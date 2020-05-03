@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>JSEngine</title>
+    <style>
+      html {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+
+        position: fixed;
+        overflow: hidden;
+      }
+
+      canvas, img {
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+
+      * {
+        font-size: 0px;
+      }
+
+      canvas {
+        width: 100%;
+      }
+
+      #buttonsWrapper {
+        margin:  0;
+        padding: 0;
+        width:   100%;
+        height:  calc(99vh - 100vw);
+      }
+
+      .button {
+        font-size: 200px;
+        filter: invert(0.8);
+
+        transform-origin: center;
+
+        width: 100%;
+      }
+    </style>
+    <link rel="import" href="characters.txt" onload="console.log(event)">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  </head>
+
+  <body>
+    <div id="buttons" style="position:fixed;width:100%;height:100%;z-index:100"></div>
+    <canvas id="JSCanvas" width="96" height="96"></canvas>
+    <div id="buttonsWrapper">
+      <img class="button" src="Assets/AllButtons.png">
+    </div>
+
+    <script src="game.jsl" type="text/JSL"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
