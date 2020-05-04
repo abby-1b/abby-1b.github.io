@@ -41,15 +41,16 @@
 
       .button {
         font-size: 200px;
-        width: 100%;
+        width:     100%;
       }
+
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
   </head>
 
   <body>
-    <div id="buttons" style="position:fixed;width:100%;height:100%;z-index:100"></div>
+    <div id="buttons" style="position:fixed;width:100%;height:100%;z-index:10"></div>
     <canvas id="JSCanvas" width="96" height="96"></canvas>
     <div id="buttonsWrapper">
       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAAAAXNSR0IArs4c6QAAAE9JREFUOI1jYBjK4D85mhiJMAyXGqyAiQzLCDmAYvAfjUaRwGUTPjmSDSNFDUo4/ccihkuO7EjDBXCGG65YxqkBixoUQPV0iA9QNW0NHgAAq+cX9hBqJT4AAAAASUVORK5CYII=" class="button" >
@@ -180,7 +181,6 @@ function text(t, x, y) {
 var buttonImage = document.getElementById("buttons");
 buttons = 0;
 getButtons = function(e) {
-  console.log(e.pageX, e.pageY);
   if (e.pageX < 235) { // Directionals
     touchX = e.pageX - 123+0.1;
     touchY = e.pageY - 516+0.1;
@@ -190,7 +190,7 @@ getButtons = function(e) {
     else if (a < PI*1.5) { return "000100" } // Left
     else                 { return "000001" } // Up
   } else { // Square / Circle
-    return (e.pageY < 516 ? "010000" : "100000");
+    return (e.pageY > 515 ? "010000" : "100000");
   }
 };
 
@@ -204,6 +204,12 @@ updateButtons = function(e) {
 
 buttonImage.ontouchstart = function(e) {
   updateButtons(e.touches);
+  if (isDown(5)) {onButtonUp();}
+  if (isDown(4)) {onButtonDown();}
+  if (isDown(3)) {onButtonLeft();}
+  if (isDown(2)) {onButtonRight();}
+  if (isDown(1)) {onButtonA();}
+  if (isDown(0)) {onButtonB();}
 }
 buttonImage.ontouchend = function(e) {
   updateButtons(e.touches);
@@ -213,7 +219,7 @@ buttonImage.ontouchmove = function(e) {
 }
 
 function isDown(i) {
-  return pad(buttons.toString(2), 6)[6 - sqrt(i)] == "1";
+  return pad(buttons.toString(2), 6)[i] == "1";
 }
 
 // ` Misc `
@@ -229,6 +235,12 @@ function themeColor(color)  {
 // ` Global Vars `
 width  = 96
 height = 96
+onButtonUp    = function(){ print("UP!"); }
+onButtonDown  = function(){ print("DOWN!"); }
+onButtonLeft  = function(){ print("LEFT!"); }
+onButtonRight = function(){ print("RIGHT!"); }
+onButtonA     = function(){ print("A!"); }
+onButtonB     = function(){ print("B!"); }
 
 // ` Rename Basic Functions `
 mod        = (n, m) => ((n % m) + m) % m;
@@ -244,20 +256,60 @@ randR      = function(a){return Math.random()*a}
 atan       = Math.atan;
 floor      = Math.floor;
 round      = Math.round;
+log        = Math.log;
+log2       = Math.log2;
 PI         = Math.PI;
 PI2        = Math.PI * 2;
 print      = function(a){console.log(a)}
+black      = Color(0);
+white      = Color(255);
 
-setTimeout(function(){
-  if (typeof setup == "function") {
-    print("Setup exists, initializing...");
-    setup();
+gameLoop = -1;
+function startGame() {
+  setTimeout(function(){
+    if (typeof setup == "function") {
+      setup();
+    }
+    gameLoop = setInterval(function(){
+      if (typeof draw == "function") {
+        draw();
+      }
+      if (buttons == 48) { // Buttons A and B pressed.
+        print("Open menu.");
+        clearInterval(gameLoop);
+        selectedGame = 0;
+        printAllGames();
+
+        onButtonUp   = function() { if (selectedGame > 0                                      ) { selectedGame-- }; printAllGames(); }
+        onButtonDown = function() { if (selectedGame < Object.entries(localStorage).length - 1) { selectedGame++ }; printAllGames(); }
+        onButtonA    = function() { (1, eval)(Object.entries(localStorage)[selectedGame][1]); startGame() }
+      }
+    }, 1000/25);
+  }, 50);
+}
+
+selectedGame = -1;
+function printAllGames() {
+  themeColor(black);
+  background(black);
+
+  useColor(white);
+  rect(1, 1, width - 2, 5);
+  useColor(black);
+  text("SELECT GAME:", 2, 2);
+
+  for (var a = 0; a < Object.entries(localStorage).length; a++) {
+    var ctext = Object.entries(localStorage)[a][0];
+    useColor(white);
+    if (a == selectedGame) {
+      rect(1, 7 + (a * 5), 1 + (ctext.length * 4), 5);
+      useColor(black);
+    }
+    text(ctext, 2, 8 + (a * 5));
   }
-  if (typeof draw == "function") {
-    print("Draw exists, drawing...");
-    setInterval(draw, 1000 / 25);
-  }
-}, 50);
+}
+
+startGame();
 </script>
     <!-- Insert game script here -->
   </body>
