@@ -1,0 +1,264 @@
+<html>
+
+  <head>
+    <title>JSEngine</title>
+    <style>
+      html {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+
+        position: fixed;
+        overflow: hidden;
+      }
+
+      canvas, img {
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+
+      * {
+        font-size: 0px;
+      }
+
+      canvas {
+        width: 100%;
+      }
+
+      #buttonsWrapper {
+        margin:  0;
+        padding: 0;
+        width:   100%;
+        height:  calc(99vh - 100vw);
+      }
+
+      .button {
+        font-size: 200px;
+        width: 100%;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  </head>
+
+  <body>
+    <div id="buttons" style="position:fixed;width:100%;height:100%;z-index:100"></div>
+    <canvas id="JSCanvas" width="96" height="96"></canvas>
+    <div id="buttonsWrapper">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAAAAXNSR0IArs4c6QAAAE9JREFUOI1jYBjK4D85mhiJMAyXGqyAiQzLCDmAYvAfjUaRwGUTPjmSDSNFDUo4/ccihkuO7EjDBXCGG65YxqkBixoUQPV0iA9QNW0NHgAAq+cX9hBqJT4AAAAASUVORK5CYII=" class="button" >
+    </div>
+
+    <script>// ` Characters `
+var chars    = [];
+var charMaps = [];
+function processChars(text){
+  preChars = text.split("\n");
+  for (var a = 0; a < preChars.length - 1; a++) {
+    chars   [chars   .length] = preChars[a].split(" ")[0];
+    charMaps[charMaps.length] = preChars[a].split(" ")[1];
+  }
+}
+if (window.location.href.slice(0, 5) != "data:") {
+  fetch("characters.txt").then(function(response){response.text().then(processChars);});
+} else {
+  processChars("A -.-....-.\nB ..-......\nC ....--...\nD ..-.-...-\nE .....-...\nF .....-.--\nG ..-.-....\nH .-.....-.\nI ...-.-...\nJ -..--....\nK .-...-.-.\nL .--.--...\nM .......-.\nN ..-.-..-.\nO ....-....\nP .......--\nQ ......--.\nR ....--.--\nS -..-.-..-\nT ...-.--.-\nU .-..-....\nV .-..-.-.-\nW .-.......\nX .-.-.-.-.\nY .-.-.--.-\nZ ..--.--..\n0 ....-....\n1 -.--.--.-\n2 ..--.--..\n3 ...-.....\n4 .-....--.\n5 -..-.-..-\n6 .--......\n7 ...--.--.\n8 .........\n9 ......--.\n+ -.-...-.-\n- ---...---\n/ --.-.-.--\n\ .---.---.\n= ...---...\n' -.--.----\n, ----.--.-\n. -------.-\n_ ------...\n( -.-.---.-\n) -.---.-.-\n[ ..-.--..-\n] -..--.-..\n: -.-----.-\n? ...-..-.-\n! --.--.-.-\n* ----.----\n| -.--.--.-\n");
+}
+
+var canvas = document.getElementById("JSCanvas");
+var ctx = canvas.getContext("2d");
+ctx.fillStyle = "#000000";
+
+// ` Color Functions and Class `
+class ColorClass {
+  constructor(a, b=-1, c=-1) {
+    if (typeof a == "string") {
+      a = (a[0] == "#" ? a.substring(1) : a);
+      this.r = toInt(a.substring(0, 2));
+      this.g = toInt(a.substring(2, 4));
+      this.b = toInt(a.substring(4, 6));
+      this.hexColor = "#" + a;
+      return;
+    }
+    if (b == -1 || c == -1) {
+      b = a;
+      c = a;
+    }
+    this.r = a;
+    this.g = b;
+    this.b = c;
+
+    this.updateColors();
+  }
+
+  updateColors() {
+    this.hexColor = "#" + toHex(this.r) + toHex(this.g) + toHex(this.b);
+  }
+
+  getAvg() {
+    return (this.r + this.g + this.b) / 3;
+  }
+}
+function Color(a, b=-1, c=-1) {
+  return new ColorClass(a, b, c);
+}
+
+function toInt(a) {
+  return (typeof a == "string" ? floor(parseInt(a, 16)) : floor(a));
+}
+
+function toHex(a) {
+  ret = floor(a).toString(16);
+  return (ret.length == 1 ? "0" + ret : ret);
+}
+
+function hexToRgb(hex) {
+  var bigint = parseInt(hex, 16);
+  var r = (bigint >> 16) & 255;
+  var g = (bigint >> 8) & 255;
+  var b = bigint & 255;
+
+  return r + "," + g + "," + b;
+}
+
+function pad(s, size) {
+    while (s.length < size) s = "0" + s;
+    return s;
+}
+
+function useColor(color) {
+  color = (typeof color == "object" ? color.hexColor : color);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+}
+
+// ` Shape and Character Functions `
+function rect(x, y, w, h) {
+  ctx.fillRect(x, y, w, h);
+}
+
+function background(color=-1) {
+  cfs = ctx.fillStyle;
+  css = ctx.strokeStyle;
+  if (color != -1) {useColor(color)}
+  rect(0, 0, 96, 96);
+  ctx.fillStyle = cfs;
+  ctx.strokeStyle = css;
+}
+
+function box(x, y, w, h) {
+  ctx.beginPath();
+  ctx.rect(x+0.5, y+0.5, w, h);
+  ctx.stroke();
+}
+
+function character(c, x, y) {
+  i = chars.indexOf(c.toUpperCase());
+  for (var a = 0; a < 9; a++) {
+    if (charMaps[i][a] == ".") {
+      rect(x + (a % 3), y + Math.floor(a / 3), 1, 1);
+    }
+  }
+}
+
+function text(t, x, y) {
+  t = t+"";
+  for (var a = 0; a < t.length; a++) {
+    if (chars.includes(t[a].toUpperCase())) {
+      character(t[a], x + a * 4, y);
+    }
+  }
+}
+
+// ` Buttons `
+var buttonImage = document.getElementById("buttons");
+buttons = 0;
+getButtons = function(e) {
+  console.log(e.pageX, e.pageY);
+  if (e.pageX < 235) { // Directionals
+    touchX = e.pageX - 123+0.1;
+    touchY = e.pageY - 516+0.1;
+    a = mod(((touchX < 0 ? PI : 0) + atan(touchY / touchX) + PI/4), PI2);
+    if      (a < PI*0.5) { return "001000" } // Right
+    else if (a < PI    ) { return "000010" } // Down
+    else if (a < PI*1.5) { return "000100" } // Left
+    else                 { return "000001" } // Up
+  } else { // Square / Circle
+    return (e.pageY < 516 ? "010000" : "100000");
+  }
+};
+
+updateButtons = function(e) {
+  buttons = 0;
+  for (var a = 0; a < e.length; a++) {
+    buttons = buttons + parseInt(getButtons(e[a]), 2);
+  }
+  //buttons = buttons;
+}
+
+buttonImage.ontouchstart = function(e) {
+  updateButtons(e.touches);
+}
+buttonImage.ontouchend = function(e) {
+  updateButtons(e.touches);
+}
+buttonImage.ontouchmove = function(e) {
+  updateButtons(e.touches);
+}
+
+function isDown(i) {
+  return pad(buttons.toString(2), 6)[6 - sqrt(i)] == "1";
+}
+
+// ` Misc `
+function themeColor(color)  {
+  color = (typeof color == "object" ? color.hexColor : color);
+  document.body.style.backgroundColor = color;
+  console.log(hexToRgb(color.slice(1)).split(",").reduce((a, b) => parseInt(a) + parseInt(b)));
+  if (hexToRgb(color.slice(1)).split(",").reduce((a, b) => parseInt(a) + parseInt(b)) < 100) {
+    document.getElementsByClassName("button")[0].style.filter = "invert(0.8)";
+  }
+}
+
+// ` Global Vars `
+width  = 96
+height = 96
+
+// ` Rename Basic Functions `
+mod        = (n, m) => ((n % m) + m) % m;
+int        = parseInt
+onDelay    = setTimeout
+onInterval = setInterval
+sin        = Math.sin;
+cos        = Math.cos;
+tan        = Math.tan;
+sqrt       = Math.sqrt;
+rand       = Math.random;
+randR      = function(a){return Math.random()*a}
+atan       = Math.atan;
+floor      = Math.floor;
+round      = Math.round;
+PI         = Math.PI;
+PI2        = Math.PI * 2;
+print      = function(a){console.log(a)}
+
+setTimeout(function(){
+  if (typeof setup == "function") {
+    print("Setup exists, initializing...");
+    setup();
+  }
+  if (typeof draw == "function") {
+    print("Draw exists, drawing...");
+    setInterval(draw, 1000 / 25);
+  }
+}, 50);
+</script>
+    <!-- Insert game script here -->
+  </body>
+</html>
