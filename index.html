@@ -278,10 +278,25 @@ function startGame() {
 
         onButtonUp   = function() { if (selectedGame > 0                                      ) { selectedGame-- }; printAllGames(); }
         onButtonDown = function() { if (selectedGame < Object.entries(localStorage).length - 1) { selectedGame++ }; printAllGames(); }
-        onButtonA    = function() { (1, eval)(Object.entries(localStorage)[selectedGame][1]); startGame() }
+        onButtonA    = function() {
+          if (Object.entries(localStorage).length == 0) {
+            addGame();
+          }
+          onButtonUp   = function(){};
+          onButtonDown = function(){};
+          onButtonA    = function(){};
+          (1, eval)(Object.entries(localStorage)[selectedGame][1]);
+          startGame();
+        }
       }
     }, 1000/25);
   }, 50);
+}
+
+function addGame() {
+  var gameName = prompt("Enter game name:");
+  var gameCode = prompt("Enter game code:");
+  localStorage.setItem(gameName, gameCode);
 }
 
 selectedGame = -1;
@@ -307,6 +322,5 @@ function printAllGames() {
 
 startGame();
 </script>
-    <!-- Insert game script here -->
   </body>
 </html>
