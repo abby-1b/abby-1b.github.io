@@ -67,6 +67,7 @@ function processChars(text){
   }
 }
 processChars("A -.-....-.\nB ..-......\nC ....--...\nD ..-.-...-\nE .....-...\nF .....-.--\nG ..-.-....\nH .-.....-.\nI ...-.-...\nJ -..--....\nK .-...-.-.\nL .--.--...\nM .......-.\nN ..-.-..-.\nO ....-....\nP .......--\nQ ......--.\nR ....--.--\nS -..-.-..-\nT ...-.--.-\nU .-..-....\nV .-..-.-.-\nW .-.......\nX .-.-.-.-.\nY .-.-.--.-\nZ ..--.--..\n0 ....-....\n1 -.--.--.-\n2 ..--.--..\n3 ...-.....\n4 .-....--.\n5 -..-.-..-\n6 .--......\n7 ...--.--.\n8 .........\n9 ......--.\n+ -.-...-.-\n- ---...---\n/ --.-.-.--\n\ .---.---.\n= ...---...\n' -.--.----\n, ----.--.-\n. -------.-\n_ ------...\n( -.-.---.-\n) -.---.-.-\n[ ..-.--..-\n] -..--.-..\n: -.-----.-\n? ...-..-.-\n! --.--.-.-\n* ----.----\n| -.--.--.-\n");
+processChars("A -.-....-.\nB ..-......\nC ....--...\nD ..-.-...-\nE .....-...\nF .....-.--\nG ..-.-....\nH .-.....-.\nI ...-.-...\nJ -..--....\nK .-...-.-.\nL .--.--...\nM .......-.\nN ..-.-..-.\nO ....-....\nP .......--\nQ ......--.\nR ....--.--\nS -..-.-..-\nT ...-.--.-\nU .-..-....\nV .-..-.-.-\nW .-.......\nX .-.-.-.-.\nY .-.-.--.-\nZ ..--.--..\n0 ....-....\n1 -.--.--.-\n2 ..--.--..\n3 ...-.....\n4 .-....--.\n5 -..-.-..-\n6 .--......\n7 ...--.--.\n8 .........\n9 ......--.\n+ -.-...-.-\n- ---...---\n/ --.-.-.--\n\ .---.---.\n= ...---...\n' -.--.----\n, ----.--.-\n. -------.-\n_ ------...\n( -.-.---.-\n) -.---.-.-\n[ ..-.--..-\n] -..--.-..\n: -.-----.-\n? ...-..-.-\n! --.--.-.-\n* ----.----\n| -.--.--.-\n");
 
 var canvas = document.getElementById("JSCanvas");
 var ctx = canvas.getContext("2d");
@@ -254,6 +255,9 @@ floor      = Math.floor;
 round      = Math.round;
 log        = Math.log;
 log2       = Math.log2;
+max        = Math.max;
+min        = Math.min;
+limit      = function(a, l, u){ return max(min(a, u), l) }
 PI         = Math.PI;
 PI2        = Math.PI * 2;
 print      = function(a){console.log(a)}
@@ -266,27 +270,45 @@ function startGame() {
     if (typeof setup == "function") {
       setup();
     }
-    gameLoop = setInterval(function(){
+    gameLoop = setInterval(function() {
       if (typeof draw == "function") {
         draw();
       }
       if (buttons == 48) { // Buttons A and B pressed.
         print("Open menu.");
         clearInterval(gameLoop);
+        gameLoop = -1;
         selectedGame = 0;
         printAllGames();
 
-        onButtonUp   = function() { if (selectedGame > 0                                      ) { selectedGame-- }; printAllGames(); }
-        onButtonDown = function() { if (selectedGame < Object.entries(localStorage).length - 1) { selectedGame++ }; printAllGames(); }
-        onButtonA    = function() {
-          if (Object.entries(localStorage).length == 0) {
-            addGame();
+        onButtonLeft = function() {
+          if (prompt("Do you want to clear all games? (Type YES.)") == "YES") {
+            localStorage.clear();
+            printAllGames();
           }
-          onButtonUp   = function(){};
-          onButtonDown = function(){};
-          onButtonA    = function(){};
-          (1, eval)(Object.entries(localStorage)[selectedGame][1]);
-          startGame();
+        };
+        onButtonUp   = function() { selectedGame = max(selectedGame - 1, 0                      ); printAllGames(); };
+        onButtonDown = function() { selectedGame = min(selectedGame + 1, localStorage.length - 1); printAllGames(); };
+        onButtonB    = function() { addGame();                                                     printAllGames(); };
+        onButtonA    = function() {
+          if (localStorage.length == 0) {
+            addGame();
+            printAllGames();
+          } else {
+            onButtonLeft = function() {};
+            onButtonUp   = function() {};
+            onButtonDown = function() {};
+            onButtonB    = function() {};
+            onButtonA    = function() {};
+            selectedCode = Object.entries(localStorage)[selectedGame][1];
+            background(black);
+            (1, eval)(atob(selectedCode));
+            startGame();
+          }
+        }
+        onButtonB    = function() {
+          addGame();
+          printAllGames();
         }
       }
     }, 1000/25);
@@ -295,8 +317,12 @@ function startGame() {
 
 function addGame() {
   var gameName = prompt("Enter game name:");
-  var gameCode = prompt("Enter game code:");
-  localStorage.setItem(gameName, gameCode);
+  if (gameName != null) {
+    var gameCode = prompt("Enter game code (Base64):");
+    if (gameCode != null) {
+      localStorage.setItem(gameName, gameCode);
+    }
+  }
 }
 
 selectedGame = -1;
@@ -309,7 +335,7 @@ function printAllGames() {
   useColor(black);
   text("SELECT GAME:", 2, 2);
 
-  for (var a = 0; a < Object.entries(localStorage).length; a++) {
+  for (var a = 0; a < localStorage.length; a++) {
     var ctext = Object.entries(localStorage)[a][0];
     useColor(white);
     if (a == selectedGame) {
