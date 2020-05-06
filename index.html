@@ -136,9 +136,32 @@ function useColor(color) {
   ctx.strokeStyle = color;
 }
 
+// ` Sprite class `
+class SpriteClass {
+  constructor(s) {
+    this.s = s;
+    this.width = s.split(";")[0];
+    this.data = s.split(";").splice(2);
+  }
+
+  draw(x, y, s=1) {
+    for (var a = 0; a < this.data.length; a++) {
+      useColor("#"+this.data[a]);
+      rect(x + (a % this.width) * s, y + Math.floor(a / this.width) * s, s, s);
+    }
+  }
+}
+function Sprite(s) {
+  return new SpriteClass(s);
+}
+
 // ` Shape and Character Functions `
 function rect(x, y, w, h) {
   ctx.fillRect(x, y, w, h);
+}
+
+function dot(x, y) {
+  ctx.fillRect(x, y, 1, 1);
 }
 
 function background(color=-1) {
@@ -156,20 +179,20 @@ function box(x, y, w, h) {
   ctx.stroke();
 }
 
-function character(c, x, y) {
+function character(c, x, y, s=1) {
   i = chars.indexOf(c.toUpperCase());
   for (var a = 0; a < 9; a++) {
     if (charMaps[i][a] == ".") {
-      rect(x + (a % 3), y + Math.floor(a / 3), 1, 1);
+      rect(x + (a % 3) * s, y + Math.floor(a / 3) * s, s, s);
     }
   }
 }
 
-function text(t, x, y) {
+function text(t, x, y ,s=1) {
   t = t+"";
   for (var a = 0; a < t.length; a++) {
     if (chars.includes(t[a].toUpperCase())) {
-      character(t[a], x + a * 4, y);
+      character(t[a], x + a * 4 * s, y, s);
     }
   }
 }
