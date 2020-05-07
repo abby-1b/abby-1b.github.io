@@ -55,6 +55,12 @@
     <div id="buttonsWrapper">
       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAAAAXNSR0IArs4c6QAAAE9JREFUOI1jYBjK4D85mhiJMAyXGqyAiQzLCDmAYvAfjUaRwGUTPjmSDSNFDUo4/ccihkuO7EjDBXCGG65YxqkBixoUQPV0iA9QNW0NHgAAq+cX9hBqJT4AAAAASUVORK5CYII=" class="button" >
     </div>
+
+    <script>
+    fetch('game.js').then(function(response) {response.text().then(function(data) {
+      localStorage.setItem("BOOT", btoa(data));
+    });})
+    </script>
     <script>// ` Characters `
 var chars    = [];
 var charMaps = [];
@@ -171,8 +177,8 @@ class SpriteClass {
   }
 
   drawCenter(x, y, s=1) {
-    x -= this.width / 2;
-    y -= this.height / 2;
+    x -= this.width * s / 2;
+    y -= this.height * s / 2;
     for (var a = 0; a < this.data.length; a++) {
       if (this.data[a] != "-") {
         useColor("#"+this.data[a]);
@@ -185,11 +191,32 @@ function Sprite(s) {
   return new SpriteClass(s);
 }
 
-class Tiles {
-  
+class TileSet {
+  constructor(sprites) {
+    for (var a = 0; a < sprites.length; a++) {
+      if (sprites[a].constructor.name == "String") {
+        sprites[a] = Sprite(sprites[a]);
+      }
+    }
+
+    this.set = sprites;
+  }
+}
+function TileSet(sprites) {
+  return new TileSet(sprites);
 }
 
-// ` Shape and Character Functions `
+class TileMap {
+  constructor(tileSet) {
+    this.tileSet = tileSet;
+  }
+
+  mapSize(width, height) {
+    
+  }
+}
+
+// ` Shape and Text Functions `
 function rect(x, y, w, h) {
   ctx.fillRect(x, y, w, h);
 }
