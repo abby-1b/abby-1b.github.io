@@ -191,7 +191,7 @@ function Sprite(s) {
   return new SpriteClass(s);
 }
 
-class TileSet {
+class TileSetClass {
   constructor(sprites) {
     for (var a = 0; a < sprites.length; a++) {
       if (sprites[a].constructor.name == "String") {
@@ -203,17 +203,20 @@ class TileSet {
   }
 }
 function TileSet(sprites) {
-  return new TileSet(sprites);
+  return new TileSetClass(sprites);
 }
 
-class TileMap {
+class TileMapClass {
   constructor(tileSet) {
     this.tileSet = tileSet;
   }
 
   mapSize(width, height) {
-    
+    this.map = ;
   }
+}
+function TileMap(tileSet) {
+  return new TileMapClass(tileSet);
 }
 
 // ` Shape and Text Functions `
