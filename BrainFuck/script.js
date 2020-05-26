@@ -64,7 +64,7 @@ function runProgram(p) {
     if (p[ppt] == ".")                { ot.value += String.fromCharCode(pm[pt]);                              }
     if (p[ppt] == "[" && pm[pt] == 0) { ppt = bs[ppt];                                                        }
     if (p[ppt] == "]" && pm[pt] != 0) { ppt = bs[ppt];                                                        }
-    if (p[ppt] == "(")                { st = p.substring(ppt+1, bs[ppt]); pm[pt] += st; ppt += st.length + 1; }
+    if (p[ppt] == "(")                { st =p.substring(ppt+1,bs[ppt]);pm[pt]+=parseInt(st);ppt +=st.length+1;}
     ppt ++;
   }
   console.log("ran.");
@@ -82,9 +82,28 @@ function runCode() {
   var ucc2 = "";
   var ic = 0, i = "+";
   for (var a = 0; a < ucc1.length; a++) {
-    if (a == "+" || a == "-") {
-      
+    if (ucc1[a] != i && ic != 0) {
+      if (ic > 1) {
+        ucc2 += "(" + (i == "-" ? i : "") + ic + ")"
+        ic = 0;
+      } else {
+        po = "";
+        for (var b = 0; b < ic; b++) {
+          po += i;
+        }
+        ucc2 += po;
+        ic = 0;
+      }
+    }
+    if ((ucc1[a] == "+" || ucc1[a] == "-") && i != ucc1[a]) {
+      i = ucc1[a];
+      ic = 1;
+    } else if (i == ucc1[a]) {
+      ic ++;
+    } else {
+      ucc2 += ucc1[a];
     }
   }
+  runProgram(ucc2);
 }
 runCode();
