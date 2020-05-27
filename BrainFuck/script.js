@@ -23,7 +23,6 @@ function showMem() {
     }
   }
   wt.value = os;
-  console.log("memory shown.");
 }
 
 function getClose(str, pos) {
@@ -43,7 +42,6 @@ function runProgram(p) {
   setupMem();
   
   var pt = 0, ppt = 0;
-  console.log("running...");
   var bs = {};
   for (var a = 0; a < p.length-1; a++) {
     if (p[a] == "[") {
@@ -56,10 +54,10 @@ function runProgram(p) {
     }
   }
   while (ppt < p.length) {
-    if (p[ppt] == "+")                { pm[pt] ++;                                                            }
-    if (p[ppt] == "-")                { pm[pt] --;                                                            }
+    if (p[ppt] == "+")                { pm[pt] = pm[pt] + 1 % 255;                                            }
+    if (p[ppt] == "-")                { pm[pt] = pm[pt] - 1 % 255;                                            }
     if (p[ppt] == ">")                { pt = ( pt + 1 ) % pm.length;                                          }
-    if (p[ppt] == "<")                { pt --; pt = (pt < 0 ? pm.length : pt)                                 }
+    if (p[ppt] == "<")                { pt --; pt = (pt < 0 ? pm.length - 1 : pt)                             }
     if (p[ppt] == "%")                { ot.value += display(pm[pt], "")                                       }
     if (p[ppt] == ".")                { ot.value += String.fromCharCode(pm[pt]);                              }
     if (p[ppt] == "[" && pm[pt] == 0) { ppt = bs[ppt];                                                        }
@@ -67,11 +65,12 @@ function runProgram(p) {
     if (p[ppt] == "(")                { st =p.substring(ppt+1,bs[ppt]);pm[pt]+=parseInt(st);ppt +=st.length+1;}
     ppt ++;
   }
-  console.log("ran.");
   showMem();
 }
 
 function runCode() {
+  localStorage.setItem("prg", cd.value);
+  
   var ucc0 = cd.value, ucc1 = "";
   for (var a = 0; a < ucc0.length; a++) {
     if ("+-<>%.[]".indexOf(ucc0[a]) > -1) {
@@ -103,7 +102,22 @@ function runCode() {
     } else {
       ucc2 += ucc1[a];
     }
+    if (a == ucc1.length - 1) {
+      if (ic > 1) {
+        ucc2 += "(" + (i == "-" ? i : "") + ic + ")"
+        ic = 0;
+      } else {
+        po = "";
+        for (var b = 0; b < ic; b++) {
+          po += i;
+        }
+        ucc2 += po;
+        ic = 0;
+      }
+    }
   }
   runProgram(ucc2);
 }
 runCode();
+
+cd.value = localStorage.getItem("prg") || "";
