@@ -1,107 +1,61 @@
-var currCode = `# This is a comment!
-7 : a
-5:b
-print("Hello world!")
-print(10)
-print( 20 )`;
+// Example program
+#include <iostream>
+#include <string>
 
-function log(...a) {
-  console.log(...a);
-}
-function returnError(e) {
-  console.log("ERROR! " + e);
-}
+// Memory
+uint8_t memory[129600];
+int insP = 0;
 
-var error = {
-  undefinedString: "'%v1' is not defined."
-};
+int a0, a1;
 
-var lexerCode = [
-  {startChar: '"', prevType: "", type: "string" , endChar: '"' , newType: ""},
-  {startChar: '#', prevType: "", type: "comment", endChar: '\n', newType: ""}
-];
+//Instruction functions
 
-var instructions = {
-  plus:     {type: "arithmetic"  , val: "plus"    },
-  minus:    {type: "arithmetic"  , val: "minus"   },
-  multiply: {type: "arithmetic"  , val: "multiply"},
-  divide:   {type: "arithmetic"  , val: "divide"  },
-  lParen:   {type: "segmentation", val: "lParen"  },
-  rParen:   {type: "segmentation", val: "rParen"  }
-};
+void ft01() { memory[a1] = memory[a0]; }
+/*void ft01(uint8_t* memory, int a0, int a1) { memory[a1] = memory[a0]; }
+void ft02(uint8_t* memory, int a0, int n1) { memory[a0] = n1; }
+void ft03(uint8_t* memory, int a0, int a1) { memory[a1] += memory[a0]; }
+void ft04(uint8_t* memory, int a0, int a1) { memory[a1] -= memory[a0]; }
+void ft05(uint8_t* memory, int a0, int a1) { memory[a1] *= memory[a0]; }
+void ft06(uint8_t* memory, int a0, int a1) { memory[a1] /= memory[a0]; }
+void ft07(uint8_t* memory, int a0, int a1) { memory[a0] = memory[a0] << a1; }
+void ft08(uint8_t* memory, int a0, int a1) { memory[a0] = memory[a0] >> a1; }
+void ft09(uint8_t* memory, int a0, int __) { insP = a0; }
+void ft10(uint8_t* memory, int a0, int a1) { if (a1 == 0) { insP = a0; } }
+void ft11(uint8_t* memory, int a0, int a1) { if (a1 != 0) { insP = a0; } }
+*/
+void (*instructions[1])() = {ft01};
 
-var _letters = "qwertyuiopasdfghjklzxcvbnm_";
-var _numbers = "1234567890";
-var _special = "+-*/.";
 
-function charType(c) {
-  c = c.toLowerCase();
-  if        (_letters.indexOf(c) != -1) {
-    return "letter";
-  } else if (_numbers.indexOf(c) != -1) {
-    return "number";
-  } else if (_special.indexOf(c) != -1) {
-    return "special";
-  } else if (c == '\n') {
-    return "newline";
+// Join Bits
+int joinBits(uint8_t* memory, int start, int end) {
+  int calc = 0;
+  for (int i = start; i < end; i++) {
+    calc = calc << 8;
+    calc = calc | memory[i];
   }
-  return "none";
+  return calc;
+  //return ls.reduce((total, arg, idx) => total + (arg << ((ls.length - 1 - idx) * 8)), 0);
 }
 
-var tokens = [];
-
-var lastType = "";
-var storePos = 0;
-
-// FV (Function / Variable)
-var fvPos = 0;
-var fvType = "";
-
-for (var cc = 0; cc < currCode.length; cc ++) {
-  var chr = currCode[cc];
-  var currCharType = charType(chr);
-  var didSomething = false;
-  for (var i = 0; i < lexerCode.length; i++) {
-    if        (lexerCode[i].startChar.indexOf(chr) != -1 && lexerCode[i].prevType == lastType) {
-      lastType = lexerCode[i].type;
-      storePos = cc;
-      didSomething = true;
-      break;
-    } else if (lexerCode[i].endChar.indexOf(chr)   != -1 && lastType == lexerCode[i].type) {
-      tokens.push({type: lastType, val:currCode.substring(storePos + 1, cc)});
-      lastType = lexerCode[i].newType;
-      didSomething = true;
-      break;
-    }
+int main() {
+    
+  // Put program in memory
+  uint8_t program[3] = {0x15, 0x03, 0x04};
+  for (int a = 0; a < 3; a++) {
+    memory[a] = program[a];
   }
-  //console.log(chr, currCharType, didSomething);
-  if (didSomething || lastType != "") {
-    /*if ( != 0) {
-      returnError(error.undefinedString);
-    }*/
-    fvPos = cc;
-    continue;
-  }
+
+  // RUN PROGRAM!
+
+  // Get arguments (from the size inside the instruction)
+  a0 = insP + ((memory[insP] & 12) >> 2) + 1;
+  a1 = joinBits(memory, insP + a0, a0 + (memory[insP] & 3));
+  a0 = joinBits(memory, insP + 1, a0);
   
-  if        (chr == "+") {
-    tokens.push(instructions.plus);
-  } else if (chr == "-") {
-    tokens.push(instructions.minus);
-  } else if (chr == "*") {
-    tokens.push(instructions.multiply);
-  } else if (chr == "/") {
-    tokens.push(instructions.divide);
-  } else if (chr == "(") {
-    tokens.push(instructions.lParen);
-  } else if (chr == ")") {
-    tokens.push(instructions.rParen);
-  } else {
-    
-    if (fvType != currCharType) {
-      console.log(currCode.substring(fvPos, cc));
-      fvType = currCharType;
-      fvPos = cc;
-    }
-    
+  // Get 4-bit instruction
+  (instructions[ ((memory[insP] & 0xF0) >> 4) ])();
+  
+  for (int a = 0; a < 12; a++) {
+      
   }
 }
