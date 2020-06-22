@@ -1,3 +1,7 @@
+document.addEventListener("touchmove", function(event){
+    event.preventDefault();
+});
+
 var canvas = document.getElementById("screen");
 var ctx = canvas.getContext("2d");
 
