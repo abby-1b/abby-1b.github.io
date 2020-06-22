@@ -5,9 +5,6 @@ document.ontouchstart = function(e){
 document.ontouchmove = function(e){ 
   e.preventDefault(); 
 }
-
-alert(0);
-
 var canvas = document.getElementById("screen");
 var ctx = canvas.getContext("2d");
 
