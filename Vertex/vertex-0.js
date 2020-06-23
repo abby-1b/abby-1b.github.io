@@ -90,7 +90,7 @@ function joinBits(ls) {
 
 function step() {
   var arg1 = insP + ((memory[insP] & 8) >> 3) + 2,
-      arg2 = joinBits(memory.slice(insP + arg1, arg1 + ((memory[insP] & 4) >> 2) + 1)),
+      arg2 = joinBits(memory.slice(arg1, arg1 + ((memory[insP] & 4) >> 2) + 1)),
       arg1 = joinBits(memory.slice(insP + 1, arg1));
 
   // Use function output to increment pointer
