@@ -80,7 +80,7 @@ var instructions = [
 ];
 
 // Setup Memory
-var memoryBuffer = new ArrayBuffer(65535);
+var memoryBuffer = new ArrayBuffer(65536);
 var memory = new Uint8Array(memoryBuffer);
 var insP = 0;
 
@@ -95,6 +95,6 @@ function step() {
 
   // Use function output to increment pointer
   if ((instructions[ memory[insP] >> 4 ])(arg1, arg2)) {
-    insP += ((memory[insP] & 3) + ((memory[insP] & 12) >> 2) + 2);
+    insP += ((memory[insP] & 4) >> 2) + ((memory[insP] & 8) >> 3) + 3;
   }
 }
