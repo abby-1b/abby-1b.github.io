@@ -80,7 +80,7 @@ var instructions = [
 ];
 
 // Setup Memory
-var memoryBuffer = new ArrayBuffer(65536);
+var memoryBuffer = new ArrayBuffer(65535);
 var memory = new Uint8Array(memoryBuffer);
 var insP = 0;
 
