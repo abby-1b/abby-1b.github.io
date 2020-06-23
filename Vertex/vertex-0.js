@@ -61,21 +61,21 @@ Sets the instruction pointer to address0 IF address1 NOT is zero.
 
 //Instruction exec
 var instructions = [
-  function(a0,a1) { memory[a1] = memory[a0]; },
-  function(a0,n1) { memory[a0] = n1; },
-  function(a0,a1) { memory[a1] += memory[a0]; },
-  function(a0,a1) { memory[a1] -= memory[a0]; },
-  function(a0,a1) { memory[a1] *= memory[a0]; },
-  function(a0,a1) { memory[a1] /= memory[a0]; },
-  function(a0,a1) { memory[a0] = memory[a0] << a1; },
-  function(a0,a1) { memory[a0] = memory[a0] >> a1; },
-  function(a0,a1) { insP = a0; },
-  function(a0,a1) { if (a1 == 0) { insP = a0; } },
-  function(a0,a1) { if (a1 != 0) { insP = a0; } },
-  function(a0,a1) {  },
-  function(a0,a1) {  },
-  function(a0,a1) {  },
-  function(a0,a1) {  },
+  function(a0,a1) { memory[a1] = memory[a0]; return 1; },
+  function(a0,n1) { memory[a0] = n1; return 1; },
+  function(a0,a1) { memory[a1] += memory[a0]; return 1; },
+  function(a0,a1) { memory[a1] -= memory[a0]; return 1; },
+  function(a0,a1) { memory[a1] *= memory[a0]; return 1; },
+  function(a0,a1) { memory[a1] /= memory[a0]; return 1; },
+  function(a0,a1) { memory[a0] = memory[a0] << a1; return 1; },
+  function(a0,a1) { memory[a0] = memory[a0] >> a1; return 1; },
+  function(a0,a1) { insP = a0; return 0; },
+  function(a0,a1) { if (a1 == 0) { insP = a0; return 0; } return 1; },
+  function(a0,a1) { if (a1 != 0) { insP = a0; return 0; } return 1; },
+  function(a0,a1) { return 1; },
+  function(a0,a1) { return 1; },
+  function(a0,a1) { return 1; },
+  function(a0,a1) { return 1; },
   function(a0,a1) { console.log("END!"); keepRunning = false; }
 ];
 
@@ -94,5 +94,7 @@ function step() {
       arg1 = joinBits(memory.slice(insP + 1, arg1));
 
   // Use function output to increment pointer
-  insP += ((memory[insP] & 3) + ((memory[insP] & 12) >> 2) + 1) * (instructions[ memory[insP] >> 4 ])(arg1, arg2);
+  if ((instructions[ memory[insP] >> 4 ])(arg1, arg2)) {
+    insP += ((memory[insP] & 3) + ((memory[insP] & 12) >> 2) + 2);
+  }
 }
