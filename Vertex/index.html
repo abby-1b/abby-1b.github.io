@@ -22,10 +22,37 @@
         image-rendering: pixelated;
       }
       
+      #computerInfo {
+        pointer-events: none;
+        position: fixed;
+        width: 100vw;
+        height: 110vh;
+        backdrop-filter: saturate(200%) blur(60px);
+        display: flex;
+        
+        justify-content: center;
+        align-items: center;
+      }
+      
+      @media only screen and (max-width: 1050px) {
+        #computerInfo {
+          display: none;
+        }
+      }
+      
     </style>
   </head>
 <body>
 
+  <div id="computerInfo">
+    <div>
+      <h1>I've noticed you're not on a phone...</h1>
+      <p>This little website was made to be used on a phone, as an "alternative os".
+      Of course, it isn't finished, and even if you opened it on a phone, it would just display this pixelated background.
+      Have fun poking around, though.</p>
+    </div>
+  </div>
+  
 <canvas id="screen" width="245" height="422"></canvas> <!-- 490 845 -->
 <script src="vertex-0.js"></script>
 <script src="script.js"></script>
