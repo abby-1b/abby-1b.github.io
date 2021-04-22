@@ -1,78 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Code (I Guess)</title>
-<style>
-/* VARS */
-:root {
-  --bgColor: rgb(5, 5, 8);
-  --termColor: rgb(225, 225, 230);
-  --borderColor: rgb(40, 40, 40);
-  --globalSize: 1;
-  
-  --cBlue: #2257ab;
-}
-@media (pointer:none), (pointer:coarse) {
-  :root {
-    --globalSize: 0.45;
-  }
-}
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Code (I Guess)</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
 
-/* TERMINAL */
-.terminal {
-  padding: 10px;
-  color: var(--bgColor);
-  transition: color .2s, opacity .2s;
-  display: inline-block;
-  background-color: var(--termColor);
-  overflow: hidden;
-  font-size: 1.2em;
-  text-align: center;
-  overflow: hidden;
-  position: relative;
-}
-.terminal * {
-  margin-top: -10px;
-  display: inline-block;
-  transition: color .5s, transform .5s;
-}
-.terminal *:hover {
-  transform: translateY(2px);
-}
+  <body>
+    
+  </body>
 
-/* SECTIONS */
-.section {
-  height: calc(100vh - 2px);
-  border-bottom: 2px solid var(--borderColor);
-  padding: 0 5% 0 5%;
-}
-.leftText {
-  text-align: left;
-}
-.centerText {
-  text-align: center;
-}
-.rightText {
-  text-align: right;
-}
-
-/* MISC */
-.spacer {
-  display: block;
-}
-br {
-  display: block;
-  margin: 0 0;
-  content: " ";
-  line-height: 0px;
-}
-body {
-  background-color: black;
-}
-body, html {
-  margin: 0;
-  padding: 0;
-}
-</style></head>
-<body><div class="section" id="titleSection"><div class="spacer" style="padding-bottom: 30vh"></div><div class="centerText"><div class="terminal"><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">Hi</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">there</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">!</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">I</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">'</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">m</a></div><div class="spacer" style="padding-bottom: 0.5vh"></div></div><br><div class="centerText"><div class="terminal"><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--cBlue)">Code</a></div><div class="terminal"><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">(</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">I</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">Guess</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">)</a></div></div></div><br><div class="section" id="experience"><div class="spacer" style="padding-bottom: 5vh"></div><div class="centerText"><div class="terminal"><a style="font-size:max(calc(2em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">Experience</a></div></div><br><div class="spacer" style="padding-bottom: 5vh"></div><div class="leftText"><div class="terminal"><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">I</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">have</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">no</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">experience</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">.</a></div></div><br><div class="spacer" style="padding-bottom: 0.5vh"></div><div class="leftText"><div class="terminal"><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">am</a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(1em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">child</a></div></div></div><br><div class="section" id="experience"><div class="spacer" style="padding-bottom: 30vh"></div><div class="centerText"><div class="terminal"><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">That</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">'</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">s</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)"> </a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">it</a><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">.</a></div></div><br><div class="centerText"><div class="terminal"><a style="font-size:max(calc(5em * var(--globalSize)), 1em);font-family:monospace;color:var(--bgColor)">Goodbye</a></div></div></div><br></body></html>
+</html>

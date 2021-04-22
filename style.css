@@ -1,0 +1,73 @@
+/* VARS */
+:root {
+    --bgColor: rgb(5, 5, 8);
+    --termColor: rgb(225, 225, 230);
+    --borderColor: rgb(40, 40, 40);
+
+    --cBlue: #2257ab;
+}
+
+/* TERMINAL */
+.terminal {
+    padding: 10px;
+    color: var(--bgColor);
+    transition: color .2s, opacity .2s;
+    display: inline-block;
+    background-color: var(--termColor);
+    overflow: hidden;
+    font-size: 1.2em;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.terminal * {
+    margin-top: -10px;
+    display: inline-block;
+    transition: color .5s, transform .5s;
+}
+
+.terminal *:hover {
+    transform: translateY(2px);
+}
+
+/* SECTIONS */
+.section {
+    height: calc(100vh - 2px);
+    border-bottom: 2px solid var(--borderColor);
+    padding: 0 5% 0 5%;
+}
+
+.leftText {
+    text-align: left;
+}
+
+.centerText {
+    text-align: center;
+}
+
+.rightText {
+    text-align: right;
+}
+
+/* MISC */
+.spacer {
+    display: block;
+}
+
+br {
+    display: block;
+    margin: 0 0;
+    content: " ";
+    line-height: 0px;
+}
+
+body {
+    background-color: black;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+}
