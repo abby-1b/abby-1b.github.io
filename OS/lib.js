@@ -1,0 +1,398 @@
+
+let pixelSize = 2
+
+let _canvas = document.getElementById("canvas")
+let _normalCtx = _canvas.getContext("2d")
+_normalCtx.imageSmoothingEnabled = false
+
+let _ctx = _normalCtx
+
+let _fill = [255, 255, 255, 255]
+let _stroke = [150, 150, 150, 255]
+
+let touch = []
+
+let width = 0
+let height = 0
+
+let frameCount = 0
+
+let _drawInterval = null
+
+/// ERRORS
+
+function _error(t, err) {
+    if (err == undefined) {
+        err = (function(){try { throw Error('') } catch(err) { return err; }})()
+    }
+    console.error(t)
+    document.write("<style>*{font-family:monospace;color:white;background-color:#100;}</style>")
+    document.write(t + "<br>")
+    document.write("Line: ", err.stack.split("\n").filter(e => e.includes("eval at _runCode"))[0].split(":").slice(-2).join(" : ").replace(")", ""))
+    //document.write("<br>&nbsp;&nbsp;" + err.stack.split("\n").slice(1).join("<br>&nbsp;&nbsp;"))
+    clearInterval(_drawInterval)
+}
+
+/// CHANGE CANVAS
+
+function drawOn(spr) {
+    _ctx = spr.ctx
+}
+
+function drawEnd() {
+    _ctx = _normalCtx
+}
+
+/// CANVAS FUNCTIONS
+
+// Sets the stroke color
+function stroke(r, g=-1, b=-1, a=-1) {
+    if (g == -1) {
+        _stroke = [r, r, r, 255]
+    } else if (b == -1) {
+        _stroke = [r, r, r, g]
+    } else if (a == -1) {
+        _stroke = [r, g, b, 255]
+    } else {
+        _stroke = [r, g, b, a]
+    }
+}
+
+// Sets the fill color
+function fill(r, g=-1, b=-1, a=-1) {
+    if (g == -1) {
+        _fill = [r, r, r, 255]
+    } else if (b == -1) {
+        _fill = [r, r, r, g]
+    } else if (a == -1) {
+        _fill = [r, g, b, 255]
+    } else {
+        _fill = [r, g, b, a]
+    }
+}
+
+// Draws a line
+function line(x0, y0, x1, y1) {
+    if (x0 == undefined || y0 == undefined || x1 == undefined || y1 == undefined) { _error("'line' not given enough arguments!"); return; }
+    let dx = Math.abs(x1 - x0),
+        dy = Math.abs(y1 - y0),
+        sx = (x0 < x1) ? 1 : -1,
+        sy = (y0 < y1) ? 1 : -1,
+        err = dx - dy
+    
+    _ctx.fillStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
+    _ctx.globalAlpha = _stroke[3] / 255.0
+    while (true) {
+        _ctx.fillRect(Math.round(x0), Math.round(y0), 1, 1)
+        if (Math.abs(x0 - x1) < 1 && Math.abs(y0 - y1) < 1) { break }
+        let e2 = 2 * err
+        if (e2 > -dy) {
+            err -= dy
+            x0 += sx
+        }
+        if (e2 < dx) {
+            err += dx
+            y0 += sy
+        }
+    }
+}
+
+// Draws a single pixel
+function point(x, y) {
+    _ctx.fillStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
+    _ctx.globalAlpha = _stroke[3] / 255.0
+    _ctx.fillRect(Math.round(x), Math.round(y), 1, 1)
+}
+
+// Draws the outline of a rectangle
+function rect(x, y, w, h) {
+    _ctx.strokeStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
+    _ctx.beginPath()
+    _ctx.globalAlpha = _stroke[3] / 255.0
+    _ctx.rect(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(w), Math.round(h))
+    _ctx.stroke()
+}
+
+// Draws a filled rectangle, without an outline
+function fillRect(x, y, w, h) {
+    _ctx.fillStyle = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
+    _ctx.globalAlpha = _fill[3] / 255.0
+    _ctx.fillRect(Math.round(x), Math.round(y), w, h)
+}
+
+// Fills the screen with the fill color
+function background() {
+    _ctx.fillStyle = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
+    _ctx.globalAlpha = _fill[3] / 255.0
+    _ctx.fillRect(0, 0, width, height)
+}
+
+// Draws a circle outline
+function circle(xc, yc, r) {
+    xc = Math.round(xc)
+    yc = Math.round(yc)
+    r = Math.round(r)
+    _ctx.fillStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
+    _ctx.globalAlpha = _stroke[3] / 255.0
+    let y = 0, cd = 0
+    _ctx.fillRect(xc - r, yc, 1, 1)
+    _ctx.fillRect(xc + r, yc, 1, 1)
+    _ctx.fillRect(xc, yc - r, 1, 1)
+    _ctx.fillRect(xc, yc + r, 1, 1)
+    while (r > y) {
+        cd -= (--r) - (++y)
+        if (cd < 0) cd += r++
+        _ctx.fillRect(xc - y, yc - r, 1, 1)
+        _ctx.fillRect(xc - r, yc - y, 1, 1)
+        _ctx.fillRect(xc - r, yc + y, 1, 1)
+        _ctx.fillRect(xc - y, yc + r, 1, 1)
+        _ctx.fillRect(xc + y, yc - r, 1, 1)
+        _ctx.fillRect(xc + r, yc - y, 1, 1)
+        _ctx.fillRect(xc + r, yc + y, 1, 1)
+        _ctx.fillRect(xc + y, yc + r, 1, 1)
+    }
+}
+
+// Draws a filled circle
+function fillCircle(xc, yc, r) {
+    xc = Math.round(xc)
+    yc = Math.round(yc)
+    r = r << 1
+    _ctx.fillStyle = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
+    _ctx.globalAlpha = _fill[3] / 255.0
+    var x = r, y = 0, cd = 0
+    _ctx.fillRect(xc - x, yc, r<<1, 1)
+    while (x > y) {
+        cd -= (--x) - (++y)
+        if (cd < 0) cd += x++
+        _ctx.fillRect(xc - y, yc - x, y<<1, 1)
+        _ctx.fillRect(xc - x, yc - y, x<<1, 1)
+        _ctx.fillRect(xc - x, yc + y, x<<1, 1)
+        _ctx.fillRect(xc - y, yc + x, y<<1, 1)
+    }
+}
+
+// Draws a sprite to the screen
+function sprite(spr, x, y, s=1) {
+    x = Math.round(x)
+    y = Math.round(y)
+    if (s == 1) {
+        _ctx.drawImage(spr.canvas, x, y)
+    } else {
+        _ctx.drawImage(spr.canvas, x, y, spr.width * s, spr.height * s)
+    }
+}
+
+// function text(txt, x, y) {
+//     return
+// }
+
+/// SPRITES
+
+class Sprite {
+    // Declares the sprite
+    constructor(w, h) {
+        this.width = w
+        this.height = h
+        this.imageData = new ImageData(w, h)
+
+        // Chrome
+        //this.canvas = new OffscreenCanvas(this.width, this.height)
+
+        // Safari
+        this.canvas = document.createElement('canvas')
+        this.canvas.width  = this.width
+        this.canvas.height = this.height
+
+        this.ctx = this.canvas.getContext('2d')
+        this.ctx.imageSmoothingEnabled = false
+
+        this.color = "rgb(0,0,0)"
+    }
+
+    // Puts imageData into the sprite
+    compile() {
+        this.ctx.putImageData(this.imageData, 0, 0)
+    }
+    
+    // Sets all the colors in the sprite to a specified color, ignoring alpha
+    setAllColor(col) {
+        this.imageData = this.ctx.getImageData(0, 0, this.width, this.height)
+        let _imageDataLen = this.imageData.data.length
+        for (let a = 0; a < _imageDataLen; a += 4) {
+            this.imageData.data[a    ] = col[0]
+            this.imageData.data[a + 1] = col[1]
+            this.imageData.data[a + 2] = col[2]
+        }
+        this.compile()
+        this.color = `rgb(${col[0]},${col[1]},${col[2]})`
+    }
+
+    // Returns a new sprite of a seciton of the old one
+    get(x, y, w, h) {
+        // untested
+    }
+}
+
+/// FONT
+
+let _fontData="5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(:PGXY(_X_(*1B42\"Y\"*4B1:3R6O]5 JH' 70XX22M 2 >8SP 0 2[S00021 /@IE]V"
+  , _fontMapping="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()!?/\\[]#^*-+=|\"'<>.,&:;`~%@"
+  , _gl = a => {
+    let s  = new Sprite(3, 4)
+      , _s = e =>(_fontData.charCodeAt(e)-32).toString(2).padStart(6,"0")
+    let bin = _s(a * 2) + _s(a * 2 + 1)
+    for (let b in bin) {
+        if (bin[b] == '1') {
+            s.imageData.data[b * 4 + 3] = 255
+        }
+    }
+    s.compile()
+    return s
+}
+let _font = [...Array(64).keys()].map(e => _gl(e))
+
+function text(t, x, y) {
+    t += ''
+    t = t.toUpperCase()
+    let _compiledFill = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
+    for (let a in t) {
+        if (t[a] == ' ') continue
+        let _idx = _fontMapping.indexOf(t[a])
+        if (_font[_idx].color != _compiledFill) {
+            _font[_idx].setAllColor(_fill)
+            console.log(_font[_idx].color)
+        }
+        sprite(_font[_idx], x + a * 4, y)
+    }
+}
+
+/// TOUCH
+
+class Touch {
+    constructor(x, y, id) {
+        this.x = x
+        this.y = y
+        this.lx = x
+        this.ly = y
+        this.id = id
+        this._frameMoved = false
+    }
+    toString() { return `[X: ${Math.round(this.x)}, Y: ${Math.round(this.y)}]` }
+}
+
+// Sets touchDown
+_canvas.ontouchstart = function(e) {
+    e.preventDefault()
+    /*// e.touches.length
+    if (e.type == "touchstart") {
+        
+    } else {
+        
+    }*/
+    if (e.type == "touchstart") {
+        for (let a = 0; a < e.changedTouches.length; a++) {
+            touch.push(new Touch(e.changedTouches[a].clientX / pixelSize - 0.5, e.changedTouches[a].clientY / pixelSize - 0.5, e.changedTouches[a].identifier))
+        }
+    } else {
+        for (let a = 0; a < e.changedTouches.length; a++) {
+            touch = touch.filter(b => b.id != e.changedTouches[a].identifier)
+        }
+    }
+    //document.getElementsByTagName("h1")[0].innerText =
+}
+_canvas.ontouchend = _canvas.ontouchstart
+
+_canvas.ontouchmove = function(e) {
+    e.preventDefault()
+    for (let a = 0; a < e.changedTouches.length; a++) {
+        for (let b = 0; b < touch.length; b++) {
+            if (touch[b].id == e.changedTouches[a].identifier && !touch[b]._frameMoved) {
+                touch[b].lx = touch[b].x
+                touch[b].ly = touch[b].y
+                touch[b].x = e.changedTouches[a].clientX / pixelSize - 0.5
+                touch[b].y = e.changedTouches[a].clientY / pixelSize - 0.5
+                touch[b]._frameMoved = true
+                // break (untested)
+            }
+        }
+    }
+}
+
+/// MOUSE EMULATION
+
+// Sets touch.down
+_canvas.onmousedown = function(e) {
+    e.preventDefault()
+    if (e.type == "mousedown") {
+        touch.push(new Touch(e.clientX / pixelSize - 0.5, e.clientY / pixelSize - 0.5, -1))
+    } else {
+        touch = []
+    }
+}
+_canvas.onmouseup = _canvas.onmousedown
+
+_canvas.onmousemove = function(e) {
+    e.preventDefault()
+    if (touch.length == 1) {
+        if (touch[0]._frameMoved) {
+            touch[0].x = e.clientX / pixelSize - 0.5
+            touch[0].y = e.clientY / pixelSize - 0.5
+            return
+        }
+        touch[0].lx = touch[0].x
+        touch[0].ly = touch[0].y
+        touch[0].x = e.clientX / pixelSize - 0.5
+        touch[0].y = e.clientY / pixelSize - 0.5
+        touch[0]._frameMoved = true
+    }
+}
+
+/// CONTROL
+
+// Draw loop
+setTimeout(function(){
+    window.onresize = function() {
+        _canvas.width = window.innerWidth / pixelSize
+        _canvas.height = window.innerHeight / pixelSize
+        width = _canvas.width
+        height = _canvas.height
+        if (typeof window.draw != 'undefined') {
+            draw()
+        }
+    }
+    window.onorientationchange = window.onresize
+    window.onresize()
+
+    if (typeof window.setup != 'undefined') {
+        setup()
+    }
+    _drawInterval = setInterval(function(){
+        if (typeof window.draw != 'undefined') {
+            draw()
+        }
+        for (let a = 0; a < touch.length; a++) { touch[a]._frameMoved = false }
+        frameCount++
+    }, 1000. / 45)
+}, 500)
+
+document.addEventListener('contextmenu', e => e.preventDefault())
+_canvas.addEventListener('touchmove'  , e => e.preventDefault())
+
+/// ASK FOR INPUT
+
+function _runCode() {
+    let txt = document.getElementsByTagName("textarea")[0]
+    let but = document.getElementsByTagName("input")[0]
+    txt.parentElement.removeChild(txt)
+    but.parentElement.removeChild(but)
+    frameCount = 0
+    try {
+        window.eval(txt.value)
+    } catch (e) {
+        _error(e.stack.split("\n")[0], e)
+    }
+    if (typeof window.setup != 'undefined') {
+        setup()
+    }
+}

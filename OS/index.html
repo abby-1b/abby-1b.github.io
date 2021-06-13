@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Title</title>
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: black;
+            }
+
+            * {
+                user-select: none;
+            }
+
+            #canvas {
+                width: 100%;
+                height: 100%;
+                image-rendering: pixelated;
+            }
+
+            textarea {
+                font-size: 1.2em;
+                background-color: black;
+                color: white;
+                outline: none;
+                border: none;
+                margin: 0;
+                padding: 5px;
+                position: fixed;
+                width: 100vw;
+                height: 90vh;
+                font-family: monospace;
+            }
+            input {
+                font-family: monospace;
+                font-size: 1.5em;
+                position: fixed;
+                margin-top: 90vh;
+                width: 100vw;
+                height: 10vh;
+                -webkit-appearance: none;
+                border-radius: 0;
+                color: white;
+                background-color: #333;
+                outline: none;
+                border: none;
+            }
+        </style>
+        <meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0'>
+        <meta name="apple-mobile-web-app-capable" content="yes">
+
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
+    </head>
+    <h1 style="color:white;position:fixed;font-size:10em;touch-action:none;pointer-events:none"></h1>
+    <textarea></textarea>
+    <input type="button" value="run code" onclick="_runCode()">
+    <canvas id="canvas"></canvas>
+    <script src="lib.js" defer></script>
+    <!-- <script src="game.js" defer></script> -->
+</html>
