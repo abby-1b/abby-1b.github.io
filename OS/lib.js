@@ -157,7 +157,7 @@ function circle(xc, yc, r) {
 function fillCircle(xc, yc, r) {
     xc = Math.round(xc)
     yc = Math.round(yc)
-    r = r << 1
+    r = r << 0
     _ctx.fillStyle = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
     _ctx.globalAlpha = _fill[3] / 255.0
     var x = r, y = 0, cd = 0
@@ -261,7 +261,6 @@ function text(t, x, y) {
         let _idx = _fontMapping.indexOf(t[a])
         if (_font[_idx].color != _compiledFill) {
             _font[_idx].setAllColor(_fill)
-            console.log(_font[_idx].color)
         }
         sprite(_font[_idx], x + a * 4, y)
     }
@@ -374,7 +373,7 @@ setTimeout(function(){
         for (let a = 0; a < touch.length; a++) { touch[a]._frameMoved = false }
         frameCount++
     }, 1000. / 45)
-}, 500)
+}, 100)
 
 document.addEventListener('contextmenu', e => e.preventDefault())
 _canvas.addEventListener('touchmove'  , e => e.preventDefault())
@@ -382,13 +381,10 @@ _canvas.addEventListener('touchmove'  , e => e.preventDefault())
 /// ASK FOR INPUT
 
 function _runCode() {
-    let txt = document.getElementsByTagName("textarea")[0]
-    let but = document.getElementsByTagName("input")[0]
-    txt.parentElement.removeChild(txt)
-    but.parentElement.removeChild(but)
+    __removeGUI()
     frameCount = 0
     try {
-        window.eval(txt.value)
+        window.eval(document.getElementsByTagName("textarea")[0].value)
     } catch (e) {
         _error(e.stack.split("\n")[0], e)
     }
@@ -396,3 +392,12 @@ function _runCode() {
         setup()
     }
 }
+
+function __removeGUI() {
+    let txt = document.getElementsByTagName("textarea")[0]
+    let but = document.getElementsByTagName("input")[0]
+    txt.parentElement.removeChild(txt)
+    but.parentElement.removeChild(but)
+}
+
+__removeGUI()
