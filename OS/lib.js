@@ -383,6 +383,9 @@ _canvas.addEventListener('touchmove'  , e => e.preventDefault())
 function _runCode() {
     __removeGUI()
     frameCount = 0
+    if (document.getElementsByTagName("textarea")[0].value.length < 10) {
+        return;
+    }
     try {
         window.eval(document.getElementsByTagName("textarea")[0].value)
     } catch (e) {
@@ -400,4 +403,4 @@ function __removeGUI() {
     but.parentElement.removeChild(but)
 }
 
-__removeGUI()
+//__removeGUI()
