@@ -185,10 +185,6 @@ function sprite(spr, x, y, s=1) {
     }
 }
 
-// function text(txt, x, y) {
-//     return
-// }
-
 /// SPRITES
 
 class Sprite {
@@ -256,7 +252,7 @@ let _font = [...Array(64).keys()].map(e => _gl(e))
 
 function text(t, x, y) {
     t += ''
-    t = t.toUpperCase()
+    t = t.replace(/\n/g, "\\n").toUpperCase()
     let _compiledFill = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
     for (let a in t) {
         if (t[a] == ' ') continue
@@ -375,8 +371,8 @@ function _checkButtons() {
         if (_buttons[b] == null) continue
         let dsp = false
         for (let a = 0; a < touch.length; a++) {
-            if (touch[a].x > _buttons[b][0] && touch[a].x < (_buttons[b][0] + _buttons[b][2]) 
-             && touch[a].y > _buttons[b][1] && touch[a].y < (_buttons[b][1] + _buttons[b][3])) {
+            if (touch[a].x >= _buttons[b][0] && touch[a].x <= (_buttons[b][0] + _buttons[b][2]) 
+             && touch[a].y >= _buttons[b][1] && touch[a].y <= (_buttons[b][1] + _buttons[b][3])) {
                 dsp = true
                 if (_buttons[b][5]) continue
                 _buttons[b][5] = true
@@ -397,10 +393,14 @@ let _keyboardKeys = [
     "qwertyuiop",
     "asdfghjkl ",
     "zxcvbnm   ",
-    "##     ###"
+    "##     \n\n\n"
 ]
 
+let kbButtons = []
+let kbJustPressed = []
+
 function _drawKeyboard() {
+    let allPressed = []
     let kh = 120
     for (let a = 0; a < 4; a++) {
         rect(0, a * (kh / 4) + (height - kh), width - 1, 0)
@@ -409,13 +409,28 @@ function _drawKeyboard() {
         if (a == 1) xo = 0.5
         else if (a == 2) xo = 1.5
         for (let b = 0; b < ck.length; b++) {
+            let cx = (b + xo) * (width / ck.length)
+            let cy = a * (kh / 4) + (height - kh)
+            let dds = ck[b] != ' '
             if (ck[b] != ck[b - 1]) {
-                rect((b + xo) * (width / ck.length), a * (kh / 4) + (height - kh), 0, kh / 4)
-                text(ck[b], (b + xo) * (width / ck.length) + (width / ck.length) * 0.5 - 1, a * (kh / 4) + (height - kh) + kh / 8 - 2)
+                rect(cx, cy, 0, kh / 4)
+                if (dds) text(ck[b], cx + (width / ck.length) * 0.5 - 1, cy + kh / 8 - 2)
             }
+            if (dds) {
+		for (let t = 0; t < touch.length; t++) {
+		    if (touch[t].x >= cx && touch[t].x <= cx + (width / ck.length)
+		     && touch[t].y >= cy && touch[t].y <= cy + (kh / 4)) {
+		     	allPressed.push(ck[b])
+		     	break;
+		    }
+		}
+	    }
+            
             if (ck[b] != ck[b + 1]) rect((b + xo + 1) * (width / ck.length), a * (kh / 4) + (height - kh), 0, kh / 4)
         }
     }
+    kbJustPressed = allPressed.filter(e => !kbButtons.includes(e))
+    kbButtons = allPressed
 }
 
 // Document functions

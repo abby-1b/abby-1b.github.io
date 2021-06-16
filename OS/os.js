@@ -52,7 +52,6 @@ function openApp(id) {
 
 function beforeUnload() {
     localStorage.setItem("apps", JSON.stringify(apps))
-    //return confirm("Confirm refresh")
 }
 
 /// KEYBOARD
