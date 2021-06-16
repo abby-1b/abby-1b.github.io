@@ -389,12 +389,18 @@ function _checkButtons() {
 
 /// OS INTERFACE FUNCTIONS
 
-let _keyboardKeys = [
+let _keyboardKeys = [[
     "qwertyuiop",
     "asdfghjkl ",
     "zxcvbnm   ",
     "##     \n\n\n"
-]
+], [
+    "1234567890",
+    "-/:;()$&@\"",
+    ".,?!'      ",
+    "##     \n\n\n"
+]]
+let _keyboardMode = 0
 
 let kbButtons = []
 let kbJustPressed = []
@@ -404,7 +410,7 @@ function _drawKeyboard() {
     let kh = 120
     for (let a = 0; a < 4; a++) {
         rect(0, a * (kh / 4) + (height - kh), width - 1, 0)
-        let ck = _keyboardKeys[a]
+        let ck = _keyboardKeys[_keyboardMode][a]
         let xo = 0
         if (a == 1) xo = 0.5
         else if (a == 2) xo = 1.5
