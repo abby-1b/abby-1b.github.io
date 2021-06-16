@@ -397,10 +397,10 @@ let _keyboardKeys = [[
 ], [
     "1234567890",
     "-/:;()$&@\"",
-    ".,?!'      ",
+    ".,?!'    ",
     "##     \n\n\n"
 ]]
-let _keyboardMode = 0
+let _keyboardMode = 1
 
 let kbButtons = []
 let kbJustPressed = []
