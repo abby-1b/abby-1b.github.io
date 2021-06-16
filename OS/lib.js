@@ -19,6 +19,8 @@ let frameCount = 0
 
 let _drawInterval = null
 
+let _currentUnloadFunction = ()=>{}
+
 /// ERRORS
 
 function _error(t, err) {
@@ -349,41 +351,135 @@ _canvas.onmousemove = function(e) {
 
 /// CONTROL
 
-// Draw loop
-setTimeout(function(){
-    window.onresize = function() {
+let _buttons = []
+
+// Adds a button with a callback
+function addButton(x, y, w, h, c) {
+    for (let a = 0; a < _buttons.length; a++) {
+        if (_buttons[a] == null) {
+            _buttons[a] = [x, y, w, h, c, false]
+            return a
+        }
+    }
+    _buttons.push([x, y, w, h, c, false])
+    return _buttons.length - 1
+}
+
+function removeButton(id) {
+    _buttons[id] = null
+}
+
+// Checks all the buttons every frame
+function _checkButtons() {
+    for (let b = 0; b < _buttons.length; b++) {
+        if (_buttons[b] == null) continue
+        let dsp = false
+        for (let a = 0; a < touch.length; a++) {
+            if (touch[a].x > _buttons[b][0] && touch[a].x < (_buttons[b][0] + _buttons[b][2]) 
+             && touch[a].y > _buttons[b][1] && touch[a].y < (_buttons[b][1] + _buttons[b][3])) {
+                dsp = true
+                if (_buttons[b][5]) continue
+                _buttons[b][5] = true
+            } else if (_buttons[b][5]) {
+                _buttons[b][5] = false
+            }
+        }
+        if ((!dsp) && _buttons[b][5]) {
+            _buttons[b][5] = false
+            _buttons[b][4](0, b)
+        }
+    }
+}
+
+/// OS INTERFACE FUNCTIONS
+
+let _keyboardKeys = [
+    "qwertyuiop",
+    "asdfghjkl ",
+    "zxcvbnm   ",
+    "##     ###"
+]
+
+function _drawKeyboard() {
+    let kh = 120
+    for (let a = 0; a < 4; a++) {
+        rect(0, a * (kh / 4) + (height - kh), width - 1, 0)
+        let ck = _keyboardKeys[a]
+        let xo = 0
+        if (a == 1) xo = 0.5
+        else if (a == 2) xo = 1.5
+        for (let b = 0; b < ck.length; b++) {
+            if (ck[b] != ck[b - 1]) {
+                rect((b + xo) * (width / ck.length), a * (kh / 4) + (height - kh), 0, kh / 4)
+                text(ck[b], (b + xo) * (width / ck.length) + (width / ck.length) * 0.5 - 1, a * (kh / 4) + (height - kh) + kh / 8 - 2)
+            }
+            if (ck[b] != ck[b + 1]) rect((b + xo + 1) * (width / ck.length), a * (kh / 4) + (height - kh), 0, kh / 4)
+        }
+    }
+}
+
+// Document functions
+document.addEventListener('contextmenu', e => e.preventDefault())
+_canvas.addEventListener('touchmove'  , e => e.preventDefault())
+
+// Main loop
+function _runScript(c) {
+    _currentUnloadFunction()
+    if (_drawInterval != null) {
+        clearInterval(_drawInterval)
+    }
+
+    setTimeout(function(){
+        let _fns = eval(c + "\nlet __r__=[()=>{},()=>{},()=>{}];if(typeof setup!='undefined'){__r__[0]=setup}if(typeof draw!='undefined'){__r__[1]=draw}if(typeof beforeUnload!='undefined'){__r__[2]=beforeUnload}__r__")
+        
+        _buttons = []
+        _touch = []
+        frameCount = 0
+        _currentUnloadFunction = _fns[2]
+
         _canvas.width = window.innerWidth / pixelSize
         _canvas.height = window.innerHeight / pixelSize
         width = _canvas.width
         height = _canvas.height
-        if (typeof window.draw != 'undefined') {
-            draw()
-        }
-    }
-    window.onorientationchange = window.onresize
-    window.onresize()
 
-    if (typeof window.setup != 'undefined') {
-        setup()
-    }
-    _drawInterval = setInterval(function(){
-        if (typeof window.draw != 'undefined') {
-            draw()
+        //if (typeof window.setup != 'undefined') {
+            _fns[0]()
+        //}
+
+        window.onresize = function() {
+            _canvas.width = window.innerWidth / pixelSize
+            _canvas.height = window.innerHeight / pixelSize
+            width = _canvas.width
+            height = _canvas.height
+            _fns[1]()
         }
-        for (let a = 0; a < touch.length; a++) { touch[a]._frameMoved = false }
-        frameCount++
+        window.onorientationchange = window.onresize
+
+        _drawInterval = setInterval(function(){
+            _checkButtons()
+            _fns[1]()
+            for (let a = 0; a < touch.length; a++) { touch[a]._frameMoved = false }
+            frameCount++
+        }, 1000. / 45)
     }, 1000. / 45)
-}, 100)
+}
 
-document.addEventListener('contextmenu', e => e.preventDefault())
-_canvas.addEventListener('touchmove'  , e => e.preventDefault())
+window.onbeforeunload = function(event) {
+    _currentUnloadFunction()
+}
+
+function _startOS() {
+    fetch("os.js").then(r => r.text().then(_runScript))
+}
+_startOS()
+
 
 /// ASK FOR INPUT
 
-function _runCode() {
-    __removeGUI()
+/*function _runCode() {
     frameCount = 0
     if (document.getElementsByTagName("textarea")[0].value.length < 10) {
+        __removeGUI()
         return;
     }
     try {
@@ -393,7 +489,9 @@ function _runCode() {
     }
     if (typeof window.setup != 'undefined') {
         setup()
+        frameCount = 0
     }
+    __removeGUI()
 }
 
 function __removeGUI() {
@@ -403,4 +501,4 @@ function __removeGUI() {
     but.parentElement.removeChild(but)
 }
 
-//__removeGUI()
+//__removeGUI()*/
