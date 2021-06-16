@@ -421,7 +421,7 @@ function _drawKeyboard() {
             let cy = a * (kh / 5) + (height - kh)
             let dds = ck[b] != ' '
             if (ck[b] != ck[b - 1]) {
-                rect(cx, cy, 0, kh / 5)
+                rect(cx, cy, 0, kh / 10)
                 if (dds) text(ck[b], cx + (width / ck.length) * 0.5 - 1, cy + kh / 10 - 2)
             }
             if (dds) {
