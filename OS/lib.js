@@ -390,13 +390,13 @@ function _checkButtons() {
 /// OS INTERFACE FUNCTIONS
 
 let _keyboardKeys = [[
-    "-/:;()$&@\"",
+    "-+*/:;()&\"",
     "qwertyuiop",
     "asdfghjkl ",
     "zxcvbnm   ",
     "##     \n\n\n"
 ], [
-    "-/:;()$&@\"",
+    "-+*/:;()&\"",
     "1234567890",
     "[]{}#%^*+=",
     ".,?!'<>   ",
