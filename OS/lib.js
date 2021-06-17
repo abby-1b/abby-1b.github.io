@@ -233,9 +233,8 @@ class Sprite {
 }
 
 /// FONT
-
-let _fontData="5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(:PGXY(_X_(*1B42\"Y\"*4B1:3R6O]5 JH' 70XX22M 2 >8SP 0 2[S00021 /@IE]V"
-  , _fontMapping="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()!?/\\[]#^*-+=|\"'<>.,&:;`~%@"
+let _fontData =  "5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(:PGXY(_X_(*1B42\"Y\"*4B1:3R6O]5 JH' 70XX22M 2 >8SP 0 2[S00021 /@IE]V*QB<"
+  , _fontMapping="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()!?/\\[]#^*-+=|\"'<>.,&:;`~%@{}"
   , _gl = a => {
     let s  = new Sprite(3, 4)
       , _s = e =>(_fontData.charCodeAt(e)-32).toString(2).padStart(6,"0")
@@ -248,7 +247,7 @@ let _fontData="5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(
     s.compile()
     return s
 }
-let _font = [...Array(64).keys()].map(e => _gl(e))
+let _font = [...Array(66).keys()].map(e => _gl(e))
 
 function text(t, x, y) {
     t += ''
@@ -394,14 +393,20 @@ let _keyboardKeys = [[
     "qwertyuiop",
     "asdfghjkl ",
     "zxcvbnm   ",
-    "##     \n\n\n"
+    "       \n\n\n"
 ], [
     "-+*/:;()&\"",
     "1234567890",
-    "[]{}#%^*+=",
+    "[]{}#%^*+= ",
     ".,?!'<>   ",
-    "##     \n\n\n"
+    "       \n\n\n"
 ]]
+let _kbExtraButtons = [
+    [0, 3, 1.5, "SHFT"],
+    [8.5, 3, 1.5, "BACK"],
+    [2, 4, 5, " "],
+    [0, 4, 2, "MODE"]
+]
 let _keyboardMode = 0
 
 let kbButtons = []
@@ -409,34 +414,50 @@ let kbJustPressed = []
 
 function _drawKeyboard() {
     let allPressed = []
-    let kh = 130
+    let kh = 120
+    let bh = kh / 5
+    let bw = width / 10
     for (let a = 0; a < 5; a++) {
         rect(0, a * (kh / 5) + (height - kh), width - 1, 0)
         let ck = _keyboardKeys[_keyboardMode][a]
         let xo = 0
-        if (a == 1) xo = 0.5
-        else if (a == 2) xo = 1.5
+        if (a == 2) xo = 0.5
+        else if (a == 3) xo = 1.5
         for (let b = 0; b < ck.length; b++) {
             let cx = (b + xo) * (width / ck.length)
             let cy = a * (kh / 5) + (height - kh)
             let dds = ck[b] != ' '
             if (ck[b] != ck[b - 1]) {
-                rect(cx, cy, 0, kh / 10)
+                rect(cx, cy, 0, kh / 5)
                 if (dds) text(ck[b], cx + (width / ck.length) * 0.5 - 1, cy + kh / 10 - 2)
             }
             if (dds) {
-		for (let t = 0; t < touch.length; t++) {
-		    if (touch[t].x >= cx && touch[t].x <= cx + (width / ck.length)
-		     && touch[t].y >= cy && touch[t].y <= cy + (kh / 5)) {
-		     	allPressed.push(ck[b])
-		     	break;
-		    }
-		}
-	    }
-            
-            if (ck[b] != ck[b + 1]) rect((b + xo + 1) * (width / ck.length), a * (kh / 5) + (height - kh), 0, kh / 4)
+		        for (let t = 0; t < touch.length; t++) {
+		            if (touch[t].y >= cy && touch[t].y <= cy + (kh / 5)
+		             && touch[t].x >= cx && touch[t].x <= cx + (width / ck.length)) {
+		     	        allPressed.push(ck[b])
+		     	        break
+		            }
+		        }
+	        }
+            if (ck[b] != ck[b + 1]) {
+                rect((b + xo + 1) * (width / ck.length), a * (kh / 5) + (height - kh), 0, kh / 5)
+            }
         }
     }
+    rect(2 * bw, 4 * bh + height - kh, 0, bh)
+    fill(255, 0, 0, 100)
+    for (let b = 0; b < _kbExtraButtons.length; b++) {
+        let cb = _kbExtraButtons[b]
+        for (let t = 0; t < touch.length; t++) {
+            if (touch[t].y >= cb[1] * bh + (height - kh) && touch[t].y <= (cb[1] + 1) * bh + (height - kh)
+		     && touch[t].x >= cb[0] * bw && touch[t].x <= (cb[0] + cb[2]) * bw) {
+		     	allPressed.push(cb[3])
+		     	break
+		    }
+        }
+    }
+    
     kbJustPressed = allPressed.filter(e => !kbButtons.includes(e))
     kbButtons = allPressed
 }
