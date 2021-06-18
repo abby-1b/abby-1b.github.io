@@ -1,3 +1,4 @@
+let _homeWidth = 15
 
 let pixelSize = 2
 
@@ -20,6 +21,7 @@ let frameCount = 0
 let _drawInterval = null
 
 let _currentUnloadFunction = ()=>{}
+let _currentCodeName = ""
 
 /// ERRORS
 
@@ -251,6 +253,7 @@ let _font = [...Array(66).keys()].map(e => _gl(e))
 
 function text(t, x, y) {
     t += ''
+    _ctx.globalAlpha = _fill[3] / 255.0
     t = t.replace(/\n/g, "\\n").toUpperCase()
     let _compiledFill = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
     for (let a in t) {
@@ -400,6 +403,12 @@ let _keyboardKeys = [[
     "[]{}#%^*+= ",
     ".,?!'<>   ",
     "       \n\n\n"
+], [
+    " ",
+    " ",
+    " ",
+    " ",
+    "       \n\n\n"
 ]]
 let _kbExtraButtons = [
     [0, 3, 1.5, "SHFT"],
@@ -417,23 +426,23 @@ function _drawKeyboard() {
     let kh = 120
     let bh = kh / 5
     let bw = width / 10
-    for (let a = 0; a < 5; a++) {
-        rect(0, a * (kh / 5) + (height - kh), width - 1, 0)
+    for (let a = (_keyboardMode == 2 ? 4 : 0); a < 5; a++) {
+        rect(0, a * bh + (height - kh) - 1, width - 1, 0)
         let ck = _keyboardKeys[_keyboardMode][a]
         let xo = 0
         if (a == 2) xo = 0.5
         else if (a == 3) xo = 1.5
         for (let b = 0; b < ck.length; b++) {
             let cx = (b + xo) * (width / ck.length)
-            let cy = a * (kh / 5) + (height - kh)
+            let cy = a * bh + (height - kh)
             let dds = ck[b] != ' '
             if (ck[b] != ck[b - 1]) {
-                rect(cx, cy, 0, kh / 5)
+                rect(cx, cy, 0, bh - 1)
                 if (dds) text(ck[b], cx + (width / ck.length) * 0.5 - 1, cy + kh / 10 - 2)
             }
             if (dds) {
 		        for (let t = 0; t < touch.length; t++) {
-		            if (touch[t].y >= cy && touch[t].y <= cy + (kh / 5)
+		            if (touch[t].y >= cy && touch[t].y <= cy + bh
 		             && touch[t].x >= cx && touch[t].x <= cx + (width / ck.length)) {
 		     	        allPressed.push(ck[b])
 		     	        break
@@ -441,7 +450,7 @@ function _drawKeyboard() {
 		        }
 	        }
             if (ck[b] != ck[b + 1]) {
-                rect((b + xo + 1) * (width / ck.length), a * (kh / 5) + (height - kh), 0, kh / 5)
+                rect((b + xo + 1) * (width / ck.length), a * bh + (height - kh), 0, bh - 1)
             }
         }
     }
@@ -467,14 +476,15 @@ document.addEventListener('contextmenu', e => e.preventDefault())
 _canvas.addEventListener('touchmove'  , e => e.preventDefault())
 
 // Main loop
-function _runScript(c) {
+function _runScript(c, name) {
     _currentUnloadFunction()
+    _currentCodeName = name
     if (_drawInterval != null) {
         clearInterval(_drawInterval)
     }
 
     setTimeout(function(){
-        let _fns = eval(c + "\nlet __r__=[()=>{},()=>{},()=>{}];if(typeof setup!='undefined'){__r__[0]=setup}if(typeof draw!='undefined'){__r__[1]=draw}if(typeof beforeUnload!='undefined'){__r__[2]=beforeUnload}__r__")
+        let _fns = eval(c + "\nlet __r__=[()=>{},()=>{},()=>{},()=>{}];if(typeof setup!='undefined'){__r__[0]=setup}if(typeof draw!='undefined'){__r__[1]=draw}if(typeof beforeUnload!='undefined'){__r__[2]=beforeUnload}if(typeof _editMode!='undefined'){__r__[3]=_editMode}__r__")
         
         _buttons = []
         _touch = []
@@ -486,9 +496,7 @@ function _runScript(c) {
         width = _canvas.width
         height = _canvas.height
 
-        //if (typeof window.setup != 'undefined') {
-            _fns[0]()
-        //}
+        _fns[0]()
 
         window.onresize = function() {
             _canvas.width = window.innerWidth / pixelSize
@@ -502,7 +510,17 @@ function _runScript(c) {
         _drawInterval = setInterval(function(){
             _checkButtons()
             _fns[1]()
-            for (let a = 0; a < touch.length; a++) { touch[a]._frameMoved = false }
+            fill(255)
+            for (let a = 0; a < touch.length; a++) {
+                touch[a]._frameMoved = false
+                if (touch[a].lx >= width - _homeWidth && touch[a].x < width - _homeWidth) {
+                    if (_currentCodeName == "") {
+                        _fns[3]()
+                    } else {
+                        _startOS()
+                    }
+                }
+            }
             frameCount++
         }, 1000. / 45)
     }, 1000. / 45)
@@ -513,7 +531,7 @@ window.onbeforeunload = function(event) {
 }
 
 function _startOS() {
-    fetch("os.js").then(r => r.text().then(_runScript))
+    fetch("os.js").then(r => r.text().then(function(c){_runScript(c,"")}))
 }
 _startOS()
 
