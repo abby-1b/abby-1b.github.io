@@ -43,10 +43,13 @@ function getApp(id) {
 }
 
 function openApp(id) {
+    if (editMode) {
+        apps = apps.filter(e => e != apps[id])
+    }
     if (apps[id].type == 1) {
-        fetch(apps[id].content).then(r => r.text().then(_runScript))
+        fetch(apps[id].content).then(r => r.text().then(function(c){_runScript(c, apps[id].title)}))
     } else {
-        _runScript(apps[id].content)
+        _runScript(apps[id].content, apps[id].title)
     }
 }
 
@@ -54,14 +57,14 @@ function beforeUnload() {
     localStorage.setItem("apps", JSON.stringify(apps))
 }
 
-/// KEYBOARD
-
 let addAppButton = -1
+let editMode = false
+let appShrink = 0
 
 function setup() {
     addAppButton = addButton(1, 1, Math.floor(width / 3) - 3, Math.floor(width / 3) - 3, function(t, b) {
         addApp({
-            title: "Untitled App",
+            title: "New App",
             type: 0,
             content: "",
             tile: {x: 0, y: 0}
@@ -80,6 +83,12 @@ function draw() {
             openApp(appButtons.indexOf(b))
         })
     }
+    
+    if (editMode) {
+        appShrink = (appShrink * 3 + 5) / 4
+    } else {
+        appShrink *= 3 / 4
+    }
 
     let w3 = Math.floor(width / 3)
 
@@ -96,24 +105,26 @@ function draw() {
                 apps[a].tile.y += 1
             }
         }
-        rect(apps[a].tile.x * w3 + 1, apps[a].tile.y * w3 + 1, w3 - 3, w3 - 3)
+        let sm = appShrink
+        rect(apps[a].tile.x * w3 + 1 + (Math.random() * 2 - 1) * 0.7 * editMode + sm, apps[a].tile.y * w3 + 1 + (Math.random() * 2 - 1) * 0.7 * editMode + sm, w3 - 3 - sm * 2, w3 - 3 - sm * 2)
         _buttons[appButtons[a]][0] = apps[a].tile.x * w3 + 1
         _buttons[appButtons[a]][1] = apps[a].tile.y * w3 + 1
         _buttons[appButtons[a]][2] = w3 - 3
         _buttons[appButtons[a]][3] = w3 - 3
-        text(apps[a].title, apps[a].tile.x * w3 + 3, apps[a].tile.y * w3 + 3)
+        text(apps[a].title, apps[a].tile.x * w3 + 3 + sm, apps[a].tile.y * w3 + 3 + sm)
     }
-
-    stroke(220, 255, 220)
+    
+    let am = ((5 - appShrink) / 5)
+    stroke(220, 255, 220, 255 * am)
     let cx = (apps.length % 3) * w3
     let cy = Math.floor(apps.length / 3) * w3
-    rect(cx + 1, cy + 1, w3 - 3, w3 - 3)
-    _buttons[addAppButton][0] = cx + 1
-    _buttons[addAppButton][1] = cy + 1
+    rect(cx + 1 + (w3 * (1 - am)) / 2, cy + 1 + (w3 * (1 - am)) / 2, (w3 - 3) * am, (w3 - 3) * am)
+    _buttons[addAppButton][0] = cx
+    _buttons[addAppButton][1] = cy
     line(cx + w3 / 2, cy + w3 / 3, cx + w3 / 2, cy + w3 - 1 - w3 / 3)
     line(cx + w3 / 3, cy + w3 / 2, cx + w3 - 1 - w3 / 3, cy + w3 / 2)
 
-    fill(255, 0, 0, 100)
+    fill(255, 50)
     for (let t = 0; t < touch.length; t++) {
         fillRect(Math.floor(touch[t].x / w3) * w3, Math.floor(touch[t].y / w3) * w3, w3, w3)
     }
@@ -137,3 +148,15 @@ function draw() {
         }
     }
 }
+
+function _editMode() {
+    editMode = !editMode
+}
+
+
+
+
+
+
+
+
