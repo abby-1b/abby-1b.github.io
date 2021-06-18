@@ -4,19 +4,16 @@ let editingText = JSON.parse(localStorage.getItem("apps"))[1].content.split("\n"
 let onLine = editingText.length - 1
 let onChar = editingText[onLine].length
 
+let blink = 0
+let blinkTime = 30
+
 function setup() {
     console.log(localStorage.getItem("apps"))
-    addButton(width - 5, 0, 5, 5, function(b, i) {
-        _startOS()
-    })
 }
 
 function draw() {
     fill(0)
     background()
-    
-    stroke(255, 0, 0)
-    line(width - 5, 0, width, 5)
     
     if (editingText.length == 0) {
         editingText[0] = ""
@@ -41,7 +38,7 @@ function draw() {
         onLine += 1
         editingText.splice(onLine, 0, lineContent)
         onChar = 0
-    } else {
+    } else if (kbJustPressed.length != 0) {
         let addChars = kbJustPressed.filter(e => e.length == 1).join("")
         //editingText[onLine] += addChars
         editingText[onLine] = editingText[onLine].slice(0, onChar) + addChars + editingText[onLine].slice(onChar)
@@ -53,19 +50,34 @@ function draw() {
         text(editingText[l], 1, 2 + l * 5)
     }
     
-    if (frameCount % 20 < 10) {
-        text('|', onChar * 4 - 1, onLine * 5 + 2)
+    if (blink > blinkTime / 2) {
+        if (blink == blinkTime) {
+            fill(100, 100, 255, Math.sin((frameCount % 10) * Math.PI / 20) * 55 + 150)
+            fillRect(onChar * 4 - 1, onLine * 5 + 1, 3, 6)
+        } else {
+            fill(100, 100, 255)
+            fillRect(onChar * 4, onLine * 5 + 1, 1, 6)
+        }
+    }
+    blink--
+    if (blink < 0) {
+        blink = blinkTime - 1
     }
     
     for (let t = 0; t < touch.length; t++) {
         if (touch[t].y < height - 120) {
-            onLine = Math.round(touch[t].y / 5)
+            blink = blinkTime
+            onLine = Math.round(touch[t].y / 5) - 5
             if (onLine >= editingText.length) {
                 onLine = editingText.length - 1
+            } else if (onLine < 0) {
+                onLine = 0
             }
-            onChar = Math.round(touch[t].x / 5)
+            onChar = Math.round(touch[t].x / 4)
             if (onChar > editingText[onLine].length) {
                 onChar = editingText[onLine].length
+            } else if (onChar < 0) {
+                onChar = 0
             }
         }
     }
