@@ -24,17 +24,23 @@ let _currentUnloadFunction = ()=>{}
 let _currentCodeName = ""
 
 /// ERRORS
+let _errors = []
 
 function _error(t, err) {
-    if (err == undefined) {
-        err = (function(){try { throw Error('') } catch(err) { return err; }})()
-    }
-    console.error(t)
-    document.write("<style>*{font-family:monospace;color:white;background-color:#100;}</style>")
-    document.write(t + "<br>")
-    document.write("Line: ", err.stack.split("\n").filter(e => e.includes("eval at _runCode"))[0].split(":").slice(-2).join(" : ").replace(")", ""))
-    //document.write("<br>&nbsp;&nbsp;" + err.stack.split("\n").slice(1).join("<br>&nbsp;&nbsp;"))
-    clearInterval(_drawInterval)
+	clearInterval(_drawInterval)
+	if (err == undefined) { err = (function(){try{throw Error('')}catch(err){return err}})() }
+	err = err.stack.split("\n")
+	let errStr = ""
+	if (t != "") { errStr += t + "\n" }
+	else { errStr += err[0].split(": ").slice(1).join(": ") + "\n" }
+	if (err.join("").includes("eval at")) {
+		errStr += "  Line: " + err.filter(e => e.includes("eval at"))[0].split(":").slice(-2).join(" : ").replace(")", "")
+	} else {
+		errStr += "(Unknown error)\n" + err
+		//errStr += "  Line: " + err.filter(e => e.includes("eval at"))[0].split(":").slice(-2).join(" : ").replace(")", "")
+	}
+	_errors.push(errStr)
+	_startOS()
 }
 
 /// CHANGE CANVAS
@@ -51,6 +57,7 @@ function drawEnd() {
 
 // Sets the stroke color
 function stroke(r, g=-1, b=-1, a=-1) {
+    if (r == undefined) { _error("'stroke' needs at least one argument!") }
     if (g == -1) {
         _stroke = [r, r, r, 255]
     } else if (b == -1) {
@@ -64,6 +71,7 @@ function stroke(r, g=-1, b=-1, a=-1) {
 
 // Sets the fill color
 function fill(r, g=-1, b=-1, a=-1) {
+    if (r == undefined) { _error("'fill' needs at least one argument!") }
     if (g == -1) {
         _fill = [r, r, r, 255]
     } else if (b == -1) {
@@ -77,7 +85,7 @@ function fill(r, g=-1, b=-1, a=-1) {
 
 // Draws a line
 function line(x0, y0, x1, y1) {
-    if (x0 == undefined || y0 == undefined || x1 == undefined || y1 == undefined) { _error("'line' not given enough arguments!"); return; }
+    if (arguments.length < 4) { _error("'line' not given enough arguments!"); return; }
     let dx = Math.abs(x1 - x0),
         dy = Math.abs(y1 - y0),
         sx = (x0 < x1) ? 1 : -1,
@@ -103,6 +111,7 @@ function line(x0, y0, x1, y1) {
 
 // Draws a single pixel
 function point(x, y) {
+    if (arguments.length < 2) { _error("'point' not given enough arguments!"); return;  }
     _ctx.fillStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
     _ctx.globalAlpha = _stroke[3] / 255.0
     _ctx.fillRect(Math.round(x), Math.round(y), 1, 1)
@@ -110,6 +119,7 @@ function point(x, y) {
 
 // Draws the outline of a rectangle
 function rect(x, y, w, h) {
+	if (arguments.length < 4) { _error("'rect' not given enough arguments!") }
     _ctx.strokeStyle = `rgb(${_stroke[0]},${_stroke[1]},${_stroke[2]})`
     _ctx.beginPath()
     _ctx.globalAlpha = _stroke[3] / 255.0
@@ -119,6 +129,7 @@ function rect(x, y, w, h) {
 
 // Draws a filled rectangle, without an outline
 function fillRect(x, y, w, h) {
+	if (arguments.length < 4) { _error("'fillRect' not given enough arguments!") }
     _ctx.fillStyle = `rgb(${_fill[0]},${_fill[1]},${_fill[2]})`
     _ctx.globalAlpha = _fill[3] / 255.0
     _ctx.fillRect(Math.round(x), Math.round(y), w, h)
@@ -133,6 +144,7 @@ function background() {
 
 // Draws a circle outline
 function circle(xc, yc, r) {
+	if (arguments.length < 3) { _error("'circle' not given enough arguments!") }
     xc = Math.round(xc)
     yc = Math.round(yc)
     r = Math.round(r)
@@ -159,6 +171,7 @@ function circle(xc, yc, r) {
 
 // Draws a filled circle
 function fillCircle(xc, yc, r) {
+	if (arguments.length < 3) { _error("'fillCircle' not given enough arguments!") }
     xc = Math.round(xc)
     yc = Math.round(yc)
     r = r << 0
@@ -178,6 +191,7 @@ function fillCircle(xc, yc, r) {
 
 // Draws a sprite to the screen
 function sprite(spr, x, y, s=1) {
+	if (arguments.length < 3) { _error("'sprite' not given enough arguments!") }
     x = Math.round(x)
     y = Math.round(y)
     if (s == 1) {
@@ -252,6 +266,7 @@ let _fontData =  "5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[
 let _font = [...Array(66).keys()].map(e => _gl(e))
 
 function text(t, x, y) {
+	if (arguments.length < 3) { _error("'text' not given enough arguments!") }
     t += ''
     _ctx.globalAlpha = _fill[3] / 255.0
     t = t.replace(/\n/g, "\\n").toUpperCase()
@@ -353,6 +368,7 @@ let _buttons = []
 
 // Adds a button with a callback
 function addButton(x, y, w, h, c) {
+	if (arguments.length < 5) { _error("'addButton' not given enough arguments!") }
     for (let a = 0; a < _buttons.length; a++) {
         if (_buttons[a] == null) {
             _buttons[a] = [x, y, w, h, c, false]
@@ -483,7 +499,7 @@ function _runScript(c, name) {
         clearInterval(_drawInterval)
     }
 
-    setTimeout(function(){
+    setTimeout(function __outerTimeout() {
         let _fns = eval(c + "\nlet __r__=[()=>{},()=>{},()=>{},()=>{}];if(typeof setup!='undefined'){__r__[0]=setup}if(typeof draw!='undefined'){__r__[1]=draw}if(typeof beforeUnload!='undefined'){__r__[2]=beforeUnload}if(typeof _editMode!='undefined'){__r__[3]=_editMode}__r__")
         
         _buttons = []
@@ -507,7 +523,7 @@ function _runScript(c, name) {
         }
         window.onorientationchange = window.onresize
 
-        _drawInterval = setInterval(function(){
+        _drawInterval = setInterval(function __outerLoop(){
             _checkButtons()
             _fns[1]()
             fill(255)
@@ -530,11 +546,15 @@ window.onbeforeunload = function __beforeUnload(event) {
     _currentUnloadFunction()
 }
 
+window.onerror = function __errorHandler(errorMsg, url, lineNo, columnNo, error) {
+    _error("", error)
+    return true
+}
+
 function _startOS() {
-    fetch("os.js").then(r => r.text().then(function(c){_runScript(c,"")}))
+    fetch("os.js").then(r => r.text().then(function(c){_runScript(c, "")}))
 }
 _startOS()
-
 
 /// ASK FOR INPUT
 

@@ -41,11 +41,6 @@ function addApp(data) {
     return apps.length - 1
 }
 
-// Gets an app from storage
-function getApp(id) {
-    return _apps[id]
-}
-
 function openApp(id) {
     if (editMode) {
         apps = apps.filter(e => e != apps[id])
