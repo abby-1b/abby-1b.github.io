@@ -498,7 +498,7 @@ function _runScript(c, name) {
 
         _fns[0]()
 
-        window.onresize = function() {
+        window.onresize = function __onresize() {
             _canvas.width = window.innerWidth / pixelSize
             _canvas.height = window.innerHeight / pixelSize
             width = _canvas.width
@@ -526,7 +526,7 @@ function _runScript(c, name) {
     }, 1000. / 45)
 }
 
-window.onbeforeunload = function(event) {
+window.onbeforeunload = function __beforeUnload(event) {
     _currentUnloadFunction()
 }
 

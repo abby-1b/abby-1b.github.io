@@ -1,12 +1,16 @@
 
 /// STORAGE
 
-if (localStorage.getItem("system") == null) {localStorage.setItem("system", JSON.stringify({
-    name: "User Name",
-    clipboard: "",
-    tiles: ""
-}))}
-if (localStorage.getItem("apps") == null) { localStorage.setItem("apps", "[]") }
+if (localStorage.getItem("system") == null) {
+	localStorage.setItem("system", JSON.stringify({
+    	name: "User Name",
+    	clipboard: "",
+    	tiles: ""
+	})
+)}
+if (localStorage.getItem("apps") == null) {
+	localStorage.setItem("apps", "[]")
+}
 
 let apps = JSON.parse(localStorage.getItem("apps"))
 let appButtons = []
@@ -45,9 +49,13 @@ function getApp(id) {
 function openApp(id) {
     if (editMode) {
         apps = apps.filter(e => e != apps[id])
+        return
     }
     if (apps[id].type == 1) {
-        fetch(apps[id].content).then(r => r.text().then(function(c){_runScript(c, apps[id].title)}))
+        fetch(apps[id].content).then(
+            r => r.text().then(function(c){
+                _runScript(c, apps[id].title)
+        }))
     } else {
         _runScript(apps[id].content, apps[id].title)
     }
