@@ -1,5 +1,5 @@
-
-let editingText = JSON.parse(localStorage.getItem("apps"))[1].content.split("\n")
+let editingID = parseInt(prompt("App ID"))
+let editingText = JSON.parse(localStorage.getItem("apps"))[editingID].content.split("\n")
 
 let onLine = editingText.length - 1
 let onChar = editingText[onLine].length
@@ -88,13 +88,12 @@ function draw() {
 }
 
 function beforeUnload() {
-    save(1)
-    
+    save(editingID)
 }
 
 function save(id) {
     editingText = editingText.join("\n")
     let apps = JSON.parse(localStorage.getItem("apps"))
-    apps[1].content = editingText
+    apps[id].content = editingText
     localStorage.setItem("apps", JSON.stringify(apps))
 }
