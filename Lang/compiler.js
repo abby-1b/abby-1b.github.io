@@ -182,7 +182,9 @@ function compile(program) {
     variables     (ast)
     control       (ast)
     adjacentTokens(ast)
+    pathGen       (ast)
     console.log("\n" + util.inspect(ast, false, null, true))
+    getVarType(ast, ".content.0.arguments.0.0.arguments.0")
     let code     = generate(ast)
     code      = indent(code, 1)
     functions = indent(functions, 0)
@@ -308,7 +310,7 @@ function parse(tokens) {
         content: []
     }
     let c = 0
-    function walk() {
+    function walk(idx) {
         let token = tokens[c]
         if (["num", "str", "nam", "opr", ...formattedVarTypes].includes(token.type)) {
             c++
@@ -365,7 +367,7 @@ function parse(tokens) {
         error(`Unknown token: ${token.type} \`${token.content}\``)
     }
     while (c < tokens.length) {
-        ast.content.push(walk())
+        ast.content.push(walk(ast.content.length))
     }
     return ast
 }
@@ -612,6 +614,16 @@ function adjacentTokens(ast) {
     return ast
 }
 
+function pathGen(ast, path="") {
+    for (let b in ast) {
+        if (typeof ast[b] != "string") {
+            if (!Array.isArray(ast[b])) ast[b].path = path + "." + b
+            pathGen(ast[b], path + "." + b)
+        }
+    }
+    return ast
+}
+
 function generate(node, parentType="") {
     let code = ""
 
@@ -758,4 +770,37 @@ function indent(code, i) {
         if ("([{".includes(code[a][code[a].length - 1])) i++
     }
     return code.join("\n")
+}
+
+function getPath(ast, path) {
+    path = path.split(".")
+    path = path.slice(1)
+    path = path.map(e => `["${e}"]`).join("")
+    return eval("ast" + path, ast)
+}
+
+function getVar(ast, path, nam) {
+    path = path.split(".")
+    let last = path.pop()
+    let isNum = !isNaN(parseFloat(last))
+    last = isNum ? parseInt(last) : last
+    while (path.length > 0) {
+        if (last < 0 || !isNum) {
+            last = path.pop()
+            isNum = !isNaN(parseFloat(last))
+        } else {
+            let node = getPath(ast, path.join(".") + "." + last)
+            if (node.type == "declare") {
+                return node
+            }
+            last--
+        }
+    }
+    return undefined
+}
+
+function getVarType(ast, path) {
+    let node = getVar(ast, path, getPath(ast, path).content)
+    if (node == undefined) return undefined
+    return node.type
 }

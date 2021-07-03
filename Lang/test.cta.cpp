@@ -53,8 +53,8 @@ void sleep(int milliseconds) { cout << flush; usleep(milliseconds * 1000); }
 string a = string("Hello!");
 
 int main() {
-    // variable `a`;
     print(length());
+    // variable `a`;
     std::cout << '\n';
     return 0;
 }
