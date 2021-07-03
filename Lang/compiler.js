@@ -1,16 +1,29 @@
 //"use strict";
 
-let opTypes = "=+-*/<>"
+// /opt/homebrew/Cellar/glfw/3.3.4
 
-let varTypes = ["int", "str", "flt", "dbl", "fn", "def"]
+let varTypes = ["int", "str", "flt", "dbl", "def"]
 let formattedVarTypes = varTypes.map(e => e + "Type")
+
+let keyWords = ["return", "break", "continue"]
+
+let fullTokenNames = {
+    "num": "number",
+    "opr": "operation",
+    "str": "string",
+    "declare": "variable declaration",
+    "intType": "integer",
+    "strType": "string",
+    "fltType": "float",
+    "dblType": "double",
+    "def": "function"
+}
 
 let lTypesToCTypes = {
     "int": "int",
     "str": "string",
     "flt": "float",
     "dbl": "double",
-    "fn":  "???",
     "def": "void"
 }
 
@@ -41,12 +54,7 @@ let operationFunctions = {
     "<=": "leq",
     "=<": "leq",
     ">=": "meq",
-    "=>": "meq",
-
-    "l": "String::length(%)",
-    "tint": "String::toint(%)",
-    "lower": "String::lower(%)",
-    "upper": "String::upper(%)"
+    "=>": "meq"
 }
 
 let genCodeLib = `
@@ -63,36 +71,14 @@ let genCodeLib = `
 #include <algorithm>
 #include <cctype>
 #include <vector>
-
+#include <unistd.h>
+#include "./headers/utils.h"
 using namespace std;
 
-class String {
-    public:
-        static int toint(string a) {
-            try {
-                return stoi(a);
-            } catch (...) {
-                return 0;
-            }
-        }
-        static string lower(string a) {
-            transform(a.begin(), a.end(), a.begin(), [](unsigned char c){ return tolower(c); });
-            return a;
-        }
-        static string upper(string a) {
-            transform(a.begin(), a.end(), a.begin(), [](unsigned char c){ return toupper(c); });
-            return a;
-        }
-        static int length(string a) {
-            return a.length();
-        }
-};
-
-class Vector {
-};
-
-string print(string i) { cout << i; return i; }
-float  print(float i)  { cout << i; return i; }
+string print(string i       ) { cout << i; return i; }
+float  print(float i        ) { cout << i; return i; }
+template <class T>
+string print(vector<T> i    ) { string r = Array::toString(i); cout << r; return r; }
 
 string input(string i) { cout << i; string _retstr; getline(cin, _retstr); return _retstr; }
 
@@ -102,7 +88,7 @@ string _sum(float a , string b) { return to_string(a) + b; }
 string _sum(string a, string b) { return a + b; }
 
 float  _sub(float a , float b ) { return a - b; }
-// string _sub(string a, float b ) { return to_string(b) + a; }
+// string _sub(string a, float b ) { return a + to_string(b); }
 // string _sub(float a , string b) { return to_string(a) + b; }
 // string _sub(string a, string b) { return a + b; }
 
@@ -120,6 +106,8 @@ int _meq(float a , float b ) { return a >= b; }
 
 int _mrr(float a , float b ) { return a > b; }
 int _mrr(string a, string b) { return a.length() > b.length(); }
+
+void sleep(int milliseconds) { cout << flush; usleep(milliseconds * 1000); }
 
 `
 
@@ -141,8 +129,7 @@ let controlFlow = ["if", "while", "for", "scan"]
 let lastVariableType = ""
 
 if (process.argv.length == 2) {
-    console.error("usage: compiler [file name]")
-    process.exit(1)
+    printUsage()
 }
 
 const fs = require("fs")
@@ -150,14 +137,31 @@ const util = require("util")
 const { exec } = require("child_process")
 
 fs.readFile(process.argv[2], "utf8", (err, data) => {
-    save(compile(data), process.argv[2].replace(".l", ""))
+    if (data == undefined) {
+        error(`File \`${process.argv[2]}\` not found.`)
+    }
+    save(compile(data), process.argv[2])
 })
 
 String.prototype.any = function(c) { return this.includes(c) }
 
+function printUsage() {
+    console.error("usage: compiler [file name]")
+    process.exit(1)
+}
+
 function error(message) {
     console.error(`\x1b[31mERROR at ${arguments.callee.caller.name}: ${message}`)
     process.exit(1)
+}
+
+process.on('uncaughtException', (err) => {
+    console.error(`\x1b[31mThere was an uncaught error!\n `, err)
+    process.exit(1)
+})
+
+function warn(message) {
+    console.log(`\x1b[33m${message}\x1b[0m`)
 }
 
 function save(code, name) {
@@ -171,13 +175,14 @@ function save(code, name) {
 }
 
 function compile(program) {
-    let tokens   = tokenize  (program)
-    let ast      = parse     (tokens)  // This is mutated with modify. Oh no.
-    modify    (ast)
-    operations(ast)
-    variables (ast)
-    console.log(util.inspect(ast, false, null, true))
-    control   (ast)
+    let tokens   = tokenize(program)
+    let ast      = parse   (tokens)
+    modify        (ast)
+    operations    (ast)
+    variables     (ast)
+    control       (ast)
+    adjacentTokens(ast)
+    console.log("\n" + util.inspect(ast, false, null, true))
     let code     = generate(ast)
     code      = indent(code, 1)
     functions = indent(functions, 0)
@@ -206,10 +211,10 @@ function tokenize(program) {
                 type: "mod",
                 content: c
             })
-        } else if (opTypes.any(c)) {
+        } else if ("=+-*/<>".any(c)) {
             let fullNam = c
             c = program[++currentChar]
-            while (opTypes.any(c)) {
+            while ("=+-*/<>".any(c)) {
                 fullNam += c
                 c = program[++currentChar]
             }
@@ -423,6 +428,12 @@ function operations(ast) {
             if (c == 1) error(`Expected statement before \`${JSON.stringify(p)}\``)
             if (c == modified.length) error(`Expected statement after \`${p.content}\``)
             if (["++", "--", "+=", "-=", "*=", "/="].includes(p.content)) continue
+            if (modified[c - 2].type.includes("Type")) error(`\`${p.content}\` can't be used as a variable name`)
+            if (["paren", "arr"].includes(modified[c].type)) {
+                modified[c].content = modified[c].content.map(e => operations({content: e}).content)
+            } else {
+                modified[c] = operations(modified[c])
+            }
             modified.splice(c - 2, 0, {
                 type: "opr",
                 name: p.content,
@@ -451,12 +462,14 @@ function variables(ast) {
         } else if (p.type == "ctrl") {
             p.arguments = p.arguments.map(e => variables({content: e}).content)
         } else if (formattedVarTypes.includes(p.type)) {
+            if (c >= declaredVars.length) error(`Expected something after \`${p.type.replace("Type","")}\``)
             if (declaredVars[c].type == "call") {
                 p.content = {
                     type: p.type,
                     name: declaredVars[c].content,
                     arguments: declaredVars[c].arguments.map(e => variables({content: e}).content)
                 }
+                checkVarName(p.content.name, "function")
                 p.type = "function"
                 declaredVars.splice(c, 1)
                 continue
@@ -485,10 +498,12 @@ function variables(ast) {
                 p.type = "declare"
                 declaredVars.splice(c, 3)
             }
-            if ([...varTypes, ...controlFlow].includes(p.content.name)) error(`\`${p.content.name}\` can't be used as a variable name`)
+            checkVarName(p.content.name)
         } else if (p.type == "nam") {
             if (c >= declaredVars.length) continue
-            //if (declaredVars[c].type != "opr") error(`Expected \`opr\`, got \`${declaredVars[c].type}\``)
+            if (declaredVars[c].type == "sep") error(`Misplaced separator, the comma doesn't do anything here`)
+            if (declaredVars[c].type.includes("Type")) error(`No idea what this means. Try swapping \`${p.content}\` and \`${declaredVars[c].type.replace("Type","")}\``)
+            if (declaredVars[c].type != "opr") error(`No idea what this means`) //error(`Expected \`operand\`, got \`${declaredVars[c].type}\``)
             if (c >= declaredVars.length - 1) error(`Expected something after \`${declaredVars[c].content}\``)
             p.content = {
                 type: declaredVars[c].content,
@@ -521,7 +536,7 @@ function control(ast) {
             p.arguments = p.arguments.map(e => control({content: e}).content)
             p.name = p.content
             if (modified[c].type == "block") {
-                p.content = modified[c].content
+                p.content = control(modified[c]).content
             } else {
                 p.content = [ modified[c] ]
             }
@@ -530,14 +545,13 @@ function control(ast) {
             let type = modified[c].type
             if (type == "block") {
                 control(modified[c])
-                //modified[c].content = modified[c].content.map(e => control({content: e}).content)
-                //console.log(modified[c].content)
                 p.content.content = modified[c].content
                 modified.splice(c, 1)
             } else if (type == "call") {
                 p.content.content = [ modified[c] ]
                 modified.splice(c, 1)
             } else {
+                // Missing `opr` type
                 error(`Unknown branch type \`${type}\``)
             }
         } else if (formattedVarTypes.includes(p.type)) {
@@ -547,8 +561,55 @@ function control(ast) {
     return ast
 }
 
-function addSemicolon(s) {
-    return (s[s.length - 1] == "}" ? s : s + ';')
+function adjacentTokens(ast) {
+    let check = ast.content
+    let c = 0;
+    while (c < check.length) {
+        let p = check[c++]
+        if (["paren", "arr"].includes(p.type)) {
+            if (p.type == "paren" && p.content.length > 1) error(`Misplaced separator, the comma doesn't do anything here`)
+            p.content.map(e => adjacentTokens({content: e}).content)
+        } else if (p.type == "block") {
+            adjacentTokens(p)
+        } else if (p.type == "call") {
+            p.arguments.map(e => adjacentTokens({content: e}).content)
+        } else if (p.type == "declare") {
+            if (p.content.content)
+                adjacentTokens({content: p.content.content})
+        } else if (p.type == "modify") {
+            adjacentTokens({content: p.content.content})
+        } else if (p.type == "ctrl") {
+            p.arguments.map(e => adjacentTokens({type: "paren", content: e}).content)
+            adjacentTokens(p)
+        } else if (p.type == "opr") {
+            adjacentTokens({type: "opr", content: p.arguments})
+        } else if (p.type == "function") {
+            adjacentTokens({type: "function", content: p.content.content})
+        }
+        
+        if (c <= check.length - 1) {
+            let goodTypes = [
+                "declare",
+                "call",
+                "modify",
+                "ctrl"
+            ]
+            let doErr = false
+            if (["opr", "function", "block", "Program"].includes(ast.type)) {
+                continue
+            } else {
+                if (!goodTypes.includes(p.type)) doErr = true
+                if (!goodTypes.includes(check[c].type)) doErr = true
+            }
+            if (!doErr) {
+                if (goodTypes.includes(p.type)) continue
+                if (goodTypes.includes(check[c].type)) continue
+                if (p.type == check[c].type) error(`Two ${fullTokenNames[p.type]}s can't be next to each other here.`)
+            }
+            error(`Found \`${fullTokenNames[p.type]}\` next to \`${fullTokenNames[check[c].type]}\`. Try moving one of them somewhere else.`)
+        }
+    }
+    return ast
 }
 
 function generate(node, parentType="") {
@@ -613,7 +674,6 @@ function generate(node, parentType="") {
             } else if (node.arguments.length != 1) {
                 error(`Didn't expect ${node.arguments.length} arguments for \`${node.name}\``)
             }
-            console.log(node)
             if (node.content == undefined) {
                 error("For some reason the if statement didn't get a block? Idk.")
             }
@@ -627,8 +687,8 @@ function generate(node, parentType="") {
             return 'string("' + node.content + '")'
         case "opr":
             if (node.name == '.') {
-                //return `${generate(node.arguments[0])}.${operationFunctions[generate(node.arguments[1])]}()`
-                return operationFunctions[generate(node.arguments[1])].replace("%", generate(node.arguments[0]))
+                
+                return generate(node.arguments[1])
             } else {
                 if (operationFunctions[node.name] == undefined) error(`Unknown operation \`${JSON.stringify(node)}\``)
                 return `_${operationFunctions[node.name]}(${generate(node.arguments[0])}, ${generate(node.arguments[1])})`
@@ -648,6 +708,9 @@ function generate(node, parentType="") {
         case "paren":
             return `(${node.content.map(generate).join(" ")})`
         case "nam":
+            if (keyWords.includes(node.content)) {
+                //warn(`\`${node.content}\` was left as \`nam\` type.`)
+            }
             return node.content
         case "declare":
             lastVariableType = node.content.type.replace('Type','')
@@ -669,10 +732,22 @@ function generate(node, parentType="") {
             }
         case "modify":
             return `${node.content.name} ${node.content.type} ${generate(node.content.content)}`
+        case "sep":
+            error(`Why is this comma here?`)
         default:
             error(`Node not recognized: \`${node.type}\``)
     }
     return code
+}
+
+function checkVarName(n, t="variable") {
+    if ([...varTypes, ...controlFlow, ...Object.keys(stats), ...keyWords].includes(n)) {
+        error(`\`${n}\` can't be used as a ${t} name`)
+    }
+}
+
+function addSemicolon(s) {
+    return (s[s.length - 1] == "}" ? s : s + ';')
 }
 
 function indent(code, i) {

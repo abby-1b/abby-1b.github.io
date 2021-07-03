@@ -12,39 +12,14 @@
 #include <algorithm>
 #include <cctype>
 #include <vector>
-
+#include <unistd.h>
+#include "./headers/utils.h"
 using namespace std;
 
-class String {
-    public:
-        static int toint(string a) {
-            try {
-                return stoi(a);
-            } catch (...) {
-                return 0;
-            }
-        }
-
-        static string lower(string a) {
-            transform(a.begin(), a.end(), a.begin(), [](unsigned char c){ return tolower(c); });
-            return a;
-        }
-
-        static string upper(string a) {
-            transform(a.begin(), a.end(), a.begin(), [](unsigned char c){ return toupper(c); });
-            return a;
-        }
-
-        static int length(string a) {
-            return a.length();
-        }
-};
-
-class Vector {
-};
-
-string print(string i) { cout << i; return i; }
-float  print(float i)  { cout << i; return i; }
+string print(string i       ) { cout << i; return i; }
+float  print(float i        ) { cout << i; return i; }
+template <class T>
+string print(vector<T> i    ) { string r = Array::toString(i); cout << r; return r; }
 
 string input(string i) { cout << i; string _retstr; getline(cin, _retstr); return _retstr; }
 
@@ -54,7 +29,7 @@ string _sum(float a , string b) { return to_string(a) + b; }
 string _sum(string a, string b) { return a + b; }
 
 float  _sub(float a , float b ) { return a - b; }
-// string _sub(string a, float b ) { return to_string(b) + a; }
+// string _sub(string a, float b ) { return a + to_string(b); }
 // string _sub(float a , string b) { return to_string(a) + b; }
 // string _sub(string a, string b) { return a + b; }
 
@@ -73,23 +48,13 @@ int _meq(float a , float b ) { return a >= b; }
 int _mrr(float a , float b ) { return a > b; }
 int _mrr(string a, string b) { return a.length() > b.length(); }
 
-int number = String::toint(input(string("Enter the number of terms: ")));
-int n1 = 0;
-int n2 = 1;
-int nextTerm;
+void sleep(int milliseconds) { cout << flush; usleep(milliseconds * 1000); }
+
+string a = string("Hello!");
 
 int main() {
-    // variable `number`;
-    // variable `n1`;
-    // variable `n2`;
-    // variable `nextTerm`;
-    print(string("\nFibonacci: \n"));
-    for (int a = 0; _lss(a, number); a++) {
-        print(n1); print(" "); print(string(""));
-        nextTerm = _sum(n1, n2);
-        n1 = n2;
-        n2 = nextTerm;
-    }
+    // variable `a`;
+    print(length());
     std::cout << '\n';
     return 0;
 }
