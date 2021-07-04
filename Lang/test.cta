@@ -1,10 +1,6 @@
 
-print(a.length())
-str a = "Hello!"
-# print(a.length())
-
 # str@ a = ["Hello, ", "World", "!"]
-# print(a.toString())
+# print(a)
 
 # def fib(int number) {
 #     flt n1 = 0

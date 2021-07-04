@@ -24,8 +24,11 @@ class String {
             transform(a.begin(), a.end(), a.begin(), [](unsigned char c){ return toupper(c); });
             return a;
         }
-        static inline int length(string a) {
+        static inline int len(string a) {
             return a.length();
+        }
+        static inline string add(string a, string b) {
+            return a + "," + b;
         }
 };
 
@@ -47,6 +50,10 @@ class Array {
                 ret += i[a];
             }
             return ret + "\"]";
+        }
+        template <class T>
+        static inline int len(vector<T> i) {
+            return i.size();
         }
 };
 

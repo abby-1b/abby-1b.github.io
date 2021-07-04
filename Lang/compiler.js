@@ -19,6 +19,11 @@ let fullTokenNames = {
     "def": "function"
 }
 
+let varTypeToClass = {
+    "strType": "String",
+    "arr": "Array"
+}
+
 let lTypesToCTypes = {
     "int": "int",
     "str": "string",
@@ -127,6 +132,8 @@ let genCodeEnd = `
 let controlFlow = ["if", "while", "for", "scan"]
 
 let lastVariableType = ""
+let checkedVariableType = ""
+let fullAst
 
 if (process.argv.length == 2) {
     printUsage()
@@ -183,8 +190,9 @@ function compile(program) {
     control       (ast)
     adjacentTokens(ast)
     pathGen       (ast)
+    fullAst = ast;
     console.log("\n" + util.inspect(ast, false, null, true))
-    getVarType(ast, ".content.0.arguments.0.0.arguments.0")
+    //getVarType(ast, ".content.0.arguments.0.0.arguments.0")
     let code     = generate(ast)
     code      = indent(code, 1)
     functions = indent(functions, 0)
@@ -642,9 +650,9 @@ function generate(node, parentType="") {
                 let ret = node.arguments.map(e => `${stats["print"]}(${generate(e)})`)
                 return ret.join(`; ${stats["print"]}(\" \"); `)
             }
-            return node.content + "("
+            return node.content + "( "
                 + node.arguments.map(generate).join(", ")
-                + ")"
+                + " )"
         case "function": // Not implemented!
             let args = node.content.arguments.map(generate).join(", ")
             let code = node.content.content.map(generate).map(addSemicolon)
@@ -699,8 +707,15 @@ function generate(node, parentType="") {
             return 'string("' + node.content + '")'
         case "opr":
             if (node.name == '.') {
-                
-                return generate(node.arguments[1])
+                let varName = generate(node.arguments[0])
+                let fnCall = generate(node.arguments[1]).split(" ")
+                let fnStart = fnCall[0]
+                let fnEnd = fnCall.slice(1).join(" ")
+                if (fnEnd.length != 2) {
+                    return `${varTypeToClass[checkedVariableType]}::${fnStart} ${varName}, ${fnEnd}`
+                } else {
+                    return `${varTypeToClass[checkedVariableType]}::${fnStart} ${varName}${fnEnd}`
+                }
             } else {
                 if (operationFunctions[node.name] == undefined) error(`Unknown operation \`${JSON.stringify(node)}\``)
                 return `_${operationFunctions[node.name]}(${generate(node.arguments[0])}, ${generate(node.arguments[1])})`
@@ -720,27 +735,41 @@ function generate(node, parentType="") {
         case "paren":
             return `(${node.content.map(generate).join(" ")})`
         case "nam":
-            if (keyWords.includes(node.content)) {
-                //warn(`\`${node.content}\` was left as \`nam\` type.`)
+            //console.log("NAM:", node.content)
+            if (![...keyWords].includes(node.content)) {
+                let varType = getVarType(fullAst, node.path, node.content)
+                if (varType == undefined) error(`Variable \`${node.content}\` not declared`)
+                checkedVariableType = varType
             }
             return node.content
         case "declare":
-            lastVariableType = node.content.type.replace('Type','')
+            lastVariableType = node.content.type.replace('Type', '')
             let varType = lTypesToCTypes[lastVariableType]
             if (node.array) {
                 varType = `vector<${varType}>`
             }
-            let ret
+            let declaration
+            let setting
             if (node.content.content == undefined) {
-                ret = `${varType} ${node.content.name}`
+                declaration = `${varType} ${node.content.name}`
+                setting = undefined
             } else {
-                ret = `${varType} ${node.content.name} = ${generate(node.content.content)}`
+                declaration = `${varType} ${node.content.name}`
+                setting = generate(node.content.content)
             }
             if (parentType == "Program") {
-                variableCode += ret + ';\n'
-                return `// variable \`${node.content.name}\``
+                variableCode += declaration + ';\n'
+                if (setting != undefined) {
+                    return node.content.name + " = " + setting
+                } else {
+                    return `// variable \`${node.content.name}\``
+                }
             } else {
-                return ret
+                if (setting != undefined) {
+                    return declaration + " = " + setting
+                } else {
+                    return declaration
+                }
             }
         case "modify":
             return `${node.content.name} ${node.content.type} ${generate(node.content.content)}`
@@ -781,6 +810,7 @@ function getPath(ast, path) {
 
 function getVar(ast, path, nam) {
     path = path.split(".")
+    let checkedForPath = "..."
     let last = path.pop()
     let isNum = !isNaN(parseFloat(last))
     last = isNum ? parseInt(last) : last
@@ -789,9 +819,28 @@ function getVar(ast, path, nam) {
             last = path.pop()
             isNum = !isNaN(parseFloat(last))
         } else {
-            let node = getPath(ast, path.join(".") + "." + last)
-            if (node.type == "declare") {
+            let finalPath = path.join(".") + "." + last
+            if (path[path.length - 1] == "arguments" && getPath(ast, path.join("."))[0].length != undefined) {
+                finalPath = path.join(".") + "." + last + ".0"
+            }
+            let node = getPath(ast, finalPath)
+            console.log(node)
+            if (node.type == "declare" && node.content.name == nam) {
                 return node
+            } else if (((node.type == "ctrl" && ["for"].includes(node.name)) || node.type == "function") && checkedForPath != node.path) {
+                path.push(last)
+                if (node.type == "function") {
+                    path.push("content")
+                    path.push("arguments")
+                    path.push("0")
+                    last = node.content.arguments[0].length
+                } else {
+                    path.push("arguments")
+                    path.push("0")
+                    last = node.arguments[0].length
+                }
+                isNum = true
+                checkedForPath = node.path
             }
             last--
         }
@@ -799,8 +848,9 @@ function getVar(ast, path, nam) {
     return undefined
 }
 
-function getVarType(ast, path) {
+function getVarType(ast, path, nam) {
     let node = getVar(ast, path, getPath(ast, path).content)
     if (node == undefined) return undefined
-    return node.type
+    if (node.array) return "arr"
+    return node.content.type
 }

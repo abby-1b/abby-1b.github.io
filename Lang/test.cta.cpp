@@ -50,11 +50,23 @@ int _mrr(string a, string b) { return a.length() > b.length(); }
 
 void sleep(int milliseconds) { cout << flush; usleep(milliseconds * 1000); }
 
-string a = string("Hello!");
+void fib(int number) {
+    float n1 = 0;
+    float n2 = 1;
+    float nextTerm;
+    print( string("\nFibonacci: \n") );
+    for (int a = 0; _lss(a, number); a++) {
+        print(n1); print(" "); print(string(""));
+        nextTerm = _sum(n1, n2);
+        n1 = n2;
+        n2 = nextTerm;
+        n1 += 1;
+    }
+}
 
 int main() {
-    print(length());
-    // variable `a`;
+    // function `fib`;
+    fib( 10 );
     std::cout << '\n';
     return 0;
 }
