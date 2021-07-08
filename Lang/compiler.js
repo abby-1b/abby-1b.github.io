@@ -2,6 +2,8 @@
 
 // /opt/homebrew/Cellar/glfw/3.3.4
 
+let vNum = "1.1.0"
+
 let varTypes = ["int", "str", "flt", "dbl", "def"]
 let formattedVarTypes = varTypes.map(e => e + "Type")
 
@@ -62,57 +64,16 @@ let operationFunctions = {
     "=>": "meq"
 }
 
-let genCodeLib = `
-// std::vector<int> v { 10, 20, 30 };
-
-// transform(v.begin(), v.end(), v.begin(), [](int &c){ return c * 2; });
-
-// for (int a : v) {
-//     print(a); print(" ");
-// }
-
-#include <iostream>
+let genCodeLib = 
+`#include <iostream>
 #include <string>
 #include <algorithm>
 #include <cctype>
 #include <vector>
 #include <unistd.h>
 #include "./headers/utils.h"
+#include "./headers/ctasl.h"
 using namespace std;
-
-string print(string i       ) { cout << i; return i; }
-float  print(float i        ) { cout << i; return i; }
-template <class T>
-string print(vector<T> i    ) { string r = Array::toString(i); cout << r; return r; }
-
-string input(string i) { cout << i; string _retstr; getline(cin, _retstr); return _retstr; }
-
-float  _sum(float a , float b ) { return a + b; }
-string _sum(string a, float b ) { return to_string(b) + a; }
-string _sum(float a , string b) { return to_string(a) + b; }
-string _sum(string a, string b) { return a + b; }
-
-float  _sub(float a , float b ) { return a - b; }
-// string _sub(string a, float b ) { return a + to_string(b); }
-// string _sub(float a , string b) { return to_string(a) + b; }
-// string _sub(string a, string b) { return a + b; }
-
-float  _mul(float a , float b ) { return a * b; }
-string _mul(string a, int b   ) { string r = ""; for (int c = 0; c < b; c++) { r += a; } return r; }
-
-int _eql(float a , float b ) { return a == b; }
-int _eql(string a, string b) { return a == b; }
-
-int _lss(float a , float b ) { return a < b; }
-int _lss(string a, string b) { return a.length() < b.length(); }
-
-int _leq(float a , float b ) { return a <= b; }
-int _meq(float a , float b ) { return a >= b; }
-
-int _mrr(float a , float b ) { return a > b; }
-int _mrr(string a, string b) { return a.length() > b.length(); }
-
-void sleep(int milliseconds) { cout << flush; usleep(milliseconds * 1000); }
 
 `
 
@@ -134,9 +95,15 @@ let controlFlow = ["if", "while", "for", "scan"]
 let lastVariableType = ""
 let checkedVariableType = ""
 let fullAst
+let fullProgram = ""
 
 if (process.argv.length == 2) {
     printUsage()
+}
+
+if (process.argv.includes("-v")) {
+    console.log("Version:", vNum)
+    process.exit(0)
 }
 
 const fs = require("fs")
@@ -154,11 +121,17 @@ String.prototype.any = function(c) { return this.includes(c) }
 
 function printUsage() {
     console.error("usage: compiler [file name]")
-    process.exit(1)
+    process.exit(0)
 }
 
-function error(message) {
-    console.error(`\x1b[31mERROR at ${arguments.callee.caller.name}: ${message}`)
+function error(message, node) {
+    console.log(`\x1b[31mERROR at ${arguments.callee.caller.name}: ${message}`)
+    if (node != undefined) {
+        console.log("  Line " + node.posInfo[0] + ":", fullProgram.split("\n")[node.posInfo[0] - 1])
+        console.log("        ", " ".repeat(node.posInfo[2]) + "^".repeat((node.posInfo[3] - node.posInfo[2]) + 1))
+    } else {
+        console.log("  ( No node provided!!! )")
+    }
     process.exit(1)
 }
 
@@ -182,8 +155,10 @@ function save(code, name) {
 }
 
 function compile(program) {
+    fullProgram = program
     let tokens   = tokenize(program)
     let ast      = parse   (tokens)
+    console.log("\n" + util.inspect(ast, false, null, true))
     modify        (ast)
     operations    (ast)
     variables     (ast)
@@ -191,7 +166,6 @@ function compile(program) {
     adjacentTokens(ast)
     pathGen       (ast)
     fullAst = ast;
-    console.log("\n" + util.inspect(ast, false, null, true))
     //getVarType(ast, ".content.0.arguments.0.0.arguments.0")
     let code     = generate(ast)
     code      = indent(code, 1)
@@ -202,36 +176,48 @@ function compile(program) {
 }
 
 function tokenize(program) {
-    program = program.split("\n")
-                     .map(e => e.split("#")[0])
-                     .join("\n")
     let tokens = []
     let currentChar = 0
+    let lineNum = 0
+    let lineChar = 0
     while (currentChar < program.length) {
         let c = program[currentChar]
-        if (" \n".any(c)) {
-            // Do nothing :O
+        if (c == '\n') {
+            lineNum++
+            lineChar = 0
+        } else if (c == " ") {
+
         } else if (c == ',') {
             tokens.push({
                 type: "sep",
                 content: ','
             })
+        } else if (c == '#') {
+            while (program[currentChar++] != "\n" && currentChar < program.length) {}
+            currentChar--
+            lineNum++
+            lineChar = 0
         } else if ("@&".includes(c)) {
             tokens.push({
                 type: "mod",
-                content: c
+                content: c,
+                posInfo: [lineNum + 1, lineNum + 1, lineChar, lineChar]
             })
         } else if ("=+-*/<>".any(c)) {
             let fullNam = c
             c = program[++currentChar]
+            lineChar++
             while ("=+-*/<>".any(c)) {
                 fullNam += c
                 c = program[++currentChar]
+                lineChar++
             }
             currentChar--
+            lineChar--
             tokens.push({
                 type: "opr",
-                content: fullNam
+                content: fullNam,
+                posInfo: [lineNum + 1, lineNum + 1, lineChar, lineChar]
             })
         } else if ("()[]{}".any(c)) {
             let types = {
@@ -244,33 +230,43 @@ function tokenize(program) {
             }
             tokens.push({
                 type: types[c],
-                content: c
+                content: c,
+                posInfo: [lineNum + 1, lineNum + 1, lineChar, lineChar]
             })
         } else if ("0123456789.".any(c)) {
             let fullNum = c
+            let start = lineChar
             c = program[++currentChar]
+            lineChar++
             while ("0123456789.".any(c)) {
                 fullNum += c
                 c = program[++currentChar]
+                lineChar++
             }
             currentChar--
+            lineChar--
             if (fullNum == ".") {
                 tokens.push({
                     type: "opr",
-                    content: "."
+                    content: ".",
+                    posInfo: [lineNum + 1, start, lineChar]
                 })
             } else {
                 tokens.push({
                     type: "num",
-                    content: fullNum
+                    content: fullNum,
+                    posInfo: [lineNum + 1, lineNum + 1, start, lineChar]
                 })
             }
         } else if (c == '"') {
             let fullString = ""
+            let start = lineChar
             c = program[++currentChar]
+            lineChar++
             while (c != '"') {
                 fullString += c
                 c = program[++currentChar]
+                lineChar++
                 if (currentChar >= program.length) {
                     error("String not closed!")
                 }
@@ -279,35 +275,44 @@ function tokenize(program) {
                     if (c == 'n') c = "\\n"
                     fullString += c
                     c = program[++currentChar]
+                    lineChar++
                 }
             }
             tokens.push({
                 type: "str",
-                content: fullString
+                content: fullString,
+                posInfo: [lineNum + 1, lineNum + 1, start, lineChar]
             })
         } else if ("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_".any(c)) {
             let fullNam = c
+            let start = lineChar
             c = program[++currentChar]
+            lineChar++
             while ("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789_".any(c)) {
                 fullNam += c
                 c = program[++currentChar]
+                lineChar++
             }
             currentChar--
+            lineChar--
             if (varTypes.includes(fullNam)) {
                 tokens.push({
                     type: fullNam + "Type",
-                    content: fullNam
+                    content: fullNam,
+                    posInfo: [lineNum + 1, lineNum + 1, start, lineChar]
                 })
             } else {
                 tokens.push({
                     type: "nam",
-                    content: fullNam
+                    content: fullNam,
+                    posInfo: [lineNum + 1, lineNum + 1, start, lineChar]
                 })
             }
         } else {
-            error(`Character not recognized: \`${c}\``)
+            error(`Character not recognized: \`${c}\``, {posInfo: [lineNum + 1, lineNum + 1, lineChar, lineChar]})
         }
         currentChar++
+        lineChar++
     }
     return tokens
 }
@@ -325,7 +330,7 @@ function parse(tokens) {
             return token
         }
         if (token.type == "oarr") {
-            let node = {type: "arr", content: []}
+            let node = {type: "arr", content: [], posInfo: [token.posInfo[0], -1, token.posInfo[2], -1]}
             c++
             token = walk()
             while (token.type != "carr") {
@@ -337,6 +342,8 @@ function parse(tokens) {
                 }
                 token = walk()
             }
+            node.posInfo[1] = token.posInfo[1]
+            node.posInfo[3] = token.posInfo[3]
             return node
         }
         if (token.type == "opar") {
@@ -366,13 +373,17 @@ function parse(tokens) {
         }
         if (["carr", "cpar", "cblk", "sep"].includes(token.type)) {
             c++
-            return {type: token.type}
+            return {type: token.type, posInfo: token.posInfo}
         }
         if (token.type == "mod") {
             c++
-            return {type: token.type, content: token.content}
+            return {
+                type: token.type, 
+                content: token.content,
+                posInfo: token.posInfo
+            }
         }
-        error(`Unknown token: ${token.type} \`${token.content}\``)
+        error(`Unknown token: ${token.type} \`${token.content}\``, token)
     }
     while (c < tokens.length) {
         ast.content.push(walk(ast.content.length))
@@ -423,22 +434,22 @@ function operations(ast) {
         } else if (p.type == "ctrl") {
             p.arguments = p.arguments.map(e => operations({content: e}).content)
         } else if (p.type == "opr" && p.content == '=') {
-            if (c == 1) error(`Unexpected \`=\``)
+            if (c == 1) error(`Unexpected \`=\``, p)
             if (modified[c - 2].type == "opr") {
                 modified[c - 2].content += '='
                 modified.splice(c - 1, 1)
             }
         } else if (p.type == "opr" && ["++", "--"].includes(p.content)) {
-            if (c == 1) error(`Expected statement before \`${p.content}\``)
-            if (modified[c - 2].type != "nam") error(`Unexpected ${modified[c - 2].type} before \`${p.content}\``)
+            if (c == 1) error(`Expected something before \`${p.content}\``, p)
+            if (modified[c - 2].type != "nam") error(`Unexpected ${fullTokenNames[modified[c - 2].type]} before \`${p.content}\``, modified[c - 2])
             modified[c - 1].content = p.content[0] + "="
             modified.splice(c, 0, {type: "num", content: '1'})
         } else if (p.type == "opr") {
             if (p.name != undefined) continue
-            if (c == 1) error(`Expected statement before \`${JSON.stringify(p)}\``)
-            if (c == modified.length) error(`Expected statement after \`${p.content}\``)
+            if (c == 1) error(`Expected something before \`${p.content}\``, p)
+            if (c == modified.length) error(`Expected something after \`${p.content}\``, p)
             if (["++", "--", "+=", "-=", "*=", "/="].includes(p.content)) continue
-            if (modified[c - 2].type.includes("Type")) error(`\`${p.content}\` can't be used as a variable name`)
+            if (modified[c - 2].type.includes("Type")) error(`\`${p.content}\` can't be used as a variable name`, p) // What?
             if (["paren", "arr"].includes(modified[c].type)) {
                 modified[c].content = modified[c].content.map(e => operations({content: e}).content)
             } else {
@@ -513,7 +524,7 @@ function variables(ast) {
             if (c >= declaredVars.length) continue
             if (declaredVars[c].type == "sep") error(`Misplaced separator, the comma doesn't do anything here`)
             if (declaredVars[c].type.includes("Type")) error(`No idea what this means. Try swapping \`${p.content}\` and \`${declaredVars[c].type.replace("Type","")}\``)
-            if (declaredVars[c].type != "opr") error(`No idea what this means`) //error(`Expected \`operand\`, got \`${declaredVars[c].type}\``)
+            if (declaredVars[c].type != "opr") error(`No idea what this means`, declaredVars[c])
             if (c >= declaredVars.length - 1) error(`Expected something after \`${declaredVars[c].content}\``)
             p.content = {
                 type: declaredVars[c].content,
@@ -717,8 +728,16 @@ function generate(node, parentType="") {
                     return `${varTypeToClass[checkedVariableType]}::${fnStart} ${varName}${fnEnd}`
                 }
             } else {
+                let var1Name = generate(node.arguments[0])
+                let var1IsArr = checkedVariableType == "arr"
+                let var2Name = generate(node.arguments[1])
+                let var2IsArr = checkedVariableType == "arr"
                 if (operationFunctions[node.name] == undefined) error(`Unknown operation \`${JSON.stringify(node)}\``)
-                return `_${operationFunctions[node.name]}(${generate(node.arguments[0])}, ${generate(node.arguments[1])})`
+                if (var1IsArr || var2IsArr) {
+                    return `(${var1Name} ${node.name} ${var2Name})`
+                } else {
+                    return `_${operationFunctions[node.name]}(${var1Name}, ${var2Name})`
+                }
             }
         case "arr": // Needs code here!
             let inferredType = node.content[0][0].type
@@ -731,7 +750,7 @@ function generate(node, parentType="") {
             if (lastVariableType == "int") {
                 castType = "(int)"
             }
-            return `vector<${lTypesToCTypes[lastVariableType]}>{` + node.content.map(e => castType + generate(e)).join(", ") + "} "
+            return `Array<${lTypesToCTypes[lastVariableType]}>(vector<${lTypesToCTypes[lastVariableType]}>{` + node.content.map(e => castType + generate(e)).join(", ") + "})"
         case "paren":
             return `(${node.content.map(generate).join(" ")})`
         case "nam":
@@ -746,7 +765,7 @@ function generate(node, parentType="") {
             lastVariableType = node.content.type.replace('Type', '')
             let varType = lTypesToCTypes[lastVariableType]
             if (node.array) {
-                varType = `vector<${varType}>`
+                varType = `Array<${varType}>`//`vector<${varType}>`
             }
             let declaration
             let setting
@@ -824,7 +843,6 @@ function getVar(ast, path, nam) {
                 finalPath = path.join(".") + "." + last + ".0"
             }
             let node = getPath(ast, finalPath)
-            console.log(node)
             if (node.type == "declare" && node.content.name == nam) {
                 return node
             } else if (((node.type == "ctrl" && ["for"].includes(node.name)) || node.type == "function") && checkedForPath != node.path) {

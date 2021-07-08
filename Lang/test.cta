@@ -1,6 +1,8 @@
 
-# str@ a = ["Hello, ", "World", "!"]
-# print(a)
+#flt@ a = ["hey ", 1, 2, 3]
+return + 1
+
+# Remember to check for JSON.stringify in errors!
 
 # def fib(int number) {
 #     flt n1 = 0
@@ -23,7 +25,5 @@
 #(4 + 2 "hey")
 #int a = ((3, 0) + 2)
 #a int = 0
-#oi, mate
+#hey, mate
 #-1 # should work
-
-# entity.name.variable.cta
