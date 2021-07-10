@@ -2,7 +2,7 @@
 
 // /opt/homebrew/Cellar/glfw/3.3.4
 
-let vNum = "1.1.0"
+let vNum = "1.1.1"
 
 let varTypes = ["int", "str", "flt", "dbl", "def"]
 let formattedVarTypes = varTypes.map(e => e + "Type")
@@ -92,6 +92,8 @@ let genCodeEnd = `
 
 let controlFlow = ["if", "while", "for", "scan"]
 
+let noVarNames = [...varTypes, ...controlFlow, ...Object.keys(stats), ...keyWords]
+
 let lastVariableType = ""
 let checkedVariableType = ""
 let fullAst
@@ -158,10 +160,10 @@ function compile(program) {
     fullProgram = program
     let tokens   = tokenize(program)
     let ast      = parse   (tokens)
-    console.log("\n" + util.inspect(ast, false, null, true))
     modify        (ast)
     operations    (ast)
     variables     (ast)
+    console.log("\n" + util.inspect(ast, false, null, true))
     control       (ast)
     adjacentTokens(ast)
     pathGen       (ast)
@@ -449,7 +451,8 @@ function operations(ast) {
             if (c == 1) error(`Expected something before \`${p.content}\``, p)
             if (c == modified.length) error(`Expected something after \`${p.content}\``, p)
             if (["++", "--", "+=", "-=", "*=", "/="].includes(p.content)) continue
-            if (modified[c - 2].type.includes("Type")) error(`\`${p.content}\` can't be used as a variable name`, p) // What?
+            if (modified[c - 2].type.includes("Type")) error(`\`${modified[c - 2].content}\` isn't a value`, modified[c - 2])
+            if (modified[c].type.includes("Type")) error(`\`${modified[c].content}\` isn't a value`, modified[c])
             if (["paren", "arr"].includes(modified[c].type)) {
                 modified[c].content = modified[c].content.map(e => operations({content: e}).content)
             } else {
@@ -475,7 +478,7 @@ function variables(ast) {
     while (c < declaredVars.length) {
         let p = declaredVars[c++]
         if (["paren", "arr"].includes(p.type)) {
-            p.content = p.content.map(e => variables({content: e}).content)
+            p.content = p.content.map(e => variables({content: e, type: p.type}).content)
         } else if (p.type == "block") {
             p = variables(p)
         } else if (p.type == "call") {
@@ -483,14 +486,15 @@ function variables(ast) {
         } else if (p.type == "ctrl") {
             p.arguments = p.arguments.map(e => variables({content: e}).content)
         } else if (formattedVarTypes.includes(p.type)) {
-            if (c >= declaredVars.length) error(`Expected something after \`${p.type.replace("Type","")}\``)
+            if (["paren", "arr"].includes(ast.type)) error(`Declaration inside of a container`)
+            if (c >= declaredVars.length) error(`Expected something after \`${p.type.replace("Type","")}\``, p)
             if (declaredVars[c].type == "call") {
                 p.content = {
                     type: p.type,
                     name: declaredVars[c].content,
                     arguments: declaredVars[c].arguments.map(e => variables({content: e}).content)
                 }
-                checkVarName(p.content.name, "function")
+                checkVarName(p.content.name, "function", declaredVars[c])
                 p.type = "function"
                 declaredVars.splice(c, 1)
                 continue
@@ -519,17 +523,18 @@ function variables(ast) {
                 p.type = "declare"
                 declaredVars.splice(c, 3)
             }
-            checkVarName(p.content.name)
+            checkVarName(p.content.name, "variable")
         } else if (p.type == "nam") {
             if (c >= declaredVars.length) continue
             if (declaredVars[c].type == "sep") error(`Misplaced separator, the comma doesn't do anything here`)
             if (declaredVars[c].type.includes("Type")) error(`No idea what this means. Try swapping \`${p.content}\` and \`${declaredVars[c].type.replace("Type","")}\``)
             if (declaredVars[c].type != "opr") error(`No idea what this means`, declaredVars[c])
             if (c >= declaredVars.length - 1) error(`Expected something after \`${declaredVars[c].content}\``)
+            checkVarName(p.content, "variable", p)
             p.content = {
                 type: declaredVars[c].content,
                 name: p.content,
-                content: [ declaredVars[c + 1] ],
+                content: [ declaredVars[c + 1] ]
             }
             p.type = "modify"
             declaredVars.splice(c, 2)
@@ -627,6 +632,7 @@ function adjacentTokens(ast) {
                 if (goodTypes.includes(check[c].type)) continue
                 if (p.type == check[c].type) error(`Two ${fullTokenNames[p.type]}s can't be next to each other here.`)
             }
+            console.log(check[c])
             error(`Found \`${fullTokenNames[p.type]}\` next to \`${fullTokenNames[check[c].type]}\`. Try moving one of them somewhere else.`)
         }
     }
@@ -661,9 +667,9 @@ function generate(node, parentType="") {
                 let ret = node.arguments.map(e => `${stats["print"]}(${generate(e)})`)
                 return ret.join(`; ${stats["print"]}(\" \"); `)
             }
-            return node.content + "( "
+            return node.content + "("
                 + node.arguments.map(generate).join(", ")
-                + " )"
+                + ")"
         case "function": // Not implemented!
             let args = node.content.arguments.map(generate).join(", ")
             let code = node.content.content.map(generate).map(addSemicolon)
@@ -800,9 +806,9 @@ function generate(node, parentType="") {
     return code
 }
 
-function checkVarName(n, t="variable") {
-    if ([...varTypes, ...controlFlow, ...Object.keys(stats), ...keyWords].includes(n)) {
-        error(`\`${n}\` can't be used as a ${t} name`)
+function checkVarName(name, t="variable", node) {
+    if (noVarNames.includes(name)) {
+        error(`\`${name}\` can't be used as a ${t} name`, node)
     }
 }
 

@@ -10,7 +10,7 @@ using namespace std;
 
 
 int main() {
-    _sum(return, 1);
+    (int a = 0);
     std::cout << '\n';
     return 0;
 }

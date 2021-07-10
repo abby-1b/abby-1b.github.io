@@ -1,6 +1,6 @@
 
 #flt@ a = ["hey ", 1, 2, 3]
-return + 1
+(int a = 0)
 
 # Remember to check for JSON.stringify in errors!
 
