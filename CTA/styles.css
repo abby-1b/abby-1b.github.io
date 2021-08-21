@@ -1,0 +1,38 @@
+
+:root {
+    --dark: #111;
+    --light: #fbfbfb;
+
+    --ttime: .3s;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --dark: #fbfbfb;
+        --light: #111;
+    }
+}
+
+html, body {
+    background: var(--light);
+    transition: all var(--ttime);
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, li {
+    color: var(--dark);
+    transition: color var(--ttime);
+    font-family: sans-serif;
+}
+
+#mdd {
+    width: min(800px,100%);
+    margin: 0 auto;
+
+    padding-left: 10px;
+    padding-right: 10px;
+
+    -moz-box-sizing: border-box; 
+    -webkit-box-sizing: border-box; 
+    box-sizing: border-box; 
+}
