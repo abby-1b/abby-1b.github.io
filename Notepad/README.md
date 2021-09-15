@@ -28,7 +28,7 @@ After that, you can put `$` after any line to graph it. Sure, it can only graph 
 ```$ Graph enabled```
 
 ### JavaScript (`~`)
-Put `~` to run JavaScript code directly. This doesn't support things like `10x` multiplication. Variables executed from math mode can still be accessed and set.
+Put `~` at the end of a line to run JavaScript code directly. This doesn't support things like `10x` multiplication. Variables executed from math mode can still be accessed and set.
 
 Small disadvantage: there's no `window` object.
 
