@@ -191,7 +191,7 @@ function mathAnalyze() {
     // Show/hide graphs
     if (graphEnabled) {
         cv.style.opacity = "1"
-        cv.style.backgroundColor = "rgba(255,255,255,1)"
+        cv.style.backgroundColor = "rgba(255,255,255,0.8)"
     } else {
         cv.style.opacity = "0"
         cv.style.backgroundColor = "rgba(255,255,255,0)"
