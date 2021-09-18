@@ -12,7 +12,7 @@ class Card {
         for (let p in params) this[p] = params[p]
         if (isSmall && smallParams)
             for (let p in smallParams) this[p] = smallParams[p]
-        this._el = document.createElement("div")
+        this._el = document.createElement(params ? params.tag : "div")
         this._el.className = "card"
         this._children = []
         this._parent = {}
@@ -39,9 +39,10 @@ class Card {
         this._children.splice(this._children.indexOf(c), 1)
     }
 
-    removeSelf() {
-        this._parent.removeChild(this)
-    }
+    removeSelf() { this._parent.removeChild(this) }
+
+    setContent(c) { this._el.innerHTML = c }
+    setContentSafe(c) { this._el.innerText = c }
 }
 
 let body = new Card()
