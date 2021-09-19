@@ -11,9 +11,13 @@ let colors = ["#ba2613", "#2cba13", "#1374ba", "#b7ba13", "#13ba88", "#6f13ba"]
 let math = {
     sin: Math.sin,
     cos: Math.cos,
+    abs: Math.abs,
     round: Math.round,
     bin: (n) => { console.log("BIN!"); return parseInt(n + "", 2) },
-    log: (n) => { console.log(n) }
+    log: (n) => { console.log(n) },
+    PI: Math.PI,
+    E: Math.E,
+    sqrt: Math.sqrt
 }
 
 // Canvas
@@ -31,10 +35,10 @@ function storeVars(target) {
 
 // Parses math
 function parseMath(inp) {
+    inp = inp.replace(/√/g, "sqrt")
     inp = inp.replace(/ /g, "")
     while (true) {
-        let mul = /(?<=\d)[a-zA-Z(]/g.exec(inp)
-        if (!mul) mul = /(?<=[a-zA-Z(])\d/g.exec(inp)
+        let mul = /((?<=[\d.])[a-zA-Z(]|(?<=[a-zA-Z)])[\d.]|(?<=\))[a-zA-Z(])/g.exec(inp)
         if (!mul) break
         inp = inp.substring(0, mul.index) + "*" + inp.substring(mul.index)
     }
@@ -164,15 +168,14 @@ function mathAnalyze() {
         if (s >= str.length) { ov.children[s].innerHTML = "&nbsp;"; continue }
         if (str[s].length == 0) { ov.children[s].innerHTML = "&nbsp;"; continue }
 
+        returned = "!!!"
         if (str[s][str[s].length - 1] == '\\' || str[s][str[s].length - 1] == '=') {
             // Math: Implements multiplication without an operator.
             ctx = mathProcess(str[s].slice(0,-1), ctx)
-            if ([undefined, NaN, null].includes(returned)) returned = "!!!"
             ov.children[s].innerHTML = "&nbsp;".repeat(str[s].length + 1) + returned
         } else if (str[s][str[s].length - 1] == '~') {
             // Execution: Executes JS code. No questions asked.
             ctx = process(str[s].slice(0, -1), ctx)
-            if ([undefined, NaN, null].includes(returned)) returned = "!!!"
             ov.children[s].innerHTML = "&nbsp;".repeat(str[s].length + 1) + returned
         } else if (str[s][str[s].length - 1] == '$') {
             // Graph: Graphs things to a canvas.
