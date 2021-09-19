@@ -12,6 +12,7 @@ body, html {
     height: 100%;
     padding: 0;
     margin: 0;
+    overflow: hidden;
 }
 
 #edt {
@@ -22,6 +23,7 @@ body, html {
     width: calc(100vw - 20px);
     min-height: calc(100vh - 20px);
     padding: 10px;
+    resize: none;
 }
 
 #ov {
@@ -55,7 +57,7 @@ body, html {
     color: white;
     outline: none;
     border: none;
-    resize: none;
     opacity: 0;
     transition: opacity .1s;
+    resize: none;
 }
