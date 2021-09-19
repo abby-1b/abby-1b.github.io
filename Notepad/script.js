@@ -9,15 +9,8 @@ let graphStep = 5 // Steps to take when drawing graph
 let colors = ["#ba2613", "#2cba13", "#1374ba", "#b7ba13", "#13ba88", "#6f13ba"]
 
 let math = {
-    sin: Math.sin,
-    cos: Math.cos,
-    abs: Math.abs,
-    round: Math.round,
     bin: (n) => { console.log("BIN!"); return parseInt(n + "", 2) },
     log: (n) => { console.log(n) },
-    PI: Math.PI,
-    E: Math.E,
-    sqrt: Math.sqrt
 }
 
 // Canvas
@@ -29,7 +22,7 @@ let returned = ""
 function storeVars(target) {
     return new Proxy(target, {
         has(target, prop) { return true },
-        get(target, prop) { return (prop in target ? target : math)[prop] }
+        get(target, prop) { return (prop in target ? target : (prop in math ? math : Math))[prop] }
     })
 }
 
@@ -75,7 +68,7 @@ function drawGraph(g, v, context, id) {
     cvc.strokeStyle = colors[id % colors.length]
     cvc.beginPath()
     try {
-        let l = 0;
+        let l = 0
         for (let x = -cv.width / 2 - graphStep; x < cv.width / 2 + graphStep; x += graphStep) {
             let y = function(){return eval("with(storeVars(this)){" + g.replace(new RegExp(v, 'g'), x / graphScale) + "}")}.call(context) * graphScale
             cvc.moveTo(x, -y)
@@ -129,8 +122,6 @@ document.onkeydown = function(e){
         if (metaCtrlDown != 0 && e.key == 'z') setTimeout(mathAnalyze, 1)
         if (e.key.includes("Arrow") || e.key == "Shift" || e.key == "Control" || e.key == "Meta" || e.key == "Alt" || e.key == "CapsLock")
             return
-    } else {
-        console.log(e)
     }
 
     // This timeout makes sure the code runs after the key is processed by the browser.
@@ -182,7 +173,7 @@ function mathAnalyze() {
             let gstr = parseMath(str[s].slice(0,-1)).split('=')
             if (gstr.length == 1 && gstr[0] == "") graphEnabled = true
             if (gstr[0] == "y") {
-                drawGraph(gstr[1], 'x', ctx, graphNum)
+                drawGraph(gstr[1], 'x', ctx, graphNum++)
             }
             ov.children[s].innerHTML = "&nbsp;".repeat(str[s].length + 1) + (gstr[0] == '' ? "Graph enabled" : (graphEnabled ? "Graphed" : "Off"))
         } else {
@@ -207,7 +198,12 @@ window.onresize = function() {
 }
 window.onresize()
 
-setTimeout(document.onkeydown, 100)
+// Scrolls the overlay with the editable text
+window.addEventListener('scroll', function(){
+    document.getElementById("ov").style.top = -document.getElementById("edt").scrollTop + "px"
+}, true)
+
+document.onload = document.onkeydown
 
 updateInfo()
 
