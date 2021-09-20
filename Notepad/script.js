@@ -113,7 +113,6 @@ document.onkeydown = function(e){
             }
             if (act) setTimeout(mathAnalyze, 0)
             e.preventDefault()
-            return
         }
 
         metaCtrlDown |= (e.key == "Meta"    ? 1 : 0)
