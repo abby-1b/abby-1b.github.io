@@ -86,7 +86,40 @@ function updateInfo() {
     
     Press Tab again to exit
     Press  Up  /  Down  to change graph sizing ±1
-    Press Left / Right  to change graph sizing ±5`
+    Press Left / Right  to change graph sizing ±5
+    
+    Press F to format text.`
+}
+
+function formatForDocs() {
+    let val = document.getElementById('edt').value
+    let mappings = {
+        "0": "⁰",
+        "1": "¹",
+        "2": "²",
+        "3": "³",
+        "4": "⁴",
+        "5": "⁵",
+        "6": "⁶",
+        "7": "⁷",
+        "8": "⁸",
+        "9": "⁹",
+        "+": "⁺",
+        "-": "⁻",
+        "=": "⁼",
+        "(": "⁽",
+        ")": "⁾",
+        "n": "ⁿ",
+        "i": "ⁱ"
+    }
+    val = val.replace(/\*/g, '×')
+    val = val.replace(/\^[-\d.]*/g, (e) => {
+        return e.split('').map(g => mappings[g]).join('')
+    })
+    val = val.split('\n')
+        .map(e => '\t'.repeat(e.search(/\S/) / 2) + e.trim())
+        .join('\n')
+    document.getElementById('edt').value = val
 }
 
 document.onkeydown = function(e){
@@ -102,6 +135,7 @@ document.onkeydown = function(e){
 
         if (mode) {
             let act = false
+            console.log(e.key)
             if (e.key == "ArrowUp") {
                 act = true; graphScale += 1
             } else if (e.key == "ArrowDown") {
@@ -110,6 +144,8 @@ document.onkeydown = function(e){
                 act = true; graphScale -= 5
             } else if (e.key == "ArrowRight") {
                 act = true; graphScale += 5
+            } else if (e.key == 'f') {
+                formatForDocs()
             }
             if (act) setTimeout(mathAnalyze, 0)
             e.preventDefault()
@@ -137,6 +173,7 @@ function mathAnalyze() {
     let str = document.getElementById("edt").value
     while (str[str.length - 1] == '\n') str = str.substring(0, str.length - 1)
     str = str.split("\n")
+        .map(e => e.replace(/\t/g, "  "))
     let ov = document.getElementById("ov")
     for (let ne = ov.children.length; ne < str.length; ne++) ov.appendChild(document.createElement("div"))
     let ctx = {m: {x: 1, y: 1}}
