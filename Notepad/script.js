@@ -30,6 +30,7 @@ function storeVars(target) {
 function parseMath(inp) {
     inp = inp.replace(/√/g, "sqrt")
     inp = inp.replace(/ /g, "")
+    inp = inp.replace(/×/g, "*")
     while (true) {
         let mul = /((?<=[\d.])[a-zA-Z(]|(?<=[a-zA-Z)])[\d.]|(?<=\))[a-zA-Z(])/g.exec(inp)
         if (!mul) break
