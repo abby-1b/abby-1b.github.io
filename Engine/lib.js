@@ -217,4 +217,16 @@ class Console {
         for (let s = 0; s < ths.sprites.length; s++)
             ths.sprites[s].update()
     }
+
+    static getImagePixels(src, fn) {
+        var img = document.createElement("img")
+        img.onload = function() {
+            var canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height)
+            fn(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
+        }
+        img.src = src
+    }
 }

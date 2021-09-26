@@ -10,6 +10,7 @@ plant.hasAnimation = true
 plant.animationTimer = 10
 plant.animationFrames = 41
 
+// Player
 let player = con.addSprite(Sprite("Sprites/Player.png", con.width / 2, con.height / 3, 16, 16, true))
 player.speed = new Vec2(0, 0)
 player.hasAnimation = true
@@ -20,16 +21,39 @@ player.lowerBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 4, 1, true)
 player.crouchBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 2, 5, true))
 player.isCrouched = false
 
-con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 + 8, 256, 8, true))
-con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 - 9, 200, 8, true))
+// con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 + 8, 256, 8, true))
+// con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 - 9, 200, 8, true))
+
+function notZero(vl) {
+    return vl != 0 && vl != undefined && vl != null
+}
 
 con.init(() => {
-    
+    Console.getImagePixels("Tiles/Map1.png", (px, w, h) => {
+        let did = []
+        for (let p = 0; p < px.length; p += 4) {
+            if (did.includes(p)) continue
+            did.push(p)
+            let x = ((p / 4) % w) - 8
+            let y = (Math.floor((p / 4) / w)) - 8
+            if (px[p + 3] == 0) {
+                // Air!
+            } else if (px[p + 3] != 0) {
+                // Brick!
+                let ch = 1
+                while (notZero(px[p + h * ch * 4 + 3]))
+                    did.push(p + h * (ch++) * 4)
+                let s = con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2 + 8 * x, con.height / 2 + 8 * y, 8, 8 * ch, false))
+                s.style.border = "1px solid red"
+                s.style.opacity = "0.25"
+            }
+        }
+        con.loop(gameLoop)
+    })
 })
 
 let frameCount = 0
-
-con.loop(() => {
+let gameLoop = () => {
     player.lowerOnGround = false
     con.doPhysicsSprite(player)
     if (player.onGround && !player.lowerOnGround) player.onGround = false
@@ -64,14 +88,12 @@ con.loop(() => {
             player.animationStart = 12
             player.loopAnimation = false
             player.curAnimationTimer = player.animationTimer
-            player.speed.y -= 11
+            player.speed.y -= 9
             player.onGround = false
         }
     }
     if (!player.onGround)
-        player.speed.y += 0.9
-    // if (!player.onGround)
-    //     player.speed.y += (' ' in con.keys && player.onGround ? -10 : ' ' in con.keys ? 0.7 : 0.9)
+        player.speed.y += 0.6
     player.xp += player.speed.x * 0.3
     player.yp += player.speed.y * 0.3
     player.lowerBar.xp = player.xp
@@ -99,4 +121,4 @@ con.loop(() => {
     player.flipped = player.speed.x < 0
     player.canUnCrouch = true
     frameCount++
-})
+}
