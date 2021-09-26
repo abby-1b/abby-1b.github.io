@@ -1,0 +1,8 @@
+
+Robot named M3
+
+Starts showing "Signs of Life"
+
+
+
+Final quote: "This is me."
