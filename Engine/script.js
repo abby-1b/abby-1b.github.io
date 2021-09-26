@@ -7,8 +7,11 @@ player.speed = new Vec2(0, 0)
 player.animationFrames = 6
 player.animationTimer = 6
 player.hbOffsets({top: 0, bottom: 0, left: 6, right: 6})
+player.lowerBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 4, 1, true))
+player.crouchBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 4, 1, true))
 
-let floor = con.addSprite(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 + 8, 256, 16, true))
+con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 + 8, 256, 8, true))
+con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 - 8, 8, 8, true))
 
 con.init(() => {
     
@@ -17,8 +20,10 @@ con.init(() => {
 let frameCount = 0
 
 con.loop(() => {
-    // player.onGround = false
-    player.doPhysics(floor)
+    console.log(player.canUnCrouch)
+    player.lowerOnGround = false
+    con.doPhysicsSprite(player)
+    if (player.onGround && !player.lowerOnGround) player.onGround = false
     player.speed.add(new Vec2(
         ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized())
     if ('s' in con.keys && player.onGround) {
@@ -30,8 +35,10 @@ con.loop(() => {
             player.animationTimer = 4
             player.loopAnimation = false
         }
+        player.hbOffsets({top: 10, bottom: 0, left: 6, right: 6})
         player.speed.x *= 0.7
     } else {
+        if (player.canUnCrouch) player.hbOffsets({top: 0, bottom: 0, left: 6, right: 6})
         player.speed.x *= 0.87 //0.87
     }
     if (' ' in con.keys) {
@@ -52,6 +59,10 @@ con.loop(() => {
     //     player.speed.y += (' ' in con.keys && player.onGround ? -10 : ' ' in con.keys ? 0.7 : 0.9)
     player.xp += player.speed.x * 0.3
     player.yp += player.speed.y * 0.3
+    player.lowerBar.xp = player.xp
+    player.lowerBar.yp = player.yp + 8
+    player.crouchBar.xp = player.xp
+    player.crouchBar.yp = player.yp
     if (player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
         player.loopAnimation = true
         player.animationFrames = 6
@@ -71,5 +82,6 @@ con.loop(() => {
         player.curAnimationTimer = player.animationTimer
     }
     player.flipped = player.speed.x < 0
+    player.canUnCrouch = true
     frameCount++
 })

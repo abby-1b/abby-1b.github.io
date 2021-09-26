@@ -24,6 +24,8 @@ function Sprite(src, x, y, w, h, centered) {
     el.curAnimationTimer = 0
     el.flipped = false
     el.loopAnimation = true
+    el.lowerOnGround = false
+    el.canUnCrouch = true
     el.update = function update() {
         this.style.left = this.xp + "px"
         this.style.top  = this.yp + "px"
@@ -73,7 +75,9 @@ function Sprite(src, x, y, w, h, centered) {
     }
     el.doPhysics = function(el) {
         // this.xp -= (this.getBoundingClientRect().left - el.getBoundingClientRect().right) / 2
-        
+        if (!this.lowerOnGround) this.lowerOnGround = this.lowerBar.intersects(el)
+        if (this.canUnCrouch) this.canUnCrouch = this.crouchBar.intersects(el)
+        console.log(this.crouchBar.intersects(el))
         if (!this.intersects(el)) return
         let bt = this.getHb()
         let be = el.getHb()
@@ -81,10 +85,16 @@ function Sprite(src, x, y, w, h, centered) {
         let rd = (bt.right - be.left) / _pixelSize
         let ld = (be.right - bt.left) / _pixelSize
         let td = (bt.bottom - be.top) / _pixelSize
-        if (td < rd && td < ld) {
+        let bd = (be.bottom - be.top) / _pixelSize
+        // console.log(bd)
+        if (td < rd && td < ld && td < bd) {
             this.yp -= td
             this.speed.y = 0
             this.onGround = true
+        } else if (bd < rd && bd < ld) {
+            console.log("Bottom!")
+            this.yp -= bd
+            this.speed.y = 0
         }
         else if (ld < rd) this.xp += ld
         else this.xp -= rd
@@ -164,6 +174,7 @@ class Console {
         this.el.style.transformOrigin = "top left";
         this.el.style.transform = "scale(" + s + ")"
         this.sprites = []
+        this.tiles = []
         this.loopFn = () => {}
         document.body.appendChild(this.el)
         this.keys = {}
@@ -177,6 +188,19 @@ class Console {
         return spr
     }
 
+    addTile(til) {
+        this.tiles.push(til)
+        this.el.appendChild(til)
+        return til
+    }
+
+    doPhysicsSprite(spr) {
+        // console.log(spr)
+        for (let s = 0; s < this.tiles.length; s++) {
+            spr.doPhysics(this.tiles[s])
+        }
+    }
+
     refreshSprites() {
         let sprs = this.el.getElementsByClassName("spr")
         for (let s = 0; s < sprs.length; s++)
@@ -187,8 +211,9 @@ class Console {
 
     updateAll(ths) {
         ths.loopFn()
-        for (let s = 0; s < ths.sprites.length; s++) {
+        for (let s = 0; s < ths.tiles.length; s++)
+            ths.tiles[s].update()
+        for (let s = 0; s < ths.sprites.length; s++)
             ths.sprites[s].update()
-        }
     }
 }
