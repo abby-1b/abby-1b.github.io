@@ -105,9 +105,13 @@ function Sprite(pCon, src, x, y, w, h, centered) {
         } else if (bd < rd && bd < ld) {
             this.yp += bd
             this.speed.y = 0
+        } else if (ld < rd) {
+            this.xp += ld
+            this.speed.x = 0
+        } else {
+            this.xp -= rd
+            this.speed.x = 0
         }
-        else if (ld < rd) this.xp += ld
-        else this.xp -= rd
     }
     // el.src = src
     el.update()
@@ -160,6 +164,14 @@ class Console {
         }
         document.body.style.margin  = "0"
         document.body.style.padding = "0"
+    }
+
+    static lerp(a, b, v) {
+        return a * (1 - v) + b * v
+    }
+
+    static map(v, ir1, ir2, or1, or2) {
+        return or1 + (or2 - or1) * (v - ir1) / (ir2 - ir1)
     }
 
     init(fn) {
