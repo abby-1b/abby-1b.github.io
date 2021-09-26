@@ -52,12 +52,12 @@ function Sprite(src, x, y, w, h, centered) {
     el.getHb = function() {
         let ret = this.getBoundingClientRect()
         return {
-            left: ret.left - this.hb.left,
-            right: ret.right + this.hb.right,
+            left: ret.left + this.hb.left,
+            right: ret.right - this.hb.right,
             top: ret.top + this.hb.top,
-            bottom: ret.top += this.hb.bottom,
-            width: ret.width - (this.hb.right - this.hb.left),
-            height: ret.height - (this.hb.bottom)
+            bottom: ret.bottom - this.hb.bottom,
+            width: ret.width - (this.hb.right + this.hb.left),
+            height: ret.height - (this.hb.bottom + this.hb.top)
         }
     }
     el.intersects = function(el) {
@@ -70,6 +70,24 @@ function Sprite(src, x, y, w, h, centered) {
             return true
         }
         return false
+    }
+    el.doPhysics = function(el) {
+        // this.xp -= (this.getBoundingClientRect().left - el.getBoundingClientRect().right) / 2
+        
+        if (!this.intersects(el)) return
+        let bt = this.getHb()
+        let be = el.getHb()
+        // console.log(this.intersects(el))
+        let rd = (bt.right - be.left) / _pixelSize
+        let ld = (be.right - bt.left) / _pixelSize
+        let td = (bt.bottom - be.top) / _pixelSize
+        if (td < rd && td < ld) {
+            this.yp -= td
+            this.speed.y = 0
+            this.onGround = true
+        }
+        else if (ld < rd) this.xp += ld
+        else this.xp -= rd
     }
     // el.src = src
     el.update()
