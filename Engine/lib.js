@@ -26,23 +26,29 @@ function Sprite(src, x, y, w, h, centered) {
     el.loopAnimation = true
     el.lowerOnGround = false
     el.canUnCrouch = true
+    el.hasAnimation = false
+    el.imageCentered = false
     el.update = function update() {
         this.style.left = this.xp + "px"
         this.style.top  = this.yp + "px"
-        this.curAnimationTimer -= 1
         this.style.transform = (this.centered ? "translate(-50%, -50%) " : "") + (this.flipped ? "scaleX(-1) " : "")
-        if (this.curAnimationTimer <= 0) {
-            this.animationFrame++
-            this.curAnimationTimer = this.animationTimer
-        }
-        if (this.animationFrame >= this.animationFrames) {
-            if (this.loopAnimation) {
-                this.animationFrame -= this.animationFrames
-            } else {
-                this.animationFrame = this.animationFrames - 1
+        if (this.hasAnimation) {
+            this.curAnimationTimer -= 1
+            if (this.curAnimationTimer <= 0) {
+                this.animationFrame++
+                this.curAnimationTimer = this.animationTimer
             }
+            if (this.animationFrame >= this.animationFrames) {
+                if (this.loopAnimation) {
+                    this.animationFrame -= this.animationFrames
+                } else {
+                    this.animationFrame = this.animationFrames - 1
+                }
+            }
+            this.style.background = `url(${this.sourceUrl}) ${(this.animationFrame + this.animationStart) * -this.wv}px 0px`
+        } else {
+            this.style.background = `url(${this.sourceUrl}) ${this.imageCentered ? "50% 50%" : ""}`
         }
-        this.style.background = `url(${this.sourceUrl}) ${(this.animationFrame + this.animationStart) * -this.wv}px 0px`
     }
     el.hbOffsets = function hbOffsets(hb) {
         this.hb = hb
@@ -76,8 +82,7 @@ function Sprite(src, x, y, w, h, centered) {
     el.doPhysics = function(el) {
         // this.xp -= (this.getBoundingClientRect().left - el.getBoundingClientRect().right) / 2
         if (!this.lowerOnGround) this.lowerOnGround = this.lowerBar.intersects(el)
-        if (this.canUnCrouch) this.canUnCrouch = this.crouchBar.intersects(el)
-        console.log(this.crouchBar.intersects(el))
+        if (this.canUnCrouch) this.canUnCrouch = !this.crouchBar.intersects(el)
         if (!this.intersects(el)) return
         let bt = this.getHb()
         let be = el.getHb()
@@ -91,10 +96,6 @@ function Sprite(src, x, y, w, h, centered) {
             this.yp -= td
             this.speed.y = 0
             this.onGround = true
-        } else if (bd < rd && bd < ld) {
-            console.log("Bottom!")
-            this.yp -= bd
-            this.speed.y = 0
         }
         else if (ld < rd) this.xp += ld
         else this.xp -= rd

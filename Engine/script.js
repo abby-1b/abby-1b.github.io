@@ -2,16 +2,26 @@
 Console.prepareEnv()
 let con = new Console(window.innerWidth, window.innerHeight, 3)
 
+let ctBg = con.addSprite(Sprite("Tiles/Sky.png", con.width / 2, con.height / 2, con.width, con.height, true))
+ctBg.imageCentered = true
+
+let plant = con.addSprite(Sprite("Sprites/Plant.png", con.width / 3, con.height / 3, 8, 8, false))
+plant.hasAnimation = true
+plant.animationTimer = 10
+plant.animationFrames = 41
+
 let player = con.addSprite(Sprite("Sprites/Player.png", con.width / 2, con.height / 3, 16, 16, true))
 player.speed = new Vec2(0, 0)
+player.hasAnimation = true
 player.animationFrames = 6
 player.animationTimer = 6
-player.hbOffsets({top: 0, bottom: 0, left: 6, right: 6})
+player.hbOffsets({top: 3, bottom: 0, left: 6, right: 6})
 player.lowerBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 4, 1, true))
-player.crouchBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 4, 1, true))
+player.crouchBar = con.addSprite(Sprite("Sprites/LowerBar.png", 0, 0, 2, 5, true))
+player.isCrouched = false
 
 con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 + 8, 256, 8, true))
-con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 - 8, 8, 8, true))
+con.addTile(Sprite("Tiles/SmallBrick.png", con.width / 2, con.height / 2 - 9, 200, 8, true))
 
 con.init(() => {
     
@@ -20,7 +30,6 @@ con.init(() => {
 let frameCount = 0
 
 con.loop(() => {
-    console.log(player.canUnCrouch)
     player.lowerOnGround = false
     con.doPhysicsSprite(player)
     if (player.onGround && !player.lowerOnGround) player.onGround = false
@@ -35,14 +44,20 @@ con.loop(() => {
             player.animationTimer = 4
             player.loopAnimation = false
         }
+        player.isCrouched = true
         player.hbOffsets({top: 10, bottom: 0, left: 6, right: 6})
         player.speed.x *= 0.7
     } else {
-        if (player.canUnCrouch) player.hbOffsets({top: 0, bottom: 0, left: 6, right: 6})
-        player.speed.x *= 0.87 //0.87
+        if (player.canUnCrouch) {
+            player.hbOffsets({top: 3, bottom: 0, left: 6, right: 6})
+            player.isCrouched = false
+        }
+        if (!player.canUnCrouch) player.speed.x *= 0.7
+        else player.speed.x *= 0.87 //0.87
     }
     if (' ' in con.keys) {
-        if (player.onGround) {
+        if (player.onGround && player.canUnCrouch) {
+            player.isCrouched = false
             player.animationFrame = 0
             player.animationFrames = 3
             player.animationTimer = 5
@@ -62,8 +77,8 @@ con.loop(() => {
     player.lowerBar.xp = player.xp
     player.lowerBar.yp = player.yp + 8
     player.crouchBar.xp = player.xp
-    player.crouchBar.yp = player.yp
-    if (player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
+    player.crouchBar.yp = player.yp - 2
+    if (player.canUnCrouch && player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
         player.loopAnimation = true
         player.animationFrames = 6
         if (Math.abs(player.speed.x) > 1) {
