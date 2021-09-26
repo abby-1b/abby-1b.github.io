@@ -1,7 +1,7 @@
 
-let _pixelSize = 1
+// let _pixelSize = 1
 
-function Sprite(src, x, y, w, h, centered) {
+function Sprite(pCon, src, x, y, w, h, centered) {
     let el = document.createElement("spr")
     el.centered = centered
     if (centered)
@@ -28,9 +28,11 @@ function Sprite(src, x, y, w, h, centered) {
     el.canUnCrouch = true
     el.hasAnimation = false
     el.imageCentered = false
+    el.parentCon = pCon
+    el.collidedWith = () => {}
     el.update = function update() {
-        this.style.left = this.xp + "px"
-        this.style.top  = this.yp + "px"
+        this.style.left = (this.xp + this.parentCon.camPos.x) + "px"
+        this.style.top  = (this.yp + this.parentCon.camPos.y) + "px"
         this.style.transform = (this.centered ? "translate(-50%, -50%) " : "") + (this.flipped ? "scaleX(-1) " : "")
         if (this.hasAnimation) {
             this.curAnimationTimer -= 1
@@ -45,17 +47,21 @@ function Sprite(src, x, y, w, h, centered) {
                     this.animationFrame = this.animationFrames - 1
                 }
             }
-            this.style.background = `url(${this.sourceUrl}) ${(this.animationFrame + this.animationStart) * -this.wv}px 0px`
+            if (this.imageCentered) {
+                this.style.background = `url(${this.sourceUrl}) calc(${(this.animationFrame + this.animationStart) * -this.wv}px + 50%) 50%`
+            } else {
+                this.style.background = `url(${this.sourceUrl}) ${(this.animationFrame + this.animationStart) * -this.wv}px 0px`
+            }
         } else {
             this.style.background = `url(${this.sourceUrl}) ${this.imageCentered ? "50% 50%" : ""}`
         }
     }
     el.hbOffsets = function hbOffsets(hb) {
         this.hb = hb
-        this.hb.top    *= _pixelSize
-        this.hb.bottom *= _pixelSize
-        this.hb.left   *= _pixelSize
-        this.hb.right  *= _pixelSize
+        this.hb.top    *= this.parentCon.pixelSize
+        this.hb.bottom *= this.parentCon.pixelSize
+        this.hb.left   *= this.parentCon.pixelSize
+        this.hb.right  *= this.parentCon.pixelSize
     }
     el.getHb = function() {
         let ret = this.getBoundingClientRect()
@@ -87,15 +93,18 @@ function Sprite(src, x, y, w, h, centered) {
         let bt = this.getHb()
         let be = el.getHb()
         // console.log(this.intersects(el))
-        let rd = (bt.right - be.left) / _pixelSize
-        let ld = (be.right - bt.left) / _pixelSize
-        let td = (bt.bottom - be.top) / _pixelSize
-        let bd = (be.bottom - be.top) / _pixelSize
-        // console.log(bd)
+        let rd = (bt.right - be.left) / this.parentCon.pixelSize
+        let ld = (be.right - bt.left) / this.parentCon.pixelSize
+        let td = (bt.bottom - be.top) / this.parentCon.pixelSize
+        let bd = (be.bottom - bt.top) / this.parentCon.pixelSize
         if (td < rd && td < ld && td < bd) {
             this.yp -= td
             this.speed.y = 0
             this.onGround = true
+            this.collidedWith(el, "top")
+        } else if (bd < rd && bd < ld) {
+            this.yp += bd
+            this.speed.y = 0
         }
         else if (ld < rd) this.xp += ld
         else this.xp -= rd
@@ -165,7 +174,7 @@ class Console {
     }
     
     constructor(w, h, s) {
-        _pixelSize = s
+        this.pixelSize = s
         this.width = w / s
         this.height = h / s
         this.el = document.createElement("div")
@@ -176,6 +185,7 @@ class Console {
         this.el.style.transform = "scale(" + s + ")"
         this.sprites = []
         this.tiles = []
+        this.camPos = new Vec2(0, 0)
         this.loopFn = () => {}
         document.body.appendChild(this.el)
         this.keys = {}
@@ -184,6 +194,7 @@ class Console {
     }
 
     addSprite(spr) {
+        spr.parentCon = this
         this.sprites.push(spr)
         this.el.appendChild(spr)
         return spr
