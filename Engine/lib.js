@@ -35,7 +35,7 @@ function Sprite(pCon, src, x, y, w, h, centered) {
         this.style.top  = (this.yp + this.parentCon.camPos.y) + "px"
         this.style.transform = (this.centered ? "translate(-50%, -50%) " : "") + (this.flipped ? "scaleX(-1) " : "")
         if (this.hasAnimation) {
-            this.curAnimationTimer -= 1
+            if (this.animationFrame <= this.animationFrames && this.curAnimationTimer > 0) this.curAnimationTimer -= 1
             if (this.curAnimationTimer <= 0) {
                 this.animationFrame++
                 this.curAnimationTimer = this.animationTimer
@@ -195,6 +195,7 @@ class Console {
         this.el.style.height = (h / s) + "px"
         this.el.style.transformOrigin = "top left";
         this.el.style.transform = "scale(" + s + ")"
+        this.el.style.transition = "filter 3s"
         this.sprites = []
         this.tiles = []
         this.camPos = new Vec2(0, 0)

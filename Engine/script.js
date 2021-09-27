@@ -9,16 +9,16 @@ ctBg.animationStart = 0
 ctBg.animationFrames = 1
 ctBg.animationTimer = 0
 
-// let plant = con.addSprite(Sprite(con, "Sprites/Plant.png", con.width / 3, con.height / 3, 8, 8, false))
-// plant.hasAnimation = true
-// plant.animationTimer = 10
-// plant.animationFrames = 41
+let plant = con.addSprite(Sprite(con, "Sprites/Plant.png", 1580, 506, 8, 8, false))
+plant.hasAnimation = true
+plant.animationTimer = 10
+plant.animationFrames = 41
 
 // Player
 let player = con.addSprite(Sprite(con, "Sprites/Player.png", con.width / 2, con.height / 2, 16, 16, true))
 player.speed = new Vec2(0, 0)
-player.xp += con.width * 1.9
-player.yp += con.height
+// player.xp += 1300
+// player.yp += 100
 player.hasAnimation = true
 player.animationFrames = 6
 player.animationTimer = 6
@@ -30,6 +30,7 @@ player.dialogBar = con.addSprite(Sprite(con, "Sprites/LowerBar.png", 0, 0, 0, 0,
 player.isCrouched = false
 
 player.collidedWith = function(el, d) {
+    // console.log(el.curAnimationTimer)
     if (el.sourceUrl == "Tiles/Bounce.png" && d == "top") {
         player.speed.y = -19
 
@@ -41,7 +42,7 @@ player.collidedWith = function(el, d) {
         player.loopAnimation = false
         player.curAnimationTimer = player.animationTimer
         player.onGround = false
-    } else if (el.sourceUrl == "Sprites/Trash.png" && d == "top" && (el.animationFrame == 1 || !el.hasAnimation)) {
+    } else if (el.sourceUrl == "Sprites/Trash.png" && d == "top" && (el.curAnimationTimer == 0 || el.curAnimationTimer == 120)) {
         el.hasAnimation = true
         el.animationStart = -1
         el.animationFrame = 0
@@ -49,7 +50,8 @@ player.collidedWith = function(el, d) {
         el.loopAnimation = false
         el.animationTimer = 120
         el.curAnimationTimer = 120
-        player.speed.y = -13
+        player.speed.y -= 11
+        player.yp -= 5
         
         player.isCrouched = false
         player.animationFrame = 0
@@ -65,8 +67,12 @@ player.collidedWith = function(el, d) {
 // Triggers
 let ts = [
     [1e+10, ""],
-    // [655, "Trash found. Compressing..."],
-    // [287, "M3 should jump. [space]"]
+    [1283 + 50, "M3 interested."],
+    [1283, "Trash not in web."],
+    [1183 + 50, "Trash not in archive."],
+    [1183, "Trash not in memory."],
+    [655, "Trash found. Compressing..."],
+    [287, "M3 should jump. [space]"]
 ]
 
 // Objects
@@ -192,6 +198,7 @@ function clearDialog() {
 
 let frameCount = 0
 let gameLoop = () => {
+    // console.log(obs[0].curAnimationTimer)
 
     if (player.canMove && (player.xp - con.width / 2) < -50) {
         player.speed.x = 10
@@ -200,8 +207,13 @@ let gameLoop = () => {
     if ((player.xp - con.width / 2) > ts[ts.length - 1][0]) {
         player.speed.x *= 0.8
         doDialog(ts.pop()[1])
+        if (ts.length == 1) {
+            setTimeout(function(){
+                con.el.style.filter = "brightness(0)"
+            }, 3000)
+        }
     }
-    if ((!player.canMove) && ' ' in con.keys) {
+    if (ts.length > 1 && (!player.canMove) && ' ' in con.keys) {
         player.canMove = true
         clearDialog()
     }
@@ -250,9 +262,9 @@ let gameLoop = () => {
             player.isCrouched = false
         }
         if (!player.canUnCrouch) player.speed.x *= 0.7
-        else player.speed.x *= 0.87 //0.87
+        else player.speed.x *= 0.87
     }
-    if (' ' in con.keys) {
+    if (ts.length > 1 && ' ' in con.keys) {
         if (player.onGround && player.canUnCrouch) {
             player.isCrouched = false
             player.animationFrame = 0
