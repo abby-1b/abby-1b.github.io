@@ -12,7 +12,7 @@ con.loop(() => {
 // ctBg.animationFrames = 1
 // ctBg.animationTimer = 0
 
-let plant = con.nSprite(new Sprite("Sprites/Plant.png", 0, 0, 8, 8, false))
+let plant = con.nSprite(new PhysicsActor("Sprites/Plant.png", 0, 0, 8, 8, false))
 plant.addAnimation("default", {
     start: 0,
     end: 40,
@@ -22,7 +22,7 @@ plant.addAnimation("default", {
 }, true)
 
 // Player
-let player = con.nSprite(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16, false))
+let player = con.nObj(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16, false))
 player.addAnimation("idle", {
     start: 0,
     end: 5,
@@ -31,11 +31,8 @@ player.addAnimation("idle", {
     pause: -1
 }, true)
 player.showHitbox = true
+player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
-// player.lowerBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 4, 1, true))
-// player.crouchBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 2, 5, true))
-// player.dialogBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 0, 0, true))
-// player.isCrouched = false
 
 // player.collidedWith = function(el, d) {
 //     // console.log(el.curAnimationTimer)
@@ -83,80 +80,70 @@ player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 //     [287, "M3 should jump. [space]"]
 // ]
 
-// // Objects
-// let obs = []
-
-// con.init(() => {
-//     // Dialog
-//     player.dialogBar.innerText = ""
-
-//     Console.getImagePixels("Tiles/Map1.png", (px, w, h) => {
-//         let m = {
-//             PLAYER: ["player", 78, 205, 196],
-//             BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
-//             BOUNCE: ["Tiles/Bounce.png", 31, 255, 40],
-//             TRASH: ["trash", 255, 230, 109]
-//         }
-//         function getType(p1, p2, p3) {
-//             for (let t in m) {
-//                 if (m[t][1] == p1 && m[t][2] == p2 && m[t][3] == p3) {
-//                     return t
-//                 }
-//             }
-//             return false
-//         }
-//         let bars = []
-//         let did = []
-//         for (let p = 0; p < px.length; p += 4) {
-//             if (did.includes(p)) continue
-//             did.push(p)
-//             let x = ((p / 4) % w) - 8
-//             let y = (Math.floor((p / 4) / w)) - 8
-//             if (px[p + 3] == 0) {
-//                 // Air!
-//             } else {
-//                 let tp = getType(px[p], px[p + 1], px[p + 2])
-//                 let ch = 1
-//                 while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
-//                     did.push(p + w * (ch++) * 4)
-//                 bars.push([x, y, 1, ch, tp])
-//             }
-//         }
-//         for (let b = 0; b < bars.length; b++) {
-//             for (let a = 0; a < bars.length; a++) {
-//                 if (a == b) continue
-//                 if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1] && bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
-//                     bars.splice(a, 1)
-//                     if (a < b) { b-- }
-//                     a--
-//                     bars[b][2] ++
-//                 }
-//             }
-//         }
-//         let ox = 0
-//         let oy = 0
-//         for (let b = 0; b < bars.length; b++) {
-//             if (m[bars[b][4]][0] == "player") {
-//                 ox = bars[b][0]
-//                 oy = bars[b][1]
-//                 break
-//             }
-//         }
-//         for (let b = 0; b < bars.length; b++) {
-//             let ss = 8
-//             if (m[bars[b][4]][0] == "player")
-//                 continue
-//             if (m[bars[b][4]][0] == "trash") {
-//                 obs.push(con.nSprite(new Sprite(con, "Sprites/Trash.png", con.width / 2 + ss * (bars[b][0] - ox), con.height / 2 + ss * (bars[b][1] - oy), 16, 16)))
-//                 continue
-//             }
-//             let s = con.addTile(new Sprite(con, m[bars[b][4]][0], con.width / 2 + ss * (bars[b][0] - ox), con.height / 2 + ss * (bars[b][1] - oy), ss * bars[b][2], ss * bars[b][3], false))
-//             // s.style.border = "1px solid red"
-//             // s.style.opacity = "0.25"
-//         }
-//         con.loop(gameLoop)
-//     })
-// })
+con.init(() => {
+    CTool.getImagePixels("Tiles/Map1.png", (px, w, h) => {
+        let m = {
+            PLAYER: ["player", 78, 205, 196],
+            BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
+            BOUNCE: ["Tiles/Bounce.png", 31, 255, 40],
+            TRASH: ["trash", 255, 230, 109]
+        }
+        function getType(p1, p2, p3) {
+            for (let t in m) {
+                if (m[t][1] == p1 && m[t][2] == p2 && m[t][3] == p3) {
+                    return t
+                }
+            }
+            return false
+        }
+        let bars = []
+        let did = []
+        for (let p = 0; p < px.length; p += 4) {
+            if (did.includes(p)) continue
+            did.push(p)
+            let x = ((p / 4) % w) - 8
+            let y = (Math.floor((p / 4) / w)) - 8
+            if (px[p + 3] != 0) {
+                let tp = getType(px[p], px[p + 1], px[p + 2])
+                let ch = 1
+                while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
+                    did.push(p + w * (ch++) * 4)
+                bars.push([x, y, 1, ch, tp])
+            }
+        }
+        for (let b = 0; b < bars.length; b++) {
+            for (let a = 0; a < bars.length; a++) {
+                if (a == b) continue
+                if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1] && bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
+                    bars.splice(a, 1)
+                    if (a < b) { b-- }
+                    a--
+                    bars[b][2] ++
+                }
+            }
+        }
+        let ox = 0
+        let oy = 0
+        for (let b = 0; b < bars.length; b++) {
+            if (m[bars[b][4]][0] == "player") {
+                ox = bars[b][0]
+                oy = bars[b][1]
+                break
+            }
+        }
+        for (let b = 0; b < bars.length; b++) {
+            let ss = 1
+            if (m[bars[b][4]][0] == "player")
+                continue
+            if (m[bars[b][4]][0] == "trash") {
+                con.nObj(new Sprite("Sprites/Trash.png", ss * (bars[b][0] - ox), ss * (bars[b][1] - oy), 16, 16))
+                continue
+            }
+            let s = con.nTile(new Sprite(m[bars[b][4]][0], ss * (bars[b][0] - ox), ss * (bars[b][1] - oy), ss * bars[b][2], ss * bars[b][3], false))
+        }
+        // con.loop(gameLoop)
+    })
+})
 
 // let tos = [] // Timeouts
 // function doDialog(txt) {

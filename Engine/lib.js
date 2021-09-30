@@ -54,13 +54,6 @@
 //             this.style.background = `url(${this.sourceUrl}) ${this.imageCentered ? "50% 50%" : ""}`
 //         }
 //     }
-//     el.hbOffsets = function hbOffsets(hb) {
-        // this.hb = hb
-        // this.hb.top    *= this.parentCon.pixelSize
-        // this.hb.bottom *= this.parentCon.pixelSize
-        // this.hb.left   *= this.parentCon.pixelSize
-        // this.hb.right  *= this.parentCon.pixelSize
-//     }
 //     el.getHb = function() {
 //         let ret = this.getBoundingClientRect()
 //         return {
@@ -194,8 +187,9 @@ class Console {
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
         this.imageElements = []
-        this.sprites = []
-        this.tiles = []
+        this.sprites = [] // Everything that is a sprite
+        this.tiles = [] // Everything that is a tile
+        this.objects = [] // Everything that is an object
         this.camPos = new Vec2(0, 0)
         this.physics = {
             gravity: new Vec2(0, -1)
@@ -209,6 +203,8 @@ class Console {
         window.addEventListener('keyup'  , e => { if (  e.key.toLowerCase() in this.keys ) delete this.keys[e.key.toLowerCase()] })
     }
 
+    init(fn) { fn() }
+
     loop(fn) {
         // Yes, these run on 45 fps. Deal with it.
         this.loopFn = fn
@@ -216,15 +212,29 @@ class Console {
     }
 
     updateAll(ths) {
-        ths.ctx.clearRect(0, 0, ths.width, ths.height);
+        ths.ctx.clearRect(0, 0, ths.width, ths.height)
         ths.loopFn()
-        for (let s = 0; s < ths.sprites.length; s++) {
-            // console.log(ths.sprites[s])
-            ths.sprites[s].draw()
-        }
+        for (let s = 0; s < ths.tiles.length; s++) { ths.tiles[s].draw() }
+        for (let s = 0; s < ths.sprites.length; s++) { ths.sprites[s].draw() }
+        for (let s = 0; s < ths.objects.length; s++) { ths.objects[s].draw() }
     }
 
+    // Objects can have animation and physics.
+    nObj(obj) {
+        return this.objects[this.objects.push(this.imageThing(obj)) - 1]
+    }
+
+    // Sprites can have animation, but no physics.
     nSprite(spr) {
+        return this.sprites[this.sprites.push(this.imageThing(spr)) - 1]
+    }
+
+    // Tiles can have (static) physics, but no animation.
+    nTile(til) {
+        return this.tiles[this.tiles.push(this.imageThing(til)) - 1]
+    }
+
+    imageThing(spr) {
         spr.parentCon = this
         if (spr.src in this.imageIndexes) {
             if (this.imageElements[this.imageIndexes[spr.src]].complete) {
@@ -244,7 +254,6 @@ class Console {
             this.imageIndexes[spr.src] = this.imageElements.push(i) - 1
         }
         spr.src = this.imageIndexes[spr.src]
-        this.sprites.push(spr)
         return spr
     }
 }
@@ -261,10 +270,11 @@ class Sprite {
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
+        this.showHitbox = false
     }
 
     imageLoaded() {
-
+        // Called when an image loads. Interesting.
     }
 
     addAnimation(nam, dict, play) {
@@ -344,7 +354,24 @@ class PhysicsActor extends Sprite {
     hbOffsets(hb) { this.hb = hb }
 
     getHb() {
-        
+        return [
+            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
+            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
+            this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom)
+        ]
+    }
+
+    intersects(hbe) {
+        let b1 = this.getHb()
+        let b2 = hbe.getHb()
+
+        if (b1[1] + b1[3] >= b1[1]
+        &&  b1[0] + b1[2] >= b2[0]
+        && (b1[1] + b1[3]) - b1[3] <= (b2[1] + b2[3])
+        && (b1[0] + b1[2]) - b1[2] <= (b2[0] + b2[2])) {
+            return true
+        }
+        return false
     }
 
     drawHb() {
@@ -394,14 +421,14 @@ class Vec2 {
     }
 
     normalize() {
-        let d = Math.sqrt(this.x*this.x + this.y*this.y)
+        let d = Math.sqrt(this.x * this.x + this.y * this.y)
         if (d == 0) return
         this.x /= d
         this.y /= d
     }
 
     normalized() {
-        let d = Math.sqrt(this.x*this.x + this.y*this.y)
+        let d = Math.sqrt(this.x * this.x + this.y * this.y)
         if (d == 0) return new Vec2(0, 0)
         return new Vec2(this.x / d, this.y / d)
     }
