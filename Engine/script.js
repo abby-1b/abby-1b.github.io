@@ -1,7 +1,11 @@
 
-let con = new Console(window.innerWidth, window.innerHeight, 3)
-con.loop(() => {})
+let con = new Console(300, 200, "#ebe3c5")
+con.loop(() => {
+    // player.x += 0.1
+    // player.y += 0.05
+})
 
+// Background
 // let ctBg = con.nSprite(new Sprite("Tiles/Sky.png", 0, 0, con.width, con.height, 1, true))
 // ctBg.hasAnimation = true
 // ctBg.animationStart = 0
@@ -9,20 +13,25 @@ con.loop(() => {})
 // ctBg.animationTimer = 0
 
 let plant = con.nSprite(new Sprite("Sprites/Plant.png", 0, 0, 8, 8, false))
-// plant.hasAnimation = true
-// plant.animationTimer = 10
-// plant.animationFrames = 41
+plant.addAnimation("default", {
+    start: 0,
+    end: 40,
+    timer: 8,
+    loop: true,
+    pause: -1
+}, true)
 
-// // Player
-// let player = con.nSprite(new Sprite(con, "Sprites/Player.png", con.width / 2, con.height / 2, 16, 16, true))
-// player.speed = new Vec2(0, 0)
-// // player.xp += 1300
-// // player.yp += 100
-// player.hasAnimation = true
-// player.animationFrames = 6
-// player.animationTimer = 6
-// player.canMove = true
-// player.hbOffsets({top: 3, bottom: 0, left: 6, right: 6})
+// Player
+let player = con.nSprite(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16, false))
+player.addAnimation("idle", {
+    start: 0,
+    end: 5,
+    timer: 6,
+    loop: true,
+    pause: -1
+}, true)
+player.showHitbox = true
+player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 // player.lowerBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 4, 1, true))
 // player.crouchBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 2, 5, true))
 // player.dialogBar = con.nSprite(new Sprite(con, "Sprites/LowerBar.png", 0, 0, 0, 0, true))
