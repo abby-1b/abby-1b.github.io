@@ -55,11 +55,11 @@
 //         }
 //     }
 //     el.hbOffsets = function hbOffsets(hb) {
-//         this.hb = hb
-//         this.hb.top    *= this.parentCon.pixelSize
-//         this.hb.bottom *= this.parentCon.pixelSize
-//         this.hb.left   *= this.parentCon.pixelSize
-//         this.hb.right  *= this.parentCon.pixelSize
+        // this.hb = hb
+        // this.hb.top    *= this.parentCon.pixelSize
+        // this.hb.bottom *= this.parentCon.pixelSize
+        // this.hb.left   *= this.parentCon.pixelSize
+        // this.hb.right  *= this.parentCon.pixelSize
 //     }
 //     el.getHb = function() {
 //         let ret = this.getBoundingClientRect()
@@ -117,43 +117,7 @@
 // }
 
 // class Console {
-//     static prepareEnv() {
-        // let metaTags = {
-        //     "description": "This uses an unnamed JS engine made by CodeIGuess!",
-        //     "viewport": "width=device-width, initial-scale=1"
-        // }
-        // for (let mt in metaTags) {
-        //     let meta = document.createElement('meta')
-        //     meta.name = mt
-        //     meta.content = metaTags[mt]
-        //     document.head.appendChild(meta)
-        // }
-        // document.body.style.margin  = "0"
-        // document.body.style.padding = "0"
-//     }
-
-//     init(fn) {
-//         fn()
-//     }
-
-//     loop(fn) {
-//         // Yes, these run on 45 fps. Deal with it.
-//         // setInterval(function(){ updateAll(); fn() }, 1000 / 45)
-//         this.loopFn = fn
-//         setInterval(this.updateAll, 1000 / 45, this) // 1000 / 45
-//     }
-    
 //     constructor(w, h, s) {
-//         this.pixelSize = s
-//         this.width = Math.ceil(w / s)
-//         this.height = Math.ceil(h / s)
-//         this.el = document.createElement("div")
-//         this.el.style.overflow = "hidden"
-//         this.el.style.width  = Math.ceil(100 / s) + "%"
-//         this.el.style.height = Math.ceil(h / s) + "px"
-//         this.el.style.transformOrigin = "top left";
-//         this.el.style.transform = "scale(" + s + ")"
-//         this.el.style.transition = "filter 3s"
 //         this.sprites = []
 //         this.tiles = []
 //         this.camPos = new Vec2(0, 0)
@@ -163,13 +127,6 @@
 //         this.keys = {}
 //         window.addEventListener('keydown', e => { if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now(); if (e.key == ' ') e.preventDefault() })
 //         window.addEventListener('keyup'  , e => { if (  e.key.toLowerCase() in this.keys ) delete this.keys[e.key.toLowerCase()] })
-//     }
-
-//     addSprite(spr) {
-        // spr.parentCon = this
-        // this.sprites.push(spr)
-        // this.el.appendChild(spr)
-        // return spr
 //     }
 
 //     addTile(til) {
@@ -185,14 +142,6 @@
 //         }
 //     }
 
-//     refreshSprites() {
-//         let sprs = this.el.getElementsByClassName("spr")
-//         for (let s = 0; s < sprs.length; s++)
-//             this.el.removeChild(sprs[s])
-//         for (let s = 0; s < this.sprites.length; s++)
-//             this.el.appendChild(this.sprites[s].el)
-//     }
-
 //     updateAll(ths) {
 //         ths.loopFn()
 //         for (let s = 0; s < ths.tiles.length; s++)
@@ -201,21 +150,21 @@
 //             ths.sprites[s].update()
 //     }
 
-//     static getImagePixels(src, fn) {
-//         var img = document.createElement("img")
-//         img.onload = function() {
-//             var canvas = document.createElement('canvas')
-//             canvas.width = img.width
-//             canvas.height = img.height
-//             canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height)
-//             fn(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
-//         }
-//         img.src = src
-//     }
+    // static getImagePixels(src, fn) {
+    //     var img = document.createElement("img")
+    //     img.onload = function() {
+    //         var canvas = document.createElement('canvas')
+    //         canvas.width = img.width
+    //         canvas.height = img.height
+    //         canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height)
+    //         fn(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
+    //     }
+    //     img.src = src
+    // }
 // }
 
 class Console {
-    constructor(w, h, s) {
+    constructor(w, h, col) {
         let metaTags = {
             "description": "This uses an unnamed JS engine made by CodeIGuess!",
             "viewport": "width=device-width, initial-scale=1"
@@ -228,21 +177,29 @@ class Console {
         }
         document.body.style.margin  = "0"
         document.body.style.padding = "0"
-        this.pixelSize = s
-        this.width = Math.ceil(w / s)
-        this.height = Math.ceil(h / s)
+        document.body.style.backgroundColor = col | "white"
+        this.width = Math.ceil(w)
+        this.height = Math.ceil(h)
         this.el = document.createElement("canvas")
         this.el.width = this.width
         this.el.height = this.height
+        this.el.style.width = "100vw"
+        this.el.style.height = "min(100vh,100%)"
+        this.el.style.objectFit = "contain"
+        this.el.style.position = "absolute"
+        this.el.style.transform = "translate(-50%,-50%)"
+        this.el.style.left = "50%"
+        this.el.style.top = "50%"
         this.ctx = this.el.getContext('2d')
         this.ctx.imageSmoothingEnabled= false
-        this.el.style.width  = "100vw"
-        this.el.style.height = "100vh"
         this.imageIndexes = {}
         this.imageElements = []
         this.sprites = []
         this.tiles = []
         this.camPos = new Vec2(0, 0)
+        this.physics = {
+            gravity: new Vec2(0, -1)
+        }
         this.loopFn = () => {}
         this.initFn = () => {}
         document.body.appendChild(this.el)
@@ -301,15 +258,72 @@ class Sprite {
         this.h = h
         this.s = s | 1
         this.c = c
-        this.animation = [0, 0] // frame, frame count down
-        this.animationStates = {}
+        this.animation = [0, 0, true] // frame, timer, paused
+        this.animationStates = {} // start, end, timer, loop, pause frame
+        this.animationState = ""
     }
 
     imageLoaded() {
 
     }
 
+    addAnimation(nam, dict, play) {
+        this.animationStates[nam] = [
+            dict.start,
+            dict.end,
+            dict.timer,
+            dict.loop,
+            dict.pause
+        ]
+        if (play) {
+            this.animationState = nam
+            this.animation[2] = false
+            this.animation[0] = this.animationStates[this.animationState][0]
+        }
+    }
+
+    animate(nam) {
+        this.animationState = nam
+        this.animation[2] = false
+        this.animation[0] = this.animationStates[this.animationState][0]
+    }
+
+    paused() { return this.animation[2] }
+    pause() { this.animation[2] = true }
+    play(n) { this.animation[2] = false; if (n != undefined) { this.animation[0] = n } }
+    frame(n) { this.animation[0] = n }
+
+    drawHb() {
+        this.parentCon.ctx.strokeRect(
+            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5,
+            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5,
+            this.w * this.s - 1, this.h * this.s - 1)
+    }
+
     draw() {
+        // Animation
+        if (!this.animation[2]) {
+            if (this.animation[1]-- == 0) {
+                this.animation[1] = this.animationStates[this.animationState][2]
+                if (this.animation[0] == this.animationStates[this.animationState][4]) {
+                    this.animation[2] = true
+                }
+                if (this.animation[0]++ >= this.animationStates[this.animationState][1]) {
+                    if (this.animationStates[this.animationState][3]) {
+                        this.animation[0] = this.animationStates[this.animationState][0]
+                    } else {
+                        this.animation[2] = true
+                        this.animation[0]--
+                    }
+                }
+            }
+        }
+        // Hitbox
+        if (this.showHitbox) {
+            this.parentCon.ctx.strokeStyle = "#f00b"
+            this.drawHb()
+        }
+        // Sprite
         this.parentCon.ctx.drawImage(this.parentCon.imageElements[this.src],
             this.animation[0] * this.w, 0,
             this.w, this.h,
@@ -319,13 +333,47 @@ class Sprite {
     }
 }
 
-class CMath {
+class PhysicsActor extends Sprite {
+    constructor(src, x, y, w, h, s, c) {
+        super(src, x, y, w, h, s, c)
+        this.speed = new Vec2(0, 0)
+        this.locked = false
+        this.hb = {top: 0, bottom: 0, left: 0, right: 0}
+    }
+
+    hbOffsets(hb) { this.hb = hb }
+
+    getHb() {
+        
+    }
+
+    drawHb() {
+        this.parentCon.ctx.strokeRect(
+            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
+            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
+            this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom))
+    }
+}
+
+class CTool {
     static lerp(a, b, v) {
         return a * (1 - v) + b * v
     }
 
     static map(v, ir1, ir2, or1, or2) {
         return or1 + (or2 - or1) * (v - ir1) / (ir2 - ir1)
+    }
+
+    static getImagePixels(src, fn) {
+        var img = document.createElement("img")
+        img.onload = function() {
+            var canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height)
+            fn(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
+        }
+        img.src = src
     }
 }
 
