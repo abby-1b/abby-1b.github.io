@@ -3,7 +3,7 @@ let con = new Console(300, 200, "#ebe3c5")
 
 // Controls
 con.nEvent("jump", () => {
-    player.speed.y = -6
+    player.speed.y = -5
 })
 con.onKeyPressed(' ', "jump")
 
@@ -92,7 +92,7 @@ con.init(() => {
     }, (bars) => {
         let offs = CTool.findTilePos(bars, "player")
         for (let b = 0; b < bars.length; b++) {
-            const ss = 2
+            const ss = 8
             if (bars[b].type == "player") continue
             if (bars[b].type == "trash") {
                 con.nObj(new Sprite("Sprites/Trash.png", ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * 2, ss * 2))
@@ -162,8 +162,8 @@ let gameLoop = () => {
     // }
 
     con.camPos.lerp(
-        (-player.pos.x + con.width / 2) - player.speed.x * 4,
-         -player.pos.y + con.height / 2)
+        (-player.pos.x + con.width / 2) - player.speed.x * 12,
+         -player.pos.y + con.height / 2, 0.1)
     // ctBg.xp = -con.camPos.x + con.width / 2
     // ctBg.yp = -con.camPos.y + con.height / 2
     // ctBg.animationStart = (-con.camPos.x / 1000) + player.xp / 10000
@@ -187,6 +187,8 @@ let gameLoop = () => {
     if (!player.locked)
         player.speed.add(new Vec2(
             ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized())
+    // let a = player.speed.angle()
+    // console.log(a)
     // if ('s' in con.keys && player.onGround) {
     //     if (player.animationStart != 17) {
     //         player.animationStart = 17
