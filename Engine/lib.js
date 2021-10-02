@@ -192,10 +192,13 @@ class Console {
         this.objects = [] // Everything that is an object
         this.camPos = new Vec2(0, 0)
         this.physics = {
-            gravity: new Vec2(0, -1)
+            gravity: new Vec2(0, 0.3),
+            friction: new Vec2(0.8, 0.96)
         }
+        this.events = {}
         this.loopFn = () => {}
         this.initFn = () => {}
+        this.frameCount = 0
         document.body.appendChild(this.el)
         document.body.style.overflow = "hidden"
         this.keys = {}
@@ -203,12 +206,27 @@ class Console {
         window.addEventListener('keyup'  , e => { if (  e.key.toLowerCase() in this.keys ) delete this.keys[e.key.toLowerCase()] })
     }
 
+    // Controls
+    nEvent(n, f) {
+        this.events[n] = f
+    }
+    onKeyPressed(k, n) {
+        if (typeof k === "string")
+            window.addEventListener('keydown', e => { if (e.key == k && !e.repeat) this.events[n]() })
+        else
+            window.addEventListener('keydown', e => { if (k.includes(e.key) && !e.repeat) this.events[n]() })
+    }
+
+    isKeyDown(k) {
+        return k in this.keys
+    }
+
     init(fn) { fn() }
 
     loop(fn) {
         // Yes, these run on 45 fps. Deal with it.
         this.loopFn = fn
-        setInterval(this.updateAll, 1000 / 45, this)
+        setInterval(this.updateAll, 1000 / 45, this) // 1000 / 45
     }
 
     updateAll(ths) {
@@ -216,7 +234,16 @@ class Console {
         ths.loopFn()
         for (let s = 0; s < ths.tiles.length; s++) { ths.tiles[s].draw() }
         for (let s = 0; s < ths.sprites.length; s++) { ths.sprites[s].draw() }
-        for (let s = 0; s < ths.objects.length; s++) { ths.objects[s].draw() }
+        for (let s = 0; s < ths.objects.length; s++) {
+            if (ths.objects[s].constructor.name == "PhysicsActor") {
+                ths.objects[s].physics()
+                for (let t = 0; t < ths.tiles.length; t++) {
+                    ths.objects[s].avoidCollision(ths.tiles[t])
+                }
+            }
+            ths.objects[s].draw()
+        }
+        ths.frameCount++
     }
 
     // Objects can have animation and physics.
@@ -234,6 +261,7 @@ class Console {
         return this.tiles[this.tiles.push(this.imageThing(til)) - 1]
     }
 
+    // Adding any image thing. Supposed to be private.
     imageThing(spr) {
         spr.parentCon = this
         if (spr.src in this.imageIndexes) {
@@ -261,8 +289,7 @@ class Console {
 class Sprite {
     constructor(src, x, y, w, h, s, c) {
         this.src = src
-        this.x = x
-        this.y = y
+        this.pos = new Vec2(x, y)
         this.w = w
         this.h = h
         this.s = s | 1
@@ -270,7 +297,9 @@ class Sprite {
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
-        this.showHitbox = false
+        this.showHitbox = true
+
+        this.collided = false
     }
 
     imageLoaded() {
@@ -303,10 +332,18 @@ class Sprite {
     play(n) { this.animation[2] = false; if (n != undefined) { this.animation[0] = n } }
     frame(n) { this.animation[0] = n }
 
+    getHb() {
+        return [
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5,
+            this.w * this.s - 1, this.h * this.s - 1
+        ]
+    }
+
     drawHb() {
         this.parentCon.ctx.strokeRect(
-            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5,
-            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5,
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5,
             this.w * this.s - 1, this.h * this.s - 1)
     }
 
@@ -328,18 +365,18 @@ class Sprite {
                 }
             }
         }
-        // Hitbox
-        if (this.showHitbox) {
-            this.parentCon.ctx.strokeStyle = "#f00b"
-            this.drawHb()
-        }
         // Sprite
         this.parentCon.ctx.drawImage(this.parentCon.imageElements[this.src],
             this.animation[0] * this.w, 0,
             this.w, this.h,
-            Math.floor(this.x - (this.c ? this.w / 2 : 0)),
-            Math.floor(this.y - (this.c ? this.h / 2 : 0)),
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)),
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)),
             this.w * this.s, this.h * this.s)
+        // Hitbox
+        if (this.showHitbox) {
+            this.parentCon.ctx.strokeStyle = (this.collided ? "#f0f9" : "#f009")
+            this.drawHb()
+        }
     }
 }
 
@@ -355,8 +392,8 @@ class PhysicsActor extends Sprite {
 
     getHb() {
         return [
-            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
-            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
             this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom)
         ]
     }
@@ -365,7 +402,14 @@ class PhysicsActor extends Sprite {
         let b1 = this.getHb()
         let b2 = hbe.getHb()
 
-        if (b1[1] + b1[3] >= b1[1]
+        if(b1.top    + b1.height > b2.top
+        && b1.left   + b1.width  > b2.left
+        && b1.bottom - b1.height < b2.bottom
+        && b1.right  - b1.width  < b2.right) {
+            return true
+        }
+
+        if (b1[1] + b1[3] >= b2[1]
         &&  b1[0] + b1[2] >= b2[0]
         && (b1[1] + b1[3]) - b1[3] <= (b2[1] + b2[3])
         && (b1[0] + b1[2]) - b1[2] <= (b2[0] + b2[2])) {
@@ -374,10 +418,29 @@ class PhysicsActor extends Sprite {
         return false
     }
 
+    physics(el) {
+        this.speed.add(this.parentCon.physics.gravity)
+        this.speed.x *= this.parentCon.physics.friction.x
+        this.speed.y *= this.parentCon.physics.friction.y
+        this.pos.add(this.speed)
+    }
+
+    avoidCollision(el) {
+        if (this.intersects(el)) {
+            el.collided = true
+            this.speed.y = 0
+            while (this.intersects(el)) {
+                this.pos.y -= 1
+            }
+        } else {
+            el.collided = false
+        }
+    }
+
     drawHb() {
         this.parentCon.ctx.strokeRect(
-            Math.floor(this.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
-            Math.floor(this.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
             this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom))
     }
 }
@@ -402,10 +465,80 @@ class CTool {
         }
         img.src = src
     }
+
+    static findTilePos(tiles, type, def) {
+        let offs = def ? def : new Vec2(0, 0)
+        for (let b = 0; b < tiles.length; b++) {
+            if (tiles[b].type == type) {
+                offs.set(tiles[b].x, tiles[b].y)
+                break
+            }
+        }
+        return offs
+    }
+
+    static tileMapFrom(src, types, callback) {
+        this.getImagePixels(src, (px, w, h) => {
+            function getType(p1, p2, p3) {
+                for (let t in types)
+                    if (types[t][1] == p1 && types[t][2] == p2 && types[t][3] == p3)
+                        return t
+                return false
+            }
+            // Return bars
+            let bars = []
+            // Tiles already iterated through
+            let did = []
+            for (let p = 0; p < px.length; p += 4) {
+                if (did.includes(p)) continue
+                did.push(p)
+                let x = ((p / 4) % w) - 8
+                let y = (Math.floor((p / 4) / w)) - 8
+                if (px[p + 3] != 0) {
+                    let tp = getType(px[p], px[p + 1], px[p + 2])
+                    let ch = 1
+                    while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
+                        did.push(p + w * (ch++) * 4)
+                    bars.push([x, y, 1, ch, tp])
+                }
+            }
+            for (let b = 0; b < bars.length; b++) {
+                for (let a = 0; a < bars.length; a++) {
+                    if (a == b) continue
+                    if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1] && bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
+                        bars.splice(a, 1)
+                        if (a < b) { b-- }
+                        a--
+                        bars[b][2] ++
+                    }
+                }
+            }
+            for (let b = 0; b < bars.length; b++) {
+                bars[b] = {
+                    type: types[bars[b][4]][0],
+                    x: bars[b][0],
+                    y: bars[b][1],
+                    w: bars[b][2],
+                    h: bars[b][3]
+                }
+            }
+            callback(bars)
+        })
+    }
 }
 
 class Vec2 {
     constructor(x, y) {
+        this.x = x
+        this.y = y
+    }
+
+    lerp(x, y, a) {
+        this.x = CTool.lerp(this.x, x, a)
+        this.y = CTool.lerp(this.y, y, a)
+    }
+
+    set(x, y) {
         this.x = x
         this.y = y
     }
@@ -415,9 +548,14 @@ class Vec2 {
         this.y *= v
     }
 
-    add(v2) {
-        this.x += v2.x
-        this.y += v2.y
+    mulV(v) {
+        this.x *= v.x
+        this.y *= v.y
+    }
+
+    add(v) {
+        this.x += v.x
+        this.y += v.y
     }
 
     normalize() {
@@ -432,4 +570,6 @@ class Vec2 {
         if (d == 0) return new Vec2(0, 0)
         return new Vec2(this.x / d, this.y / d)
     }
+
+    toString() { return `(${this.x}, ${this.y})` }
 }

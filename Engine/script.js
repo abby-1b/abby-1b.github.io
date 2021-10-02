@@ -1,9 +1,11 @@
 
 let con = new Console(300, 200, "#ebe3c5")
-con.loop(() => {
-    // player.x += 0.1
-    // player.y += 0.05
+
+// Controls
+con.nEvent("jump", () => {
+    player.speed.y = -6
 })
+con.onKeyPressed(' ', "jump")
 
 // Background
 // let ctBg = con.nSprite(new Sprite("Tiles/Sky.png", 0, 0, con.width, con.height, 1, true))
@@ -33,41 +35,42 @@ player.addAnimation("idle", {
 player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
+player.pos.x += 5
 
-// player.collidedWith = function(el, d) {
-//     // console.log(el.curAnimationTimer)
-//     if (el.sourceUrl == "Tiles/Bounce.png" && d == "top") {
-//         player.speed.y = -19
+player.collidedWith = function(el, d) {
+    // console.log(el.curAnimationTimer)
+    if (el.sourceUrl == "Tiles/Bounce.png" && d == "top") {
+        player.speed.y = -19
 
-//         player.isCrouched = false
-//         player.animationFrame = 0
-//         player.animationFrames = 3
-//         player.animationTimer = 10
-//         player.animationStart = 12
-//         player.loopAnimation = false
-//         player.curAnimationTimer = player.animationTimer
-//         player.onGround = false
-//     } else if (el.sourceUrl == "Sprites/Trash.png" && d == "top" && (el.curAnimationTimer == 0 || el.curAnimationTimer == 120)) {
-//         el.hasAnimation = true
-//         el.animationStart = -1
-//         el.animationFrame = 0
-//         el.animationFrames = 2
-//         el.loopAnimation = false
-//         el.animationTimer = 120
-//         el.curAnimationTimer = 120
-//         player.speed.y -= 11
-//         player.yp -= 5
+        player.isCrouched = false
+        player.animationFrame = 0
+        player.animationFrames = 3
+        player.animationTimer = 10
+        player.animationStart = 12
+        player.loopAnimation = false
+        player.curAnimationTimer = player.animationTimer
+        player.onGround = false
+    } else if (el.sourceUrl == "Sprites/Trash.png" && d == "top" && (el.curAnimationTimer == 0 || el.curAnimationTimer == 120)) {
+        el.hasAnimation = true
+        el.animationStart = -1
+        el.animationFrame = 0
+        el.animationFrames = 2
+        el.loopAnimation = false
+        el.animationTimer = 120
+        el.curAnimationTimer = 120
+        player.speed.y -= 11
+        player.yp -= 5
         
-//         player.isCrouched = false
-//         player.animationFrame = 0
-//         player.animationFrames = 3
-//         player.animationTimer = 10
-//         player.animationStart = 12
-//         player.loopAnimation = false
-//         player.curAnimationTimer = player.animationTimer
-//         player.onGround = false
-//     }
-// }
+        player.isCrouched = false
+        player.animationFrame = 0
+        player.animationFrames = 3
+        player.animationTimer = 10
+        player.animationStart = 12
+        player.loopAnimation = false
+        player.curAnimationTimer = player.animationTimer
+        player.onGround = false
+    }
+}
 
 // // Triggers
 // let ts = [
@@ -81,67 +84,24 @@ player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 // ]
 
 con.init(() => {
-    CTool.getImagePixels("Tiles/Map1.png", (px, w, h) => {
-        let m = {
-            PLAYER: ["player", 78, 205, 196],
-            BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
-            BOUNCE: ["Tiles/Bounce.png", 31, 255, 40],
-            TRASH: ["trash", 255, 230, 109]
-        }
-        function getType(p1, p2, p3) {
-            for (let t in m) {
-                if (m[t][1] == p1 && m[t][2] == p2 && m[t][3] == p3) {
-                    return t
-                }
-            }
-            return false
-        }
-        let bars = []
-        let did = []
-        for (let p = 0; p < px.length; p += 4) {
-            if (did.includes(p)) continue
-            did.push(p)
-            let x = ((p / 4) % w) - 8
-            let y = (Math.floor((p / 4) / w)) - 8
-            if (px[p + 3] != 0) {
-                let tp = getType(px[p], px[p + 1], px[p + 2])
-                let ch = 1
-                while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
-                    did.push(p + w * (ch++) * 4)
-                bars.push([x, y, 1, ch, tp])
-            }
-        }
+    CTool.tileMapFrom("Tiles/Map1.png", {
+        PLAYER: ["player", 78, 205, 196],
+        BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
+        BOUNCE: ["Tiles/Bounce.png", 31, 255, 40],
+        TRASH: ["trash", 255, 230, 109]
+    }, (bars) => {
+        let offs = CTool.findTilePos(bars, "player")
         for (let b = 0; b < bars.length; b++) {
-            for (let a = 0; a < bars.length; a++) {
-                if (a == b) continue
-                if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1] && bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
-                    bars.splice(a, 1)
-                    if (a < b) { b-- }
-                    a--
-                    bars[b][2] ++
-                }
-            }
-        }
-        let ox = 0
-        let oy = 0
-        for (let b = 0; b < bars.length; b++) {
-            if (m[bars[b][4]][0] == "player") {
-                ox = bars[b][0]
-                oy = bars[b][1]
-                break
-            }
-        }
-        for (let b = 0; b < bars.length; b++) {
-            let ss = 1
-            if (m[bars[b][4]][0] == "player")
-                continue
-            if (m[bars[b][4]][0] == "trash") {
-                con.nObj(new Sprite("Sprites/Trash.png", ss * (bars[b][0] - ox), ss * (bars[b][1] - oy), 16, 16))
+            const ss = 2
+            if (bars[b].type == "player") continue
+            if (bars[b].type == "trash") {
+                con.nObj(new Sprite("Sprites/Trash.png", ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * 2, ss * 2))
                 continue
             }
-            let s = con.nTile(new Sprite(m[bars[b][4]][0], ss * (bars[b][0] - ox), ss * (bars[b][1] - oy), ss * bars[b][2], ss * bars[b][3], false))
+            let s = con.nTile(new Sprite(bars[b].type, ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * bars[b].w, ss * bars[b].h, false))
         }
-        // con.loop(gameLoop)
+        con.loop(gameLoop)
+        // con.loop(() => {})
     })
 })
 
@@ -182,108 +142,104 @@ con.init(() => {
 //     tos = []
 // }
 
-// let frameCount = 0
-// let gameLoop = () => {
-//     // console.log(obs[0].curAnimationTimer)
+let gameLoop = () => {
+    // if (player.canMove && (player.xp - con.width / 2) < -50) {
+    //     player.speed.x = 10
+    //     doDialog("M3 shouldn't go back. [space]")
+    // }
+    // if ((player.xp - con.width / 2) > ts[ts.length - 1][0]) {
+    //     player.speed.x *= 0.8
+    //     doDialog(ts.pop()[1])
+    //     if (ts.length == 1) {
+    //         setTimeout(function(){
+    //             con.el.style.filter = "brightness(0)"
+    //         }, 3000)
+    //     }
+    // }
+    // if (ts.length > 1 && (!player.canMove) && ' ' in con.keys) {
+    //     player.canMove = true
+    //     clearDialog()
+    // }
 
-//     if (player.canMove && (player.xp - con.width / 2) < -50) {
-//         player.speed.x = 10
-//         doDialog("M3 shouldn't go back. [space]")
-//     }
-//     if ((player.xp - con.width / 2) > ts[ts.length - 1][0]) {
-//         player.speed.x *= 0.8
-//         doDialog(ts.pop()[1])
-//         if (ts.length == 1) {
-//             setTimeout(function(){
-//                 con.el.style.filter = "brightness(0)"
-//             }, 3000)
-//         }
-//     }
-//     if (ts.length > 1 && (!player.canMove) && ' ' in con.keys) {
-//         player.canMove = true
-//         clearDialog()
-//     }
+    con.camPos.lerp(
+        (-player.pos.x + con.width / 2) - player.speed.x * 4,
+         -player.pos.y + con.height / 2)
+    // ctBg.xp = -con.camPos.x + con.width / 2
+    // ctBg.yp = -con.camPos.y + con.height / 2
+    // ctBg.animationStart = (-con.camPos.x / 1000) + player.xp / 10000
 
-//     con.camPos.x = Console.lerp(con.camPos.x, (-player.xp + con.width / 2) - player.speed.x * 4, 0.1)
-//     con.camPos.y = Console.lerp(con.camPos.y, -player.yp + con.height / 2, 0.1)
-//     ctBg.xp = -con.camPos.x + con.width / 2
-//     ctBg.yp = -con.camPos.y + con.height / 2
-//     ctBg.animationStart = (-con.camPos.x / 1000) + player.xp / 10000
-
-//     player.lowerOnGround = false
-//     for (let a = 0; a < 2; a++) {
-//         con.doPhysicsSprite(player)
-//         for (let o = 0; o < obs.length; o++) {
-//             player.doPhysics(obs[o])
-//         }
-//         player.xp += player.speed.x * (0.3 / 2)
-//         player.yp += player.speed.y * (0.3 / 2)
-//         player.lowerBar.xp = player.xp
-//         player.lowerBar.yp = player.yp + 8
-//         player.crouchBar.xp = player.xp
-//         player.crouchBar.yp = player.yp - 2
-//     }
-//     player.dialogBar.xp = player.xp
-//     // console.log(("." + player.dialogBar.innerHTML + '.').split(/<br>/g).filter(e => e != '').length)
-//     player.dialogBar.yp = (player.yp - 18) // - (("." + player.dialogBar.innerHTML + '.').split(/<br>/g).filter(e => e != '').length) * 16
-//     if (player.onGround && !player.lowerOnGround) player.onGround = false
-//     if (player.canMove)
-//         player.speed.add(new Vec2(
-//             ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized())
-//     if ('s' in con.keys && player.onGround) {
-//         if (player.animationStart != 17) {
-//             player.animationStart = 17
-//             player.curAnimationTimer = 4
-//             player.animationFrame = 0
-//             player.animationFrames = 2
-//             player.animationTimer = 4
-//             player.loopAnimation = false
-//         }
-//         player.isCrouched = true
-//         player.hbOffsets({top: 10, bottom: 0, left: 5, right: 5})
-//         player.speed.x *= 0.7
-//     } else {
-//         if (player.canUnCrouch) {
-//             player.hbOffsets({top: 3, bottom: 0, left: 6, right: 6})
-//             player.isCrouched = false
-//         }
-//         if (!player.canUnCrouch) player.speed.x *= 0.7
-//         else player.speed.x *= 0.87
-//     }
-//     if (ts.length > 1 && ' ' in con.keys) {
-//         if (player.onGround && player.canUnCrouch) {
-//             player.isCrouched = false
-//             player.animationFrame = 0
-//             player.animationFrames = 3
-//             player.animationTimer = 5
-//             player.animationStart = 12
-//             player.loopAnimation = false
-//             player.curAnimationTimer = player.animationTimer
-//             player.speed.y -= 9
-//             player.onGround = false
-//         }
-//     }
-//     if (!player.onGround)
-//         player.speed.y += 0.6
-//     if (player.canUnCrouch && player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
-//         player.loopAnimation = true
-//         player.animationFrames = 6
-//         if (Math.abs(player.speed.x) > 1) {
-//             player.animationStart = 6
-//             player.animationTimer = 3
-//         } else {
-//             player.animationStart = 0
-//             player.animationTimer = 6
-//         }
-//     }
-//     if ((!player.loopAnimation) && player.animationStart == 12 && player.speed.y > 0) {
-//         player.animationStart = 15
-//         player.animationFrame = 0
-//         player.animationFrames = 2
-//         player.animationTimes = 5
-//         player.curAnimationTimer = player.animationTimer
-//     }
-//     if (player.speed.x != 0) player.flipped = player.speed.x < 0
-//     player.canUnCrouch = true
-//     frameCount++
-// }
+    // player.lowerOnGround = false
+    // for (let a = 0; a < 2; a++) {
+    //     con.doPhysicsSprite(player)
+    //     for (let o = 0; o < obs.length; o++) {
+    //         player.doPhysics(obs[o])
+    //     }
+    //     player.xp += player.speed.x * (0.3 / 2)
+    //     player.yp += player.speed.y * (0.3 / 2)
+    //     player.lowerBar.xp = player.xp
+    //     player.lowerBar.yp = player.yp + 8
+    //     player.crouchBar.xp = player.xp
+    //     player.crouchBar.yp = player.yp - 2
+    // }
+    // player.dialogBar.xp = player.xp
+    // player.dialogBar.yp = (player.yp - 18)
+    // if (player.onGround && !player.lowerOnGround) player.onGround = false
+    if (!player.locked)
+        player.speed.add(new Vec2(
+            ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized())
+    // if ('s' in con.keys && player.onGround) {
+    //     if (player.animationStart != 17) {
+    //         player.animationStart = 17
+    //         player.curAnimationTimer = 4
+    //         player.animationFrame = 0
+    //         player.animationFrames = 2
+    //         player.animationTimer = 4
+    //         player.loopAnimation = false
+    //     }
+    //     player.isCrouched = true
+    //     player.hbOffsets({top: 10, bottom: 0, left: 5, right: 5})
+    //     player.speed.x *= 0.7
+    // } else {
+    //     if (player.canUnCrouch) {
+    //         player.hbOffsets({top: 3, bottom: 0, left: 6, right: 6})
+    //         player.isCrouched = false
+    //     }
+    //     if (!player.canUnCrouch) player.speed.x *= 0.7
+    //     else player.speed.x *= 0.87
+    // }
+    // if (ts.length > 1 && ' ' in con.keys) {
+    //     if (player.onGround && player.canUnCrouch) {
+    //         player.isCrouched = false
+    //         player.animationFrame = 0
+    //         player.animationFrames = 3
+    //         player.animationTimer = 5
+    //         player.animationStart = 12
+    //         player.loopAnimation = false
+    //         player.curAnimationTimer = player.animationTimer
+    //         player.speed.y -= 9
+    //         player.onGround = false
+    //     }
+    // }
+    // if (!player.onGround)
+    //     player.speed.y += 0.6
+    // if (player.canUnCrouch && player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
+    //     player.loopAnimation = true
+    //     player.animationFrames = 6
+    //     if (Math.abs(player.speed.x) > 1) {
+    //         player.animationStart = 6
+    //         player.animationTimer = 3
+    //     } else {
+    //         player.animationStart = 0
+    //         player.animationTimer = 6
+    //     }
+    // }
+    // if ((!player.loopAnimation) && player.animationStart == 12 && player.speed.y > 0) {
+    //     player.animationStart = 15
+    //     player.animationFrame = 0
+    //     player.animationFrames = 2
+    //     player.animationTimes = 5
+    //     player.curAnimationTimer = player.animationTimer
+    // }
+    // if (player.speed.x != 0) player.flipped = player.speed.x < 0
+    // player.canUnCrouch = true
+}
