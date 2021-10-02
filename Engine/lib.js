@@ -193,7 +193,7 @@ class Console {
         this.camPos = new Vec2(0, 0)
         this.physics = {
             gravity: new Vec2(0, 0.3),
-            friction: new Vec2(0.8, 0.96)
+            friction: new Vec2(0.7, 0.98)
         }
         this.events = {}
         this.loopFn = () => {}
@@ -284,6 +284,11 @@ class Console {
         spr.src = this.imageIndexes[spr.src]
         return spr
     }
+
+    point(x, y, c) {
+        this.ctx.fillStyle = c
+        this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
+    }
 }
 
 class Sprite {
@@ -334,16 +339,16 @@ class Sprite {
 
     getHb() {
         return [
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5,
+            (this.pos.x - (this.c ? this.w / 2 : 0)),
+            (this.pos.y - (this.c ? this.h / 2 : 0)),
             this.w * this.s - 1, this.h * this.s - 1
         ]
     }
 
     drawHb() {
         this.parentCon.ctx.strokeRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5,
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5,
             this.w * this.s - 1, this.h * this.s - 1)
     }
 
@@ -366,11 +371,15 @@ class Sprite {
             }
         }
         // Sprite
-        this.parentCon.ctx.drawImage(this.parentCon.imageElements[this.src],
-            this.animation[0] * this.w, 0,
-            this.w, this.h,
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)),
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)),
+        let i = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
+        this.parentCon.ctx.fillStyle = i
+        i.setTransform(new DOMMatrix([this.s, 0, 0, this.s, 
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.animation[0] * this.w) * this.s,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y)
+        ]))
+        this.parentCon.ctx.fillRect(
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x),
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y),
             this.w * this.s, this.h * this.s)
         // Hitbox
         if (this.showHitbox) {
@@ -392,22 +401,15 @@ class PhysicsActor extends Sprite {
 
     getHb() {
         return [
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
-            this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom)
+            this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
+            this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
+            this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
         ]
     }
 
     intersects(hbe) {
         let b1 = this.getHb()
         let b2 = hbe.getHb()
-
-        if(b1.top    + b1.height > b2.top
-        && b1.left   + b1.width  > b2.left
-        && b1.bottom - b1.height < b2.bottom
-        && b1.right  - b1.width  < b2.right) {
-            return true
-        }
 
         if (b1[1] + b1[3] >= b2[1]
         &&  b1[0] + b1[2] >= b2[0]
@@ -427,11 +429,32 @@ class PhysicsActor extends Sprite {
 
     avoidCollision(el) {
         if (this.intersects(el)) {
+            let b1 = this.getHb()
+            let b2 = el.getHb()
             el.collided = true
-            this.speed.y = 0
-            while (this.intersects(el)) {
-                this.pos.y -= 1
+            
+            let rd = ((b1[0] + b1[2]) - b2[0])
+            let ld = ((b2[0] + b2[2]) - b1[0])
+            let td = ((b1[1] + b1[3]) - b2[1])
+            let bd = ((b2[1] + b2[3]) - b1[1])
+            if (td < rd && td < ld && td < bd) {
+                this.pos.y -= td
+                this.speed.y = Math.min(this.speed.y, 0)
+                // this.onGround = true
+                // this.collidedWith(el, "top")
+            } else if (bd < rd && bd < ld) {
+                this.pos.y += bd
+                this.speed.y = Math.max(this.speed.y, 0)
+            } else if (ld < rd) {
+                this.pos.x += ld
+                this.speed.x = 0
+            } else {
+                this.pos.x -= rd
+                this.speed.x = 0
             }
+
+            // this.speed.y = 0
+            // this.pos.y -= (b1[1] + b1[3]) - b2[1]
         } else {
             el.collided = false
         }
@@ -439,9 +462,9 @@ class PhysicsActor extends Sprite {
 
     drawHb() {
         this.parentCon.ctx.strokeRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top,
-            this.w * this.s - (1 + this.hb.left + this.hb.right), this.h * this.s - (1 + this.hb.top + this.hb.bottom))
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+            this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
     }
 }
 
@@ -553,6 +576,12 @@ class Vec2 {
         this.y *= v.y
     }
 
+    mulr(v) {
+        this.x *= v
+        this.y *= v
+        return this
+    }
+
     add(v) {
         this.x += v.x
         this.y += v.y
@@ -569,6 +598,10 @@ class Vec2 {
         let d = Math.sqrt(this.x * this.x + this.y * this.y)
         if (d == 0) return new Vec2(0, 0)
         return new Vec2(this.x / d, this.y / d)
+    }
+
+    angle() {
+        return Math.atan2(this.x, this.y)
     }
 
     toString() { return `(${this.x}, ${this.y})` }
