@@ -3,16 +3,12 @@ let con = new Console(300, 200, "#ebe3c5")
 
 // Controls
 con.nEvent("jump", () => {
-    player.speed.y = -5
+    player.speed.y = -1
 })
 con.onKeyPressed(' ', "jump")
 
 // Background
-// let ctBg = con.nSprite(new Sprite("Tiles/Sky.png", 0, 0, con.width, con.height, 1, true))
-// ctBg.hasAnimation = true
-// ctBg.animationStart = 0
-// ctBg.animationFrames = 1
-// ctBg.animationTimer = 0
+let background = con.nBgSprite(new Sprite("Tiles/Sky.png", -16, -16, con.width + 32, 512, 1, true))
 
 let plant = con.nSprite(new PhysicsActor("Sprites/Plant.png", 0, 0, 8, 8, false))
 plant.addAnimation("default", {
@@ -162,11 +158,12 @@ let gameLoop = () => {
     // }
 
     con.camPos.lerp(
-        (-player.pos.x + con.width / 2) - player.speed.x * 12,
-         -player.pos.y + con.height / 2, 0.1)
-    // ctBg.xp = -con.camPos.x + con.width / 2
-    // ctBg.yp = -con.camPos.y + con.height / 2
-    // ctBg.animationStart = (-con.camPos.x / 1000) + player.xp / 10000
+        (-player.pos.x + con.width  / 2) - player.speed.x * 12 - player.w * player.s * 0.5,
+        (-player.pos.y + con.height / 2) - player.speed.y * 4  - player.h * player.s * 0.5,
+         0.1)
+    background.pos.x = -con.camPos.x + con.width / 2
+    background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
+    background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
 
     // player.lowerOnGround = false
     // for (let a = 0; a < 2; a++) {
@@ -186,7 +183,8 @@ let gameLoop = () => {
     // if (player.onGround && !player.lowerOnGround) player.onGround = false
     if (!player.locked)
         player.speed.add(new Vec2(
-            ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized())
+            ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized().mulr(0.25))
+    // 3.86
     // let a = player.speed.angle()
     // console.log(a)
     // if ('s' in con.keys && player.onGround) {

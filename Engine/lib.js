@@ -188,12 +188,13 @@ class Console {
         this.imageIndexes = {}
         this.imageElements = []
         this.sprites = [] // Everything that is a sprite
+        this.bgSprites = [] // Sprites that go behind everything
         this.tiles = [] // Everything that is a tile
         this.objects = [] // Everything that is an object
         this.camPos = new Vec2(0, 0)
         this.physics = {
-            gravity: new Vec2(0, 0.3),
-            friction: new Vec2(0.7, 0.98)
+            gravity: new Vec2(0.0, 0.015),
+            friction: new Vec2(0.9, 0.995)
         }
         this.events = {}
         this.loopFn = () => {}
@@ -232,13 +233,16 @@ class Console {
     updateAll(ths) {
         ths.ctx.clearRect(0, 0, ths.width, ths.height)
         ths.loopFn()
+        for (let s = 0; s < ths.bgSprites.length; s++) { ths.bgSprites[s].draw() }
         for (let s = 0; s < ths.tiles.length; s++) { ths.tiles[s].draw() }
         for (let s = 0; s < ths.sprites.length; s++) { ths.sprites[s].draw() }
         for (let s = 0; s < ths.objects.length; s++) {
             if (ths.objects[s].constructor.name == "PhysicsActor") {
-                ths.objects[s].physics()
-                for (let t = 0; t < ths.tiles.length; t++) {
-                    ths.objects[s].avoidCollision(ths.tiles[t])
+                for (let a = 0; a < 5; a++) {
+                    ths.objects[s].physics()
+                    for (let t = 0; t < ths.tiles.length; t++) {
+                        ths.objects[s].avoidCollision(ths.tiles[t])
+                    }
                 }
             }
             ths.objects[s].draw()
@@ -254,6 +258,11 @@ class Console {
     // Sprites can have animation, but no physics.
     nSprite(spr) {
         return this.sprites[this.sprites.push(this.imageThing(spr)) - 1]
+    }
+
+    // Sprites can have animation, but no physics.
+    nBgSprite(spr) {
+        return this.bgSprites[this.bgSprites.push(this.imageThing(spr)) - 1]
     }
 
     // Tiles can have (static) physics, but no animation.
@@ -302,7 +311,7 @@ class Sprite {
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
-        this.showHitbox = true
+        this.showHitbox = false
 
         this.collided = false
     }
@@ -421,9 +430,8 @@ class PhysicsActor extends Sprite {
     }
 
     physics(el) {
-        this.speed.add(this.parentCon.physics.gravity)
-        this.speed.x *= this.parentCon.physics.friction.x
-        this.speed.y *= this.parentCon.physics.friction.y
+        this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
+        this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
         this.pos.add(this.speed)
     }
 
@@ -440,8 +448,9 @@ class PhysicsActor extends Sprite {
             if (td < rd && td < ld && td < bd) {
                 this.pos.y -= td
                 this.speed.y = Math.min(this.speed.y, 0)
-                // this.onGround = true
+                this.onGround = true
                 // this.collidedWith(el, "top")
+                console.log(el)
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
                 this.speed.y = Math.max(this.speed.y, 0)
@@ -580,6 +589,10 @@ class Vec2 {
         this.x *= v
         this.y *= v
         return this
+    }
+
+    muld(v) {
+        return new Vec2(this.x * v, this.y * v)
     }
 
     add(v) {

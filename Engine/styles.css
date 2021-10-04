@@ -9,6 +9,10 @@
     font-family: rh;
 }
 
+body {
+    background-color: black;
+}
+
 .noSmooth {
     image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
