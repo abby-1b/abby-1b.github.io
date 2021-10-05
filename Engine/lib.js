@@ -1,25 +1,5 @@
 
 // function Sprite(pCon, src, x, y, w, h, centered) {
-//     let el = document.createElement("spr")
-//     el.centered = centered
-//     if (centered)
-//         el.style.transform = "translate(-50%, -50%)"
-//     el.sourceUrl = src
-//     el.style.background = `url(${src}) 0px 0px`
-//     el.style.width = w + "px"
-//     el.style.height = h + "px"
-//     el.style.position = "absolute"
-//     el.classList = "noSmooth"
-//     el.xp = x
-//     el.yp = y
-//     el.wv = w
-//     el.hv = h
-//     el.hb = {top: 0, bottom: 0, left: 0, right: 0}
-//     el.animationStart = 0
-//     el.animationFrame = 0
-//     el.animationFrames = 0
-//     el.animationTimer = 0
-//     el.curAnimationTimer = 0
 //     el.flipped = false
 //     el.loopAnimation = true
 //     el.lowerOnGround = false
