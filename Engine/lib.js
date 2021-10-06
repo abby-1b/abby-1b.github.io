@@ -270,6 +270,7 @@ class Console {
             i.src = spr.src
             this.imageIndexes[spr.src] = this.imageElements.push(i) - 1
         }
+        spr.srcStr = spr.src
         spr.src = this.imageIndexes[spr.src]
         return spr
     }
@@ -292,7 +293,7 @@ class Sprite {
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
         this.showHitbox = false
-
+        this.flipped = false
         this.collided = false
     }
 
@@ -360,10 +361,10 @@ class Sprite {
             }
         }
         // Sprite
-        let i = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
-        this.parentCon.ctx.fillStyle = i
-        i.setTransform(new DOMMatrix([this.s, 0, 0, this.s, 
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.animation[0] * this.w) * this.s,
+        let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
+        this.parentCon.ctx.fillStyle = repeatedPattern
+        repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s, 
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.flipped ? (-(this.animation[0] + 1) * this.w) : (this.animation[0] * this.w)) * this.s,
             Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y)
         ]))
         this.parentCon.ctx.fillRect(
@@ -430,7 +431,10 @@ class PhysicsActor extends Sprite {
                 this.speed.y = Math.min(this.speed.y, 0)
                 this.onGround = true
                 // this.collidedWith(el, "top")
-                console.log(el)
+                // console.log(el.srcStr)
+                // if (el.srcStr == "Tiles/Bounce.png") {
+                //     this.speed.y = -2.3
+                // }
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
                 this.speed.y = Math.max(this.speed.y, 0)
