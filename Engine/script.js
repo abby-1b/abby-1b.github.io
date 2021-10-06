@@ -28,6 +28,7 @@ player.addAnimation("idle", {
     loop: true,
     pause: -1
 }, true)
+player.flipped = true
 player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
@@ -139,24 +140,6 @@ con.init(() => {
 // }
 
 let gameLoop = () => {
-    // if (player.canMove && (player.xp - con.width / 2) < -50) {
-    //     player.speed.x = 10
-    //     doDialog("M3 shouldn't go back. [space]")
-    // }
-    // if ((player.xp - con.width / 2) > ts[ts.length - 1][0]) {
-    //     player.speed.x *= 0.8
-    //     doDialog(ts.pop()[1])
-    //     if (ts.length == 1) {
-    //         setTimeout(function(){
-    //             con.el.style.filter = "brightness(0)"
-    //         }, 3000)
-    //     }
-    // }
-    // if (ts.length > 1 && (!player.canMove) && ' ' in con.keys) {
-    //     player.canMove = true
-    //     clearDialog()
-    // }
-
     con.camPos.lerp(
         (-player.pos.x + con.width  / 2) - player.speed.x * 12 - player.w * player.s * 0.5,
         (-player.pos.y + con.height / 2) - player.speed.y * 4  - player.h * player.s * 0.5,
@@ -240,6 +223,10 @@ let gameLoop = () => {
     //     player.animationTimes = 5
     //     player.curAnimationTimer = player.animationTimer
     // }
-    // if (player.speed.x != 0) player.flipped = player.speed.x < 0
+    if (player.speed.x != 0) player.flipped = player.speed.x < 0
+    if (player.flipped)
+        player.hbOffsets({top: 3, bottom: 0, left: 6, right: 5})
+    else
+        player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
     // player.canUnCrouch = true
 }
