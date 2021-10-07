@@ -172,6 +172,8 @@ class Console {
         this.tiles = [] // Everything that is a tile
         this.objects = [] // Everything that is an object
         this.camPos = new Vec2(0, 0)
+        this.following = null
+        this.followInterval = 0
         this.physics = {
             gravity: new Vec2(0.0, 0.015),
             friction: new Vec2(0.9, 0.995)
@@ -191,6 +193,7 @@ class Console {
     nEvent(n, f) {
         this.events[n] = f
     }
+
     onKeyPressed(k, n) {
         if (typeof k === "string")
             window.addEventListener('keydown', e => { if (e.key == k && !e.repeat) this.events[n]() })
@@ -202,6 +205,12 @@ class Console {
         return k in this.keys
     }
 
+    follow(el, interval) {
+        this.following = el
+        this.followInterval = interval
+    }
+
+    // Loop
     init(fn) { fn() }
 
     loop(fn) {
@@ -211,22 +220,31 @@ class Console {
     }
 
     updateAll(ths) {
+        ths.camPos.lerp(
+            (-ths.following.pos.x + ths.width  / 2) - ths.following.speed.x * 12 - ths.following.w * ths.following.s * 0.5,
+            (-ths.following.pos.y + ths.height / 2) - ths.following.speed.y * 4  - ths.following.h * ths.following.s * 0.5,
+             ths.followInterval)
         ths.ctx.clearRect(0, 0, ths.width, ths.height)
-        ths.loopFn()
         for (let s = 0; s < ths.bgSprites.length; s++) { ths.bgSprites[s].draw() }
         for (let s = 0; s < ths.tiles.length; s++) { ths.tiles[s].draw() }
         for (let s = 0; s < ths.sprites.length; s++) { ths.sprites[s].draw() }
         for (let s = 0; s < ths.objects.length; s++) {
             if (ths.objects[s].constructor.name == "PhysicsActor") {
+                ths.objects[s].collided = false
+                ths.objects[s].onGround = false
                 for (let a = 0; a < 5; a++) {
                     ths.objects[s].physics()
                     for (let t = 0; t < ths.tiles.length; t++) {
                         ths.objects[s].avoidCollision(ths.tiles[t])
                     }
+                    for (let t = 0; t < ths.objects.length; t++) {
+                        if (s != t) ths.objects[s].avoidCollision(ths.objects[t])
+                    }
                 }
             }
             ths.objects[s].draw()
         }
+        ths.loopFn()
         ths.frameCount++
     }
 
@@ -275,6 +293,17 @@ class Console {
         return spr
     }
 
+    text(t, x, y) {
+        this.ctx.fillStyle = "black"
+        this.ctx.font = "rh"
+        this.ctx.fillText(t, x, y)
+    }
+
+    rect(x, y, w, h, c) {
+        this.ctx.fillStyle = c
+        this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
+    }
+
     point(x, y, c) {
         this.ctx.fillStyle = c
         this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
@@ -292,13 +321,33 @@ class Sprite {
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
-        this.showHitbox = true // false
+        this.showHitbox = false // false
         this.flipped = false
         this.collided = false
+        this.collisionEvents = []
+        this.hb = {top: 0, bottom: 0, left: 0, right: 0}
+    }
+
+    hbOffsets(hb) { this.hb = hb }
+
+    getHb() {
+        return [
+            this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
+            this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
+            this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
+        ]
+    }
+
+    drawHb() {
+        this.parentCon.ctx.strokeRect(
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+            this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
     }
 
     imageLoaded() {
         // Called when an image loads. Interesting.
+        console.log("Loaded!")
     }
 
     addAnimation(nam, dict, play) {
@@ -317,7 +366,9 @@ class Sprite {
     }
 
     animate(nam) {
+        if (this.animationState == nam) return
         this.animationState = nam
+        this.animation[1] = this.animationStates[this.animationState][2]
         this.animation[2] = false
         this.animation[0] = this.animationStates[this.animationState][0]
     }
@@ -327,19 +378,14 @@ class Sprite {
     play(n) { this.animation[2] = false; if (n != undefined) { this.animation[0] = n } }
     frame(n) { this.animation[0] = n }
 
-    getHb() {
-        return [
-            (this.pos.x - (this.c ? this.w / 2 : 0)),
-            (this.pos.y - (this.c ? this.h / 2 : 0)),
-            this.w * this.s, this.h * this.s
-        ]
+    collidedWith(el, d) {
+        for (let e = 0; e < this.collisionEvents.length; e++) {
+            this.collisionEvents[e](el, d)
+        }
     }
 
-    drawHb() {
-        this.parentCon.ctx.strokeRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5,
-            this.w * this.s - 1, this.h * this.s - 1)
+    onCollision(fn) {
+        this.collisionEvents.push(fn)
     }
 
     draw() {
@@ -389,14 +435,6 @@ class PhysicsActor extends Sprite {
 
     hbOffsets(hb) { this.hb = hb }
 
-    getHb() {
-        return [
-            this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
-            this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
-            this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
-        ]
-    }
-
     intersects(hbe) {
         let b1 = this.getHb()
         let b2 = hbe.getHb()
@@ -421,6 +459,7 @@ class PhysicsActor extends Sprite {
             let b1 = this.getHb()
             let b2 = el.getHb()
             el.collided = true
+            this.collided = true
             
             let rd = ((b1[0] + b1[2]) - b2[0])
             let ld = ((b2[0] + b2[2]) - b1[0])
@@ -430,11 +469,7 @@ class PhysicsActor extends Sprite {
                 this.pos.y -= td
                 this.speed.y = Math.min(this.speed.y, 0)
                 this.onGround = true
-                // this.collidedWith(el, "top")
-                // console.log(el.srcStr)
-                // if (el.srcStr == "Tiles/Bounce.png") {
-                //     this.speed.y = -2.3
-                // }
+                this.collidedWith(el, "top")
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
                 this.speed.y = Math.max(this.speed.y, 0)
