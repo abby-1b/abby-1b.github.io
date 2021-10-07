@@ -3,7 +3,8 @@ let con = new Console(300, 200, "#ebe3c5")
 
 // Controls
 con.nEvent("jump", () => {
-    player.speed.y = -1
+    if (player.onGround)
+        player.speed.y = -1
 })
 con.onKeyPressed(' ', "jump")
 
@@ -28,46 +29,42 @@ player.addAnimation("idle", {
     loop: true,
     pause: -1
 }, true)
+player.addAnimation("run", {
+    start: 6,
+    end: 11,
+    timer: 3,
+    loop: true,
+    pause: -1
+}, true)
+player.addAnimation("jump", {
+    start: 12,
+    end: 13,
+    timer: 12,
+    loop: false,
+    pause: -1
+})
+player.addAnimation("fall", {
+    start: 14,
+    end: 16,
+    timer: 8,
+    loop: false,
+    pause: -1
+})
+
 player.flipped = true
-player.showHitbox = true
+// player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
-player.pos.x += 5
+player.pos.x += 775
 
-player.collidedWith = function(el, d) {
-    // console.log(el.curAnimationTimer)
-    if (el.sourceUrl == "Tiles/Bounce.png" && d == "top") {
-        player.speed.y = -19
-
-        player.isCrouched = false
-        player.animationFrame = 0
-        player.animationFrames = 3
-        player.animationTimer = 10
-        player.animationStart = 12
-        player.loopAnimation = false
-        player.curAnimationTimer = player.animationTimer
-        player.onGround = false
-    } else if (el.sourceUrl == "Sprites/Trash.png" && d == "top" && (el.curAnimationTimer == 0 || el.curAnimationTimer == 120)) {
-        el.hasAnimation = true
-        el.animationStart = -1
-        el.animationFrame = 0
-        el.animationFrames = 2
-        el.loopAnimation = false
-        el.animationTimer = 120
-        el.curAnimationTimer = 120
+player.onCollision(function(el, d) {
+    if (el.srcStr == "Tiles/Bounce.png" && d == "top") {
+        player.speed.y = -2.3
+        player.animate("jump")
+    } else if (el.srcStr == "Sprites/Trash.png" && d == "top" && (el.curAnimationTimer == 0 || el.curAnimationTimer == 120)) {
         player.speed.y -= 11
-        player.yp -= 5
-        
-        player.isCrouched = false
-        player.animationFrame = 0
-        player.animationFrames = 3
-        player.animationTimer = 10
-        player.animationStart = 12
-        player.loopAnimation = false
-        player.curAnimationTimer = player.animationTimer
-        player.onGround = false
     }
-}
+})
 
 // // Triggers
 // let ts = [
@@ -81,6 +78,7 @@ player.collidedWith = function(el, d) {
 // ]
 
 con.init(() => {
+    con.follow(player, 0.1)
     CTool.tileMapFrom("Tiles/Map1.png", {
         PLAYER: ["player", 78, 205, 196],
         BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
@@ -140,36 +138,16 @@ con.init(() => {
 // }
 
 let gameLoop = () => {
-    con.camPos.lerp(
-        (-player.pos.x + con.width  / 2) - player.speed.x * 12 - player.w * player.s * 0.5,
-        (-player.pos.y + con.height / 2) - player.speed.y * 4  - player.h * player.s * 0.5,
-         0.1)
     background.pos.x = -con.camPos.x + con.width / 2
     background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
     background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
 
-    // player.lowerOnGround = false
-    // for (let a = 0; a < 2; a++) {
-    //     con.doPhysicsSprite(player)
-    //     for (let o = 0; o < obs.length; o++) {
-    //         player.doPhysics(obs[o])
-    //     }
-    //     player.xp += player.speed.x * (0.3 / 2)
-    //     player.yp += player.speed.y * (0.3 / 2)
-    //     player.lowerBar.xp = player.xp
-    //     player.lowerBar.yp = player.yp + 8
-    //     player.crouchBar.xp = player.xp
-    //     player.crouchBar.yp = player.yp - 2
-    // }
-    // player.dialogBar.xp = player.xp
-    // player.dialogBar.yp = (player.yp - 18)
-    // if (player.onGround && !player.lowerOnGround) player.onGround = false
+    con.text("Hello, World!", 5, 10)
+
     if (!player.locked)
         player.speed.add(new Vec2(
             ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized().mulr(0.25))
-    // 3.86
-    // let a = player.speed.angle()
-    // console.log(a)
+    
     // if ('s' in con.keys && player.onGround) {
     //     if (player.animationStart != 17) {
     //         player.animationStart = 17
@@ -223,6 +201,18 @@ let gameLoop = () => {
     //     player.animationTimes = 5
     //     player.curAnimationTimer = player.animationTimer
     // }
+    if (player.onGround) {
+        if (Math.abs(player.speed.x) > 0.1)
+            player.animate("run")
+        else
+            player.animate("idle")
+    } else {
+        if (player.speed.y < 0) {
+            player.animate("jump")
+        } else {
+            player.animate("fall")
+        }
+    }
     if (player.speed.x != 0) player.flipped = player.speed.x < 0
     if (player.flipped)
         player.hbOffsets({top: 3, bottom: 0, left: 6, right: 5})
