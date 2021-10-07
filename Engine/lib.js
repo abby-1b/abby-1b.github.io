@@ -292,7 +292,7 @@ class Sprite {
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
-        this.showHitbox = false
+        this.showHitbox = true // false
         this.flipped = false
         this.collided = false
     }
@@ -331,7 +331,7 @@ class Sprite {
         return [
             (this.pos.x - (this.c ? this.w / 2 : 0)),
             (this.pos.y - (this.c ? this.h / 2 : 0)),
-            this.w * this.s - 1, this.h * this.s - 1
+            this.w * this.s, this.h * this.s
         ]
     }
 
@@ -438,7 +438,7 @@ class PhysicsActor extends Sprite {
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
                 this.speed.y = Math.max(this.speed.y, 0)
-            } else if (ld < rd) {
+            } else if (ld <= rd) {
                 this.pos.x += ld
                 this.speed.x = 0
             } else {
