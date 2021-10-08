@@ -1,5 +1,11 @@
-const optimizeRepeats = true
-const convolutionalOptimization = true
+
+// Removes whitespace
+// 'none', 'readable', 'full'
+const simpleOptimization = 'full'
+
+// Uses `replace` to optimize repeated code
+// 'none', 'fast', 'slow'
+const repeatOptimization = 'fast'
 
 const fs = require('fs')
 
@@ -22,44 +28,56 @@ const html = `
 let data = fs.readFileSync("lib.js", "utf8")
     + "\n" + fs.readFileSync("script.js")
 let minified = minify(data)
-console.log((minified.length / data.length) * 100)
+console.log("Size:", (minified.length / data.length) * 100)
 minified = html.replace(/\$0/, minified)
-console.log("Final length:", minified.length)
+console.log("Final length:", (new TextEncoder().encode(minified)).length)
 fs.writeFile("compressed.html", minified, "utf8", (e) => {})
 
 function minify(d) {
-    let cs = "+-*/{}()=:,<>;|&?[]!"
-    let nls = "*/{(=:,<>;|&?[!"
-    let nle = "+-})]"
-    d = d
-        .split("\n")
-        .map(e => e.replace(/\/\/.*/g, ""))
-        .map(e => e.trim())
-    for (let c = 0; c < cs.length; c++) {
-        d = d.map(e => e.replace(new RegExp("\\" + cs[c] + "\\s+", 'g'), cs[c]))
-        d = d.map(e => e.replace(new RegExp("\\s+\\" + cs[c], 'g'), cs[c]))
+    if (simpleOptimization == 'none') {
+        console.log("No simple optimizations.")
+    } else if (simpleOptimization == 'readable') {
+        console.log("Readable simple optimizations...")
+        d = d
+            .split("\n")
+            .map(e => e.replace(/\/\/.*/g, ""))
+            .filter(e => e.trim().length != 0)
+            .join("\n")
+    } else if (simpleOptimization == 'full') {
+        console.log("Full simple optimizations...")
+        let cs = "+-*/{}()=:,<>;|&?[]!"
+        let nls = "*/{(=:,<>;|&?[!"
+        let nle = "+-})]"
+        d = d
+            .split("\n")
+            .map(e => e.replace(/\/\/.*/g, ""))
+            .map(e => e.trim())
+        for (let c = 0; c < cs.length; c++) {
+            d = d.map(e => e.replace(new RegExp("\\" + cs[c] + "\\s+", 'g'), cs[c]))
+            d = d.map(e => e.replace(new RegExp("\\s+\\" + cs[c], 'g'), cs[c]))
+        }
+        d = d
+            .filter(e => e.length != 0)
+            .join("\n")
+            .replace(/0\./g, ".")
+        for (let c = 0; c < nls.length; c++) {
+            d = d.replace(new RegExp("\\" + nls[c] + "\n", 'g'), nls[c])
+            d = d.replace(new RegExp("\n\\" + nls[c], 'g'), nls[c])
+        }
+        for (let c = 0; c < nle.length; c++)
+            d = d.replace(new RegExp("\n\\" + nle[c], 'g'), nle[c])
     }
-    d = d
-        .filter(e => e.length != 0)
-        .join("\n")
-        .replace(/0\./g, ".")
-    for (let c = 0; c < nls.length; c++) {
-        d = d.replace(new RegExp("\\" + nls[c] + "\n", 'g'), nls[c])
-        d = d.replace(new RegExp("\n\\" + nls[c], 'g'), nls[c])
-    }
-    for (let c = 0; c < nle.length; c++)
-        d = d.replace(new RegExp("\n\\" + nle[c], 'g'), nle[c])
-    
-    let replaceString = []
 
     // Repeats
     // Lowest: 10043 > 9967 > 9664 > 9591 > 9328 > 9098 > 8203
-    // 8035
-    // Flip the replaceString, please.
-    if (optimizeRepeats) {
-        let li = 0
+    // 8035 8195 8106 7774 
+    if (repeatOptimization == 'none') {
+        console.log("No repeat optimizations.")
+    } else if (repeatOptimization == 'fast') {
+        console.log("Fast repeat optimizations...")
+        let li = 1
+        let replaceString = []
         let rs = [".addEventListener(", ".then("]
-
         let crs = ".=(["
         for (let ccr = 0; ccr < crs.length; ccr++) {
             let mi = getMatchIndexes(d, crs[ccr])
@@ -70,65 +88,71 @@ function minify(d) {
             }
             pm = pm.filter(e => (e != crs[ccr] && e.length != 0) && !rs.includes(e))
             pm = uniq(pm.map(e => [e, pm.filter(g => g == e).length]))
-            pm = pm.filter(e => (e[0].length - 1) * e[1] > 11 + e[0].length)
+            pm = pm.filter(e => (e[0].length - 1) * e[1] > 13 + e[0].length)
             for (let a = 0; a < pm.length; a++)
                 rs.push(pm[a][0])
         }
-        rs.push(...["return ", "let", "var", "return", "true", "false", "++", "--", "=0;", "==", "){", "&&", "||", "<<", ">>", "new ", "]=", ")=", "=[", "=(", "}else{", "({", "})", "}}", "))", "([", "])", "{(", ")}", "()=>", "-1", "[]"])
+        rs.push(...["return ", "let", "var", "return", "true", "false", "++", "--", "=0;", "==", "){", "&&", "||", "<<", ">>", "new ", "]=", ")=", "=[", "=(", "}else{", "({", "})", "}}", "))", "([", "])", "{(", ")}", "()=>{", "-1", "[]"])
         for (let r = 0; r < rs.length; r++) {
             let rgp = new RegExp(rs[r].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g")
             let matches = d.match(rgp)
-            if (matches && matches.length * (rs[r].length - 1) > 11 + rs[r].length) {
+            if (matches && matches.length * (rs[r].length - 1) > 13 + rs[r].length) {
                 while (d.includes(String.fromCharCode(li)) || replaceString.join("").includes(String.fromCharCode(li)) || "\\\r\n".includes(String.fromCharCode(li))) li++
                 d = d.replace(rgp, String.fromCharCode(li))
-                replaceString.push(`,/${String.fromCharCode(li).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/,"${rs[r]}")`)
+                replaceString.push(String.fromCharCode(li) + '�' + rs[r])
             }
-        }
-
-        if (convolutionalOptimization) {
-            let minSizeTotal = (new TextEncoder().encode(d + replaceString.join(""))).length
-            let lastStr = d
-            for (let rml = 0; true; rml++) {
-                let tma = 0
-                let tms = ""
-                for (let len = 2; len < 32; len++) {
-                    let ss = {}
-                    for (let a = 0; a < d.length - len; a++) {
-                        let sstr = d.substr(a, len)
-                        if (sstr in ss) {
-                            ss[sstr]++
-                        } else {
-                            ss[sstr] = 1
-                        }
-                    }
-                    let maxAppearences = Math.max(...Object.values(ss))
-                    let ky = getKeyByValue(ss, maxAppearences)
-                    maxAppearences = ((len - 1) * maxAppearences) - (11 + len)
-                    if (maxAppearences > tma) {
-                        tms = ky
-                        tma = maxAppearences
+        } // 10327 > 10298 > 10291
+        d = d.replace(/\`/g, "\\`").replace(/\${/g, "\\${")
+        replaceString = replaceString.reverse().join("�")
+        d = "$=`" + d + "`;`" + replaceString + "`.split`�`.map((e,i,a)=>{i%2==0&&($=$.split(e).join(a[i+1]))})\neval($)"
+    } else if (repeatOptimization == 'slow') {
+        console.log("Slow repeat optimizations...")
+        let li = 1
+        let replaceString = []
+        let minSizeTotal = (new TextEncoder().encode(d + replaceString.join(""))).length
+        let lastStr = d
+        for (let rml = 0; true; rml++) {
+            let tma = 0 // The max appearences
+            let tms = "" // The string referenced above
+            for (let len = 2; len < 32; len++) {
+                let ss = {}
+                for (let a = 0; a < d.length - len; a++) {
+                    let sstr = d.substr(a, len)
+                    if (sstr in ss) {
+                        ss[sstr]++
+                    } else {
+                        ss[sstr] = 1
                     }
                 }
-                if (tms == "") break
-                while (d.includes(String.fromCharCode(li)) || replaceString.join("").includes(String.fromCharCode(li)) || "\\\r\n".includes(String.fromCharCode(li))) li++
-                lastStr = d + ""
-                d = d.replace(new RegExp(tms.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g"), String.fromCharCode(li))
-                tms = tms
-                    .replace(/\n/g, "\\n")
-                    .replace(/\r/g, "\\r")
-                    .replace(/\"/g, "\\\"")
-                replaceString.push(`,/${String.fromCharCode(li).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\n/g, "\\n").replace(/\r/g, "\\r")}/,"${tms}")`)
-                let newSize = (new TextEncoder().encode(d + replaceString.join(""))).length
-                console.log("Removing...", newSize - minSizeTotal)
-                if (newSize - 20 >= minSizeTotal) {
-                    d = lastStr
-                    break
+                let maxAppearences = Math.max(...Object.values(ss))
+                let ky = getKeyByValue(ss, maxAppearences)
+                maxAppearences = ((len - 1) * maxAppearences) - (13 + len)
+                if (maxAppearences > tma) {
+                    tms = ky
+                    tma = maxAppearences
                 }
-                minSizeTotal = newSize
             }
+            if (tms == "") break
+            while (d.includes(String.fromCharCode(li)) || replaceString.join("").includes(String.fromCharCode(li)) || "\\\r\n".includes(String.fromCharCode(li))) li++
+            lastStr = d + ""
+            d = d.replace(new RegExp(tms.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g"), String.fromCharCode(li))
+            tms = tms
+                .replace(/\n/g, "\\n")
+                .replace(/\r/g, "\\r")
+                .replace(/\"/g, "\\\"")
+            // .replace(/\n/g, "\\n").replace(/\r/g, "\\r")
+            replaceString.push(String.fromCharCode(li) + '�' + tms)
+            let newSize = (new TextEncoder().encode(d + replaceString.join(""))).length
+            console.log("Removing:", newSize)
+            if (newSize - 40 >= minSizeTotal) {
+                d = lastStr
+                break
+            }
+            minSizeTotal = newSize
         }
-        console.log(replaceString.length)
-        d = "r=(s,r,w)=>s.replace(new RegExp(r.source,'g'),w)\neval(" + "r(".repeat(replaceString.length) + "`" + d.replace(/\`/g, "\\`").replace(/\${/g, "\\${") + "`" + replaceString.reverse().join("") + ")"
+        d = d.replace(/\`/g, "\\`").replace(/\${/g, "\\${")
+        replaceString = replaceString.reverse().join("�")
+        d = "$=`" + d + "`;`" + replaceString + "`.split`�`.map((e,i,a)=>{i%2==0&&($=$.split(e).join(a[i+1]))})\neval($)"
     }
     return d
 }
