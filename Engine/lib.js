@@ -140,7 +140,7 @@ class Console {
     constructor(w, h, col) {
         let metaTags = {
             "description": "This uses an unnamed JS engine made by CodeIGuess!",
-            "viewport": "width=device-width, initial-scale=1"
+            "viewport": "width=device-width,initial-scale=1"
         }
         for (let mt in metaTags) {
             let meta = document.createElement('meta')
@@ -148,8 +148,7 @@ class Console {
             meta.content = metaTags[mt]
             document.head.appendChild(meta)
         }
-        document.body.style.margin  = "0"
-        document.body.style.padding = "0"
+        document.body.style.margin = document.body.style.padding = "0"
         document.body.style.backgroundColor = col | "white"
         this.width = Math.ceil(w)
         this.height = Math.ceil(h)
@@ -161,8 +160,7 @@ class Console {
         this.el.style.objectFit = "contain"
         this.el.style.position = "absolute"
         this.el.style.transform = "translate(-50%,-50%)"
-        this.el.style.left = "50%"
-        this.el.style.top = "50%"
+        this.el.style.left = this.el.style.top = "50%"
         this.ctx = this.el.getContext('2d')
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
@@ -178,6 +176,8 @@ class Console {
             gravity: new Vec2(0.0, 0.015),
             friction: new Vec2(0.9, 0.995)
         }
+        this.fonts = {"": "20px Arial"}
+        this.currentFont = ""
         this.events = {}
         this.loopFn = () => {}
         this.initFn = () => {}
@@ -293,9 +293,21 @@ class Console {
         return spr
     }
 
+    nFont(name, url) {
+        this.fonts[name] = new FontFace(name, 'url(' + url + ')')
+        this.fonts[name].load().then((font) => {
+            document.fonts.add(font)
+            console.log(font)
+        })
+    }
+
+    font(name) {
+        this.currentFont = name
+    }
+
     text(t, x, y) {
         this.ctx.fillStyle = "black"
-        this.ctx.font = "rh"
+        this.ctx.font = "1em " + this.currentFont
         this.ctx.fillText(t, x, y)
     }
 
@@ -331,23 +343,37 @@ class Sprite {
     hbOffsets(hb) { this.hb = hb }
 
     getHb() {
-        return [
-            this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
-            this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
-            this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
-        ]
+        if (this.flipped) {
+            return [
+                this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.right * this.s,
+                this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
+                this.w * this.s - (0 + this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
+            ]
+        } else {
+            return [
+                this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
+                this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
+                this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
+            ]
+        }
     }
 
     drawHb() {
-        this.parentCon.ctx.strokeRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
-            this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
+        if (this.flipped) {
+            this.parentCon.ctx.strokeRect(
+                Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.right * this.s,
+                Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+                this.w * this.s - (1 + this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
+        } else {
+            this.parentCon.ctx.strokeRect(
+                Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
+                Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+                this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
+        }
     }
 
     imageLoaded() {
         // Called when an image loads. Interesting.
-        console.log("Loaded!")
     }
 
     addAnimation(nam, dict, play) {
@@ -433,8 +459,6 @@ class PhysicsActor extends Sprite {
         this.hb = {top: 0, bottom: 0, left: 0, right: 0}
     }
 
-    hbOffsets(hb) { this.hb = hb }
-
     intersects(hbe) {
         let b1 = this.getHb()
         let b2 = hbe.getHb()
@@ -486,13 +510,6 @@ class PhysicsActor extends Sprite {
         } else {
             el.collided = false
         }
-    }
-
-    drawHb() {
-        this.parentCon.ctx.strokeRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
-            this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
     }
 }
 
