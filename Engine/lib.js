@@ -1,143 +1,6 @@
 
-// function Sprite(pCon, src, x, y, w, h, centered) {
-//     el.flipped = false
-//     el.loopAnimation = true
-//     el.lowerOnGround = false
-//     el.canUnCrouch = true
-//     el.hasAnimation = false
-//     el.imageCentered = false
-//     el.parentCon = pCon
-//     el.collidedWith = () => {}
-//     el.update = function update() {
-//         this.style.left = (this.xp + Math.round(this.parentCon.camPos.x)) + "px"
-//         this.style.top  = (this.yp + Math.round(this.parentCon.camPos.y)) + "px"
-//         this.style.transform = (this.centered ? "translate(-50%, -50%) " : "") + (this.flipped ? "scaleX(-1) " : "")
-//         if (this.hasAnimation) {
-//             if (this.animationFrame <= this.animationFrames && this.curAnimationTimer > 0) this.curAnimationTimer -= 1
-//             if (this.curAnimationTimer <= 0) {
-//                 this.animationFrame++
-//                 this.curAnimationTimer = this.animationTimer
-//             }
-//             if (this.animationFrame >= this.animationFrames) {
-//                 if (this.loopAnimation) {
-//                     this.animationFrame -= this.animationFrames
-//                 } else {
-//                     this.animationFrame = this.animationFrames - 1
-//                 }
-//             }
-//             if (this.imageCentered) {
-//                 this.style.background = `url(${this.sourceUrl}) calc(${(this.animationFrame + this.animationStart) * -this.wv}px + 50%) 50%`
-//             } else {
-//                 this.style.background = `url(${this.sourceUrl}) ${(this.animationFrame + this.animationStart) * -this.wv}px 0px`
-//             }
-//         } else {
-//             this.style.background = `url(${this.sourceUrl}) ${this.imageCentered ? "50% 50%" : ""}`
-//         }
-//     }
-//     el.getHb = function() {
-//         let ret = this.getBoundingClientRect()
-//         return {
-//             left: ret.left + this.hb.left,
-//             right: ret.right - this.hb.right,
-//             top: ret.top + this.hb.top,
-//             bottom: ret.bottom - this.hb.bottom,
-//             width: ret.width - (this.hb.right + this.hb.left),
-//             height: ret.height - (this.hb.bottom + this.hb.top)
-//         }
-//     }
-//     el.intersects = function(el) {
-//         let b1 = this.getHb()
-//         let b2 = el.getHb()
-//         if(b1.top    + b1.height > b2.top
-//         && b1.left   + b1.width  > b2.left
-//         && b1.bottom - b1.height < b2.bottom
-//         && b1.right  - b1.width  < b2.right) {
-//             return true
-//         }
-//         return false
-//     }
-//     el.doPhysics = function(el) {
-//         // this.xp -= (this.getBoundingClientRect().left - el.getBoundingClientRect().right) / 2
-//         if (!this.lowerOnGround) this.lowerOnGround = this.lowerBar.intersects(el)
-//         if (this.canUnCrouch) this.canUnCrouch = !this.crouchBar.intersects(el)
-//         if (!this.intersects(el)) return
-//         let bt = this.getHb()
-//         let be = el.getHb()
-//         // console.log(this.intersects(el))
-//         let rd = (bt.right - be.left) / this.parentCon.pixelSize
-//         let ld = (be.right - bt.left) / this.parentCon.pixelSize
-//         let td = (bt.bottom - be.top) / this.parentCon.pixelSize
-//         let bd = (be.bottom - bt.top) / this.parentCon.pixelSize
-//         if (td < rd && td < ld && td < bd) {
-//             this.yp -= td
-//             this.speed.y = 0
-//             this.onGround = true
-//             this.collidedWith(el, "top")
-//         } else if (bd < rd && bd < ld) {
-//             this.yp += bd
-//             this.speed.y = 0
-//         } else if (ld < rd) {
-//             this.xp += ld
-//             this.speed.x = 0
-//         } else {
-//             this.xp -= rd
-//             this.speed.x = 0
-//         }
-//     }
-//     // el.src = src
-//     el.update()
-//     return el
-// }
-
-// class Console {
-//     constructor(w, h, s) {
-//         this.sprites = []
-//         this.tiles = []
-//         this.camPos = new Vec2(0, 0)
-//         this.loopFn = () => {}
-//         document.body.appendChild(this.el)
-//         document.body.style.overflow = "hidden"
-//         this.keys = {}
-//         window.addEventListener('keydown', e => { if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now(); if (e.key == ' ') e.preventDefault() })
-//         window.addEventListener('keyup'  , e => { if (  e.key.toLowerCase() in this.keys ) delete this.keys[e.key.toLowerCase()] })
-//     }
-
-//     addTile(til) {
-//         this.tiles.push(til)
-//         this.el.appendChild(til)
-//         return til
-//     }
-
-//     doPhysicsSprite(spr) {
-//         // console.log(spr)
-//         for (let s = 0; s < this.tiles.length; s++) {
-//             spr.doPhysics(this.tiles[s])
-//         }
-//     }
-
-//     updateAll(ths) {
-//         ths.loopFn()
-//         for (let s = 0; s < ths.tiles.length; s++)
-//             ths.tiles[s].update()
-//         for (let s = 0; s < ths.sprites.length; s++)
-//             ths.sprites[s].update()
-//     }
-
-    // static getImagePixels(src, fn) {
-    //     var img = document.createElement("img")
-    //     img.onload = function() {
-    //         var canvas = document.createElement('canvas')
-    //         canvas.width = img.width
-    //         canvas.height = img.height
-    //         canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height)
-    //         fn(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
-    //     }
-    //     img.src = src
-    // }
-// }
-
 class Console {
-    constructor(w, h, col) {
+    constructor(h, col) {
         let metaTags = {
             "description": "This uses an unnamed JS engine made by CodeIGuess!",
             "viewport": "width=device-width,initial-scale=1"
@@ -150,17 +13,21 @@ class Console {
         }
         document.body.style.margin = document.body.style.padding = "0"
         document.body.style.backgroundColor = col | "white"
-        this.width = Math.ceil(w)
+        this.width = Math.ceil((window.innerWidth / window.innerHeight) * h)
         this.height = Math.ceil(h)
         this.el = document.createElement("canvas")
         this.el.width = this.width
         this.el.height = this.height
-        this.el.style.width = "100vw"
-        this.el.style.height = "min(100vh,100%)"
-        this.el.style.objectFit = "contain"
+        this.el.style.height = "100vh"
+        // this.el.style.width = "100vw"
+        // this.el.style.height = "min(100vh,100%)"
+        // this.el.style.objectFit = "contain"
         this.el.style.position = "absolute"
         this.el.style.transform = "translate(-50%,-50%)"
         this.el.style.left = this.el.style.top = "50%"
+        window.onresize = (e) => {
+
+        }
         this.ctx = this.el.getContext('2d')
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
@@ -170,7 +37,6 @@ class Console {
         this.tiles = [] // Everything that is a tile
         this.objects = [] // Everything that is an object
         this.camPos = new Vec2(0, 0)
-        this.following = null
         this.followInterval = 0
         this.physics = {
             gravity: new Vec2(0.0, 0.015),
@@ -191,20 +57,55 @@ class Console {
 
     // Controls
     nEvent(n, f) {
-        this.events[n] = f
+        this.events[n] = [f, false]
     }
 
     onKeyPressed(k, n) {
-        if (typeof k === "string")
-            window.addEventListener('keydown', e => { if (e.key == k && !e.repeat) this.events[n]() })
-        else
-            window.addEventListener('keydown', e => { if (k.includes(e.key) && !e.repeat) this.events[n]() })
+        if (typeof k === "string") {
+            window.addEventListener('keydown', e => {
+                if (e.key == k && !e.repeat) {
+                    this.events[n][1] = true
+                    this.events[n][0]()
+                }
+            })
+            window.addEventListener('keyup', e => {
+                if (e.key == k)
+                    this.events[n][1] = false
+            })
+        } else {
+            window.addEventListener('keydown', e => {
+                if (k.includes(e.key) && !e.repeat) {
+                    this.events[n][1] = true
+                    this.events[n][0]()
+                }
+            })
+            window.addEventListener('keyup', e => {
+                if (k.includes(e.key))
+                    this.events[n][1] = false
+            })
+        }
+    }
+
+    eventOngoing(n) {
+        return this.events[n][1]
     }
 
     isKeyDown(k) {
         return k in this.keys
     }
 
+    // Touch
+    touchArea(h, v, events) {
+        // this.touchAttributes = [h, v, events]
+        var currentConsole = this
+        window.addEventListener("touchstart", function(e) {
+            let x = Math.round(e.changedTouches[0].clientX) * h / currentConsole.width
+            let y = Math.round(e.changedTouches[0].clientY) * v / currentConsole.height
+            console.log(x, y)
+        })
+    }
+
+    // Camera
     follow(el, interval) {
         this.following = el
         this.followInterval = interval
@@ -297,7 +198,6 @@ class Console {
         this.fonts[name] = new FontFace(name, 'url(' + url + ')')
         this.fonts[name].load().then((font) => {
             document.fonts.add(font)
-            console.log(font)
         })
     }
 
@@ -504,9 +404,6 @@ class PhysicsActor extends Sprite {
                 this.pos.x -= rd
                 this.speed.x = 0
             }
-
-            // this.speed.y = 0
-            // this.pos.y -= (b1[1] + b1[3]) - b2[1]
         } else {
             el.collided = false
         }
@@ -611,22 +508,26 @@ class Vec2 {
         this.y = y
     }
 
+    // Multiplies, doesn't return
     mul(v) {
         this.x *= v
         this.y *= v
     }
 
+    // Multiplies by vector
     mulV(v) {
         this.x *= v.x
         this.y *= v.y
     }
 
+    // Multiplies, returns
     mulr(v) {
         this.x *= v
         this.y *= v
         return this
     }
 
+    // Multiplied, doesn't mutate
     muld(v) {
         return new Vec2(this.x * v, this.y * v)
     }
@@ -636,6 +537,7 @@ class Vec2 {
         this.y += v.y
     }
 
+    // Normalizes, doesn't return
     normalize() {
         let d = Math.sqrt(this.x * this.x + this.y * this.y)
         if (d == 0) return
@@ -643,6 +545,7 @@ class Vec2 {
         this.y /= d
     }
 
+    // Normalized, doesn't mutate
     normalized() {
         let d = Math.sqrt(this.x * this.x + this.y * this.y)
         if (d == 0) return new Vec2(0, 0)
@@ -654,4 +557,9 @@ class Vec2 {
     }
 
     toString() { return `(${this.x}, ${this.y})` }
+
+    // Checks if a point is inside a rectangle
+    pointInRect(x1, y1, x2, y2, x, y) {
+        return x > x1 && x < x2 && y > y1 && y < y2
+    }
 }
