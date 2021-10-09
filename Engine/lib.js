@@ -115,8 +115,8 @@ class Console {
         })
         window.addEventListener("touchmove", function(e) {
             for (let ct = 0; ct < e.changedTouches.length; ct++) {
-                let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth + 1))
-                    + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
+                let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth  + 1))
+                  + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
                 if (i != ths.currentTouches[e.changedTouches[ct].identifier]) {
                     ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1] = false
                     ths.currentTouches[e.changedTouches[ct].identifier] = i
