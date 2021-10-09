@@ -1,5 +1,5 @@
 
-let con = new Console(300, 200, "#ebe3c5")
+let con = new Console(200, "#ebe3c5")
 
 // Text
 con.nFont("rh", "rainyhearts.ttf")
@@ -11,6 +11,13 @@ con.nEvent("jump", () => {
         player.speed.y = -1
 })
 con.onKeyPressed(' ', "jump")
+con.nEvent("left", () => {})
+
+// Touch
+con.touchArea(2, 2, [
+    "jump", "jump",
+    "left", "right"
+])
 
 // Background
 let background = con.nBgSprite(new Sprite("Tiles/Sky.png", -16, -16, con.width + 32, 512, 1, true))
@@ -34,10 +41,10 @@ player.addAnimation("down", { start: 17, end: 18, timer: 3 , loop: false, pause:
 player.addAnimation("cmov", { start: 18, end: 19, timer: 5 , loop: true, pause: -1 })
 
 player.flipped = true
-player.showHitbox = true
+// player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
-player.pos.x += 700 // 75
+// player.pos.x += 75
 
 player.onCollision(function(el, d) {
     if (el.srcStr == "Tiles/Bounce.png" && d == "top") {
@@ -78,7 +85,6 @@ con.init(() => {
             let s = con.nTile(new Sprite(bars[b].type, ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * bars[b].w, ss * bars[b].h, false))
         }
         con.loop(gameLoop)
-        // con.loop(() => {})
     })
 })
 
@@ -120,6 +126,8 @@ con.init(() => {
 // }
 
 let gameLoop = () => {
+    // console.log(con.eventOngoing("jump"))
+
     background.pos.x = -con.camPos.x + con.width / 2
     background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
     background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
@@ -135,44 +143,11 @@ let gameLoop = () => {
         player.speed.x *= 0.7
     } else {
         // if (player.canUnCrouch) {
-            player.isCrouched = false
+        player.isCrouched = false
         // }
         // if (!player.canUnCrouch) player.speed.x *= 0.7
         // else player.speed.x *= 0.87
     }
-    // if (ts.length > 1 && ' ' in con.keys) {
-    //     if (player.onGround && player.canUnCrouch) {
-    //         player.isCrouched = false
-    //         player.animationFrame = 0
-    //         player.animationFrames = 3
-    //         player.animationTimer = 5
-    //         player.animationStart = 12
-    //         player.loopAnimation = false
-    //         player.curAnimationTimer = player.animationTimer
-    //         player.speed.y -= 9
-    //         player.onGround = false
-    //     }
-    // }
-    // if (!player.onGround)
-    //     player.speed.y += 0.6
-    // if (player.canUnCrouch && player.onGround && (!(' ' in con.keys)) && (!('s' in con.keys))) {
-    //     player.loopAnimation = true
-    //     player.animationFrames = 6
-    //     if (Math.abs(player.speed.x) > 1) {
-    //         player.animationStart = 6
-    //         player.animationTimer = 3
-    //     } else {
-    //         player.animationStart = 0
-    //         player.animationTimer = 6
-    //     }
-    // }
-    // if ((!player.loopAnimation) && player.animationStart == 12 && player.speed.y > 0) {
-    //     player.animationStart = 15
-    //     player.animationFrame = 0
-    //     player.animationFrames = 2
-    //     player.animationTimes = 5
-    //     player.curAnimationTimer = player.animationTimer
-    // }
     if (player.onGround) {
         if (player.isCrouched) {
             if (Math.abs(player.speed.x) > 0.1)
@@ -186,15 +161,13 @@ let gameLoop = () => {
                 player.animate("run")
             else
                 player.animate("idle")
-
             player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
         }
     } else {
-        if (player.speed.y < 0) {
+        if (player.speed.y < -0.5)
             player.animate("jump")
-        } else {
+        else
             player.animate("fall")
-        }
         player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
     }
     if (player.speed.x != 0) player.flipped = player.speed.x < 0
