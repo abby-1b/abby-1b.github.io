@@ -3,7 +3,8 @@ class Console {
     constructor(h, col) {
         let metaTags = {
             "description": "This uses an unnamed JS engine made by CodeIGuess!",
-            "viewport": "width=device-width,initial-scale=1"
+            "viewport": "width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0",
+            "apple-mobile-web-app-capable": "yes"
         }
         for (let mt in metaTags) {
             let meta = document.createElement('meta')
@@ -13,21 +14,22 @@ class Console {
         }
         document.body.style.margin = document.body.style.padding = "0"
         document.body.style.backgroundColor = col | "white"
-        this.width = Math.ceil((window.innerWidth / window.innerHeight) * h)
-        this.height = Math.ceil(h)
         this.el = document.createElement("canvas")
-        this.el.width = this.width
-        this.el.height = this.height
+        this.el.style.width = "100vw"
         this.el.style.height = "100vh"
-        // this.el.style.width = "100vw"
-        // this.el.style.height = "min(100vh,100%)"
-        // this.el.style.objectFit = "contain"
+        window.onresize = () => {
+            this.width = Math.ceil((window.innerWidth / window.innerHeight) * h)
+            this.height = Math.ceil(h)
+            this.el.width = this.width
+            this.el.height = this.height
+        }
+        window.onorientationchange = window.onresize
+        window.ondeviceorientation = window.onresize
+        window.onresize()
+        this.el.style.objectFit = "contain"
         this.el.style.position = "absolute"
         this.el.style.transform = "translate(-50%,-50%)"
         this.el.style.left = this.el.style.top = "50%"
-        window.onresize = (e) => {
-
-        }
         this.ctx = this.el.getContext('2d')
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
@@ -96,12 +98,38 @@ class Console {
 
     // Touch
     touchArea(h, v, events) {
-        // this.touchAttributes = [h, v, events]
-        var currentConsole = this
+        this.currentTouches = {}
+        var ths = this
         window.addEventListener("touchstart", function(e) {
-            let x = Math.round(e.changedTouches[0].clientX) * h / currentConsole.width
-            let y = Math.round(e.changedTouches[0].clientY) * v / currentConsole.height
-            console.log(x, y)
+            for (let ct = 0; ct < e.changedTouches.length; ct++) {
+                let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth + 1))
+                    + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
+                ths.currentTouches[e.changedTouches[ct].identifier] = i
+                try {
+                    ths.events[events[i]][1] = true
+                    ths.events[events[i]][0]()
+                } catch (e) {
+                    console.error("Event `" + events[i] + "` doesn't exist.")
+                }
+            }
+        })
+        window.addEventListener("touchmove", function(e) {
+            for (let ct = 0; ct < e.changedTouches.length; ct++) {
+                let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth + 1))
+                    + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
+                if (i != ths.currentTouches[e.changedTouches[ct].identifier]) {
+                    ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1] = false
+                    ths.currentTouches[e.changedTouches[ct].identifier] = i
+                    ths.events[events[i]][1] = true
+                    ths.events[events[i]][0]()
+                }
+            }
+        })
+        window.addEventListener("touchend", function(e) {
+            for (let ct = 0; ct < e.changedTouches.length; ct++) {
+                ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1] = false
+                delete ths.currentTouches[e.changedTouches[ct].identifier]
+            }
         })
     }
 
