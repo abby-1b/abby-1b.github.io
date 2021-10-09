@@ -10,8 +10,12 @@ con.nEvent("jump", () => {
     if (player.onGround)
         player.speed.y = -1
 })
-con.onKeyPressed(' ', "jump")
-con.nEvent("left", () => {})
+con.onKeyPressed([' ', "ArrowUp"], "jump")
+
+con.nEvent("left" , () => {})
+con.onKeyPressed(['a', "ArrowLeft" ], "left")
+con.nEvent("right", () => {})
+con.onKeyPressed(['d', "ArrowRight"], "right")
 
 // Touch
 con.touchArea(2, 2, [
@@ -126,17 +130,16 @@ con.init(() => {
 // }
 
 let gameLoop = () => {
-    // console.log(con.eventOngoing("jump"))
-
+    background.w = con.width + 32
     background.pos.x = -con.camPos.x + con.width / 2
     background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
     background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
 
-    con.text("Hello, World!", 5, 10)
+    // con.text("Hello, World!", 5, 10)
 
     if (!player.locked)
         player.speed.add(new Vec2(
-            ('d' in con.keys ? 1 : 0) - ('a' in con.keys ? 1 : 0), 0).normalized().mulr(0.25))
+            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().mulr(0.25))
     
     if ('s' in con.keys && player.onGround) {
         player.isCrouched = true
