@@ -5,7 +5,7 @@ const simpleOptimization = 'full'
 
 // Uses `replace` to optimize repeated code
 // 'none', 'fast', 'slow'
-const repeatOptimization = 'fast'
+const repeatOptimization = 'slow'
 
 const fs = require('fs')
 
