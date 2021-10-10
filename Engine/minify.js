@@ -5,7 +5,7 @@ const simpleOptimization = 'full'
 
 // Uses `replace` to optimize repeated code
 // 'none', 'fast', 'slow'
-const repeatOptimization = 'slow'
+const repeatOptimization = 'none'
 
 const fs = require('fs')
 
@@ -26,7 +26,7 @@ const html = `
 
 // Reads two files, puts them together, and minifies them.
 let data = fs.readFileSync("lib.js", "utf8")
-    + "\n" + fs.readFileSync("script.js")
+    // + "\n" + fs.readFileSync("script.js")
 let minified = minify(data)
 console.log("Size:", (minified.length / data.length) * 100)
 minified = html.replace(/\$0/, minified)
@@ -176,3 +176,14 @@ function uniq(a) {
 }
 
 function getKeyByValue(object, value) { return Object.keys(object).find(key => object[key] === value) }
+
+// Results:
+//    MIN    :          20,728 > 7,267 bytes (full, slow)
+//    ZIP    :          20,728 > 4,956 bytes
+// MIN + ZIP : 20,728 >  7,267 > 4,661 bytes (full, slow)
+// MIN + ZIP : 20,728 >  8,914 > 4,486 bytes (full, fast)
+// MIN + ZIP : 20,728 > 12,734 > 4,029 bytes (full, none)
+
+// Conclusion:
+//   If using ZIP, use 'full', 'none' compression.
+//   If not using ZIP, use 'full', 'slow' compression.
