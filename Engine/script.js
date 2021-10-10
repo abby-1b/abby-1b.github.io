@@ -143,7 +143,7 @@ let gameLoop = () => {
     
     if ('s' in con.keys && player.onGround) {
         player.isCrouched = true
-        player.speed.x *= 0.7
+        player.speed.x *= 0.8
     } else {
         // if (player.canUnCrouch) {
         player.isCrouched = false
