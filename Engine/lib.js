@@ -419,12 +419,13 @@ class PhysicsActor extends Sprite {
             let bd = ((b2[1] + b2[3]) - b1[1])
             if (td < rd && td < ld && td < bd) {
                 this.pos.y -= td
-                this.speed.y = Math.min(this.speed.y, 0)
+                // this.speed.y = Math.max(this.speed.y, 0)
+                this.speed.y = Math.min(-this.speed.y * 0.5, 0)
                 this.onGround = true
                 this.collidedWith(el, "top")
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
-                this.speed.y = Math.max(this.speed.y, 0)
+                this.speed.y = Math.min(-this.speed.y, 0)
             } else if (ld <= rd) {
                 this.pos.x += ld
                 this.speed.x = 0
