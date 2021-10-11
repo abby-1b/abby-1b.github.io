@@ -42,7 +42,9 @@ class Console {
         this.followInterval = 0
         this.physics = {
             gravity: new Vec2(0.0, 0.015),
-            friction: new Vec2(0.9, 0.995)
+            // friction: new Vec2(0.9, 0.995)
+            friction: new Vec2(0.9, 0.99),
+            groundFriction: new Vec2(0.9, 0.99)
         }
         this.fonts = {"": "20px Arial"}
         this.currentFont = ""
@@ -251,13 +253,14 @@ class Console {
 }
 
 class Sprite {
-    constructor(src, x, y, w, h, s, c) {
+    constructor(src, x, y, w, h, scale, centered) {
+        this.type = "Sprite"
         this.src = src
         this.pos = new Vec2(x, y)
         this.w = w
         this.h = h
-        this.s = s | 1
-        this.c = c
+        this.s = scale | 1
+        this.c = centered
         this.animation = [0, 0, true] // frame, timer, paused
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
@@ -379,12 +382,30 @@ class Sprite {
     }
 }
 
+class Tile extends Sprite {
+    constructor(src, x, y, w, h, s, c) {
+        super(src, x, y, w, h, s ,c)
+        this.type = "Tile"
+    }
+}
+
 class PhysicsActor extends Sprite {
     constructor(src, x, y, w, h, s, c) {
         super(src, x, y, w, h, s, c)
+        this.type = "PhysicsActor"
         this.speed = new Vec2(0, 0)
         this.locked = false
         this.hb = {top: 0, bottom: 0, left: 0, right: 0}
+        this.bounce = 0
+        this.groundFriction = true
+    }
+
+    setFriction(x, y) {
+        return (this.friction = new Vec2(x, y))
+    }
+
+    setFrictionV(v) {
+        return (this.friction = v)
     }
 
     intersects(hbe) {
@@ -401,8 +422,8 @@ class PhysicsActor extends Sprite {
     }
 
     physics(el) {
-        this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
-        this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
+        this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics[(this.collided && this.groundFriction ? "groundFriction" : "friction")].x
+        this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics[(this.collided && this.groundFriction ? "groundFriction" : "friction")].y
         this.pos.add(this.speed)
     }
 
@@ -419,19 +440,21 @@ class PhysicsActor extends Sprite {
             let bd = ((b2[1] + b2[3]) - b1[1])
             if (td < rd && td < ld && td < bd) {
                 this.pos.y -= td
-                // this.speed.y = Math.max(this.speed.y, 0)
-                this.speed.y = Math.min(-this.speed.y * 0.5, 0)
+                this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
                 this.onGround = true
                 this.collidedWith(el, "top")
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
-                this.speed.y = Math.min(-this.speed.y, 0)
+                this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
+                this.collidedWith(el, "bottom")
             } else if (ld <= rd) {
                 this.pos.x += ld
-                this.speed.x = 0
+                this.speed.x = -this.speed.x * this.bounce
+                this.collidedWith(el, "left")
             } else {
                 this.pos.x -= rd
-                this.speed.x = 0
+                this.speed.x = -this.speed.x * this.bounce
+                this.collidedWith(el, "right")
             }
         } else {
             el.collided = false
@@ -581,6 +604,12 @@ class Vec2 {
         return new Vec2(this.x / d, this.y / d)
     }
 
+    // Gets the length
+    length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y)
+    }
+
+    // Gets the angle
     angle() {
         return Math.atan2(this.x, this.y)
     }
