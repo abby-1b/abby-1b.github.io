@@ -36,20 +36,17 @@ plant.addAnimation("default", {
 }, true)
 
 // Player
-let player = con.nObj(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16, false))
+let player = con.nObj(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16))
 player.addAnimation("idle", { start: 0 , end: 5 , timer: 6 , loop: true , pause: -1 }, true)
 player.addAnimation("run" , { start: 6 , end: 11, timer: 3 , loop: true , pause: -1 })
 player.addAnimation("jump", { start: 12, end: 13, timer: 12, loop: false, pause: -1 })
 player.addAnimation("fall", { start: 14, end: 16, timer: 8 , loop: false, pause: -1 })
 player.addAnimation("down", { start: 17, end: 18, timer: 3 , loop: false, pause: -1 })
 player.addAnimation("cmov", { start: 18, end: 19, timer: 5 , loop: true, pause: -1 })
-
-player.flipped = true
+player.groundFriction = false
 // player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
-// player.pos.x += 75
-
 player.onCollision(function(el, d) {
     if (el.srcStr == "Tiles/Bounce.png" && d == "top") {
         player.speed.y = -2.3
@@ -58,6 +55,8 @@ player.onCollision(function(el, d) {
         player.speed.y = -1.5
     }
 })
+
+// let trash = con.nObj(new PhysicsActor("Sprites/Trash.png", 0, 0, 8, 8))
 
 // // Triggers
 // let ts = [
@@ -79,6 +78,7 @@ con.init(() => {
         TRASH: ["trash", 255, 230, 109]
     }, (bars) => {
         let offs = CTool.findTilePos(bars, "player")
+        console.log(offs)
         for (let b = 0; b < bars.length; b++) {
             const ss = 8
             if (bars[b].type == "player") continue
@@ -86,7 +86,7 @@ con.init(() => {
                 con.nObj(new Sprite("Sprites/Trash.png", ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * 2, ss * 2))
                 continue
             }
-            let s = con.nTile(new Sprite(bars[b].type, ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * bars[b].w, ss * bars[b].h, false))
+            let s = con.nTile(new Tile(bars[b].type, ss * (bars[b].x - offs.x), ss * (bars[b].y - offs.y), ss * bars[b].w, ss * bars[b].h, false))
         }
         con.loop(gameLoop)
     })
@@ -135,7 +135,7 @@ let gameLoop = () => {
     background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
     background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
 
-    // con.text("Hello, World!", 5, 10)
+    // con.text(player.speed.x, 5, 10)
 
     if (!player.locked)
         player.speed.add(new Vec2(
