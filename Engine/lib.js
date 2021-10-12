@@ -43,8 +43,8 @@ class Console {
         this.physics = {
             gravity: new Vec2(0.0, 0.015),
             // friction: new Vec2(0.9, 0.995)
-            friction: new Vec2(0.9, 0.99),
-            groundFriction: new Vec2(0.9, 0.99)
+            friction: new Vec2(0.9, 0.995),
+            groundFriction: new Vec2(0.9, 0.995)
         }
         this.fonts = {"": "20px Arial"}
         this.currentFont = ""
@@ -402,10 +402,6 @@ class PhysicsActor extends Sprite {
 
     setFriction(x, y) {
         return (this.friction = new Vec2(x, y))
-    }
-
-    setFrictionV(v) {
-        return (this.friction = v)
     }
 
     intersects(hbe) {
