@@ -26,7 +26,7 @@ const html = `
 
 // Reads two files, puts them together, and minifies them.
 let data = fs.readFileSync("lib.js", "utf8")
-    // + "\n" + fs.readFileSync("script.js")
+    + "\n" + fs.readFileSync("m3.js")
 let minified = minify(data)
 console.log("Size:", (minified.length / data.length) * 100)
 minified = html.replace(/\$0/, minified)
