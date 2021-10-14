@@ -45,7 +45,8 @@ function invert(change) {
 	} else {
 		let darkPreference = localStorage.getItem("darkMode")
 		if (darkPreference === null) {
-			localStorage.setItem("darkMode", "0")
+			localStorage.setItem("darkMode", "1")
+			setColors(true)
 		} else if (darkPreference == "1") {
 			setColors(true)
 		} else {
