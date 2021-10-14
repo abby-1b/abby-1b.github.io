@@ -20,16 +20,13 @@ function mdToHtml(t) {
 		.replace(/^<h[0-9]>.*/gm, e => e + "</" + e.split(">")[0].slice(1) + ">")
 		
 	// Bullet lists
-		.replace(/^\s*?~(.|\n)*?\n\n/gm, e => "<ul>\n" + e.trim() + "\n</ul>\n\n")
 		.replace(/^(\s*?)~(\s|)/gm, "<li>")
 
 	// Checklists
-		.replace(/^\s*?\[.\](.|\n)*?\n\n/gm, e => "<ul>\n" + e.trim() + "\n</ul>\n\n")
 		.replace(/^(\s*?)\[.\](\s|)/gm, e => "<li class='" + cmIconToClass[e.trim()[1]] + "'>")
 		.replace(/^<li >.*/gm, e => e + "</li>")
 
 	// Add / Remove lists
-		.replace(/^\s*?[+|-](.|\n)*?\n\n/gm, e => "<ul>\n" + e.trim() + "\n</ul>\n\n")
 		.replace(/^(\s*?)[+|-](\s|)/gm, e => e.trim() == "+" ? "<li class='added'>" : "<li class='removed'>")
 
 	// Closes all list items
