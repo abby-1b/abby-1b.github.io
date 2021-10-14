@@ -2,15 +2,24 @@ invert()
 hud()
 
 function openPage(pageLocation) {
-	if (pageLocation !== '') pageLocation = '/' + pageLocation.slice(1)
-	fetch(pageLocation + "/site.mdc").then(r => r.text().then(text => {
-		text = mdToHtml(text)
-		document.body.children[0].innerHTML = text.text
-		document.title = text.meta.title || "Code (I Guess)"
-		if (text.meta.navbar) {
-
+	if (pageLocation[0] == "?" || pageLocation === "") {
+		if (pageLocation !== '') pageLocation = '/' + pageLocation.slice(1)
+		pageLocation += "/site.mdc"
+		fetch(pageLocation).then(r => r.text().then(text => {
+			text = mdToHtml(text)
+			document.body.children[0].innerHTML = text.text
+			document.title = text.meta.title || "Code (I Guess)"
+			if (text.meta.navbar) {
+	
+			}
+		}))
+	} else {
+		if (pageLocation.startsWith("http")) {
+			window.location.href = pageLocation
+		} else {
+			window.location.href += pageLocation
 		}
-	}))
+	}
 }
 openPage(window.location.search)
 
