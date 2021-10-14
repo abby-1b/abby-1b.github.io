@@ -16,6 +16,8 @@ body, html {
 
 html {
 	filter: invert(0.05);
+	min-height: 100vh;
+	min-width: 100vw;
 }
 
 #content {
