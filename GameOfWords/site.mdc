@@ -19,3 +19,15 @@ everything falls together cohesively.
 
 # Getting the website to work (Oct 14, 2021)
 
+Finally started getting the website itself (http://codeiguess.github.io/GameOfWords) working. It's going to be using a game engine I made a while back, and am still working on. The hardest part, however, are the ideas that I want to implement. I really should start writing these down and structuring them before working on the main game.
+
+~ Multiplayer: Something similar to a Kahoot game, with a host to start the game and multiple guests joining and playing. This would be something similar to a multiple-choice but with a bit of gameplay, something like having to move your character to the correct position.
+~ Ease of use: If it's hard to set up, takes too long, or is too slow to use, it's going to fail. This goes for both the host making the quiz and the students using it. Codes used for connecting can't be 20 characters long, and since this is a small platform it could be two to three characters long.
+~ Small details, _game juice_: Game juice refers to all the things that make a game fun to play, regardless of the characteristics of the game, or the things the player has to do. If the player is doing _anything_ in the game, it should be fun. Again, this applies for both the host (when making the quiz) and the guest (when playing the quiz). Make it fun to make quizzes!
+
+Great, we have something to aim for!
+
+Now, the things I want to get done this week:
+
+[ ] Encoding and decoding an ID to make it completely unique (maybe by using Base64 and adding characters to the left and right?)
+[ ] Checking if an ID is already taken and re-generating until one is found.
