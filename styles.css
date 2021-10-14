@@ -79,6 +79,7 @@ li {
 
 .unchecked:before, .checked:before, .important:before, .question:before {
 	background-color: rgba(var(--fg),0.1);
+	border-radius: 3px;
 }
 
 /* Checklist */
