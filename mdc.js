@@ -44,7 +44,7 @@ function mdToHtml(t) {
 		.replace(/_.*?_/gm, e => "<i>" + e.slice(1, -1) + "</i>")
 	
 	// Monospace
-		.replace(/(?<!\`)`[^`]{1,}`/gm, e => "<m>" + e.slice(1, -1) + "</m>")
+		.replace(/\`[^\`]{1,}\`(?!`)/gm, e => "<m>" + e.slice(1, -1) + "</m>")
 		.replace(/```.*$/gm, "```")
 		.replace(/```(.|\n)*?```/gm, e => "<div class='spacer'></div><m class='block'>" + e.slice(3, -3).trim().replace(/\n/g, "<div class='spacer'></div>") + "</m>")
 
