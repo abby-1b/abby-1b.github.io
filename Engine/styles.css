@@ -1,10 +1,5 @@
-@font-face {
-    font-family: rh;
-    src: url(rainyhearts.ttf) format('truetype');
-}
 * {
     pointer-events: none;
-    font-family: rh;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
