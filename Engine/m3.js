@@ -1,21 +1,19 @@
 
 let con = new Console(200, "#ebe3c5")
 
-// Text
-con.nFont("rh", "rainyhearts.ttf")
-con.font("rh")
-
 // Controls
 con.nEvent("jump", () => {
-    if (player.onGround)
+    if (player.onGround) {
         player.speed.y = -1
+		player.speed.x *= 1.5
+	}
 })
-con.onKeyPressed([' ', "ArrowUp"], "jump")
+con.onKeyPressed([' ', 'w', 'W', "ArrowUp"], "jump")
 
 con.nEvent("left" , () => {})
-con.onKeyPressed(['a', "ArrowLeft" ], "left")
+con.onKeyPressed(['a', 'A', "ArrowLeft" ], "left")
 con.nEvent("right", () => {})
-con.onKeyPressed(['d', "ArrowRight"], "right")
+con.onKeyPressed(['d', 'D', "ArrowRight"], "right")
 
 // Touch
 con.touchArea(2, 2, [
@@ -48,6 +46,7 @@ player.groundFriction = false
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 player.onCollision(function(el, d) {
+	// console.log(d)
     if (el.srcStr == "Tiles/Bounce.png" && d == "top") {
         player.speed.y = -2.3
         player.animate("jump")
@@ -56,7 +55,7 @@ player.onCollision(function(el, d) {
     }
 })
 
-// let trash = con.nObj(new PhysicsActor("Sprites/Trash.png", 0, 0, 8, 8))
+let trash = con.nObj(new PhysicsActor("Sprites/Trash.png", 0, 0, 4, 4))
 
 // // Triggers
 // let ts = [
@@ -121,21 +120,13 @@ con.init(() => {
 //     }
 // }
 
-// function clearDialog() {
-//     player.dialogBar.innerHTML = ""
-//     for (let a = 0; a < tos.length; a++) {
-//         clearTimeout(tos[a])
-//     }
-//     tos = []
-// }
-
 let gameLoop = () => {
     background.w = con.width + 32
     background.pos.x = -con.camPos.x + con.width / 2
     background.pos.y = (-con.camPos.y + con.height / 2) - (player.pos.y / 40)
     background.animation[0] = (-con.camPos.x / 1000) + player.pos.x / 10000
 
-    // con.text(player.speed.x, 5, 10)
+    con.text(player.speed.x, 5, 10)
 
     if (!player.locked)
         player.speed.add(new Vec2(
