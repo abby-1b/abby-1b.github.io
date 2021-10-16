@@ -2,7 +2,6 @@
 class Console {
     constructor(h, col) {
         let metaTags = {
-            "description": "This uses an unnamed JS engine made by CodeIGuess!",
             "viewport": "width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0",
             "apple-mobile-web-app-capable": "yes"
         }
@@ -47,7 +46,8 @@ class Console {
             groundFriction: new Vec2(0.9, 0.995)
         }
         this.fonts = {"": "20px Arial"}
-        this.currentFont = ""
+		this.nFont("std", new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  , )5!5("6U`, 4))
+		this.font("std")
         this.events = {}
         this.loopFn = () => {}
         this.initFn = () => {}
@@ -202,43 +202,50 @@ class Console {
     // Adding any image thing. Supposed to be private.
     imageThing(spr) {
         spr.parentCon = this
-        if (spr.src in this.imageIndexes) {
-            if (this.imageElements[this.imageIndexes[spr.src]].complete) {
-                spr.imageLoaded()
-            } else {
-                this.imageElements[this.imageIndexes[spr.src]].addEventListener('load', () => {
-                    spr.imageLoaded()
-                })
-            }
-        } else {
-            let i = document.createElement("img")
-            i.className += "noSmooth"
-            i.addEventListener('load', () => {
-                spr.imageLoaded()
-            })
-            i.src = spr.src
-            this.imageIndexes[spr.src] = this.imageElements.push(i) - 1
-        }
-        spr.srcStr = spr.src
-        spr.src = this.imageIndexes[spr.src]
-        return spr
+		if (spr.src.isText) {
+			this.imageIndexes[spr.src] = this.imageElements.push(spr.src.canvas) - 1
+			spr.imageLoaded()
+		} else {
+			if (spr.src in this.imageIndexes) {
+				if (this.imageElements[this.imageIndexes[spr.src]].complete) {
+					spr.imageLoaded()
+				} else {
+					this.imageElements[this.imageIndexes[spr.src]].addEventListener('load', () => {
+						spr.imageLoaded()
+					})
+				}
+			} else {
+				let i = document.createElement("img")
+				i.className += "noSmooth"
+				i.addEventListener('load', () => {
+					spr.imageLoaded()
+				})
+				i.src = spr.src
+				this.imageIndexes[spr.src] = this.imageElements.push(i) - 1
+			}
+		}
+		spr.srcStr = spr.src
+		spr.src = this.imageIndexes[spr.src]
+		return spr
     }
 
-    nFont(name, url) {
-        this.fonts[name] = new FontFace(name, 'url(' + url + ')')
-        this.fonts[name].load().then((font) => {
-            document.fonts.add(font)
-        })
+	// Font name, CImage
+    nFont(name, img) {
+        this.fonts[name] = img
     }
 
+	// Sets the font that's currently being used
     font(name) {
         this.currentFont = name
     }
 
-    text(t, x, y) {
-        this.ctx.fillStyle = "black"
-        this.ctx.font = "1em " + this.currentFont
-        this.ctx.fillText(t, x, y)
+    text(text, x, y) {
+		let f = this.fonts[this.currentFont].canvas
+		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
+		text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
+		for (let c = 0; c < text.length; c++) {
+			this.ctx.drawImage(f, text[c] * 4, 0, f.height, f.height, x + c * (f.height + 1), y, f.height, f.height)
+		}
     }
 
     rect(x, y, w, h, c) {
@@ -250,6 +257,14 @@ class Console {
         this.ctx.fillStyle = c
         this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
     }
+}
+
+class CImage {
+	constructor(text, h) {
+		this.isText = true
+		this.canvas = CTool.canvasFromString(text, h)
+		this.canvas.className += "noSmooth"
+	}
 }
 
 class Sprite {
@@ -441,7 +456,10 @@ class PhysicsActor extends Sprite {
                 this.collidedWith(el, "top")
             } else if (bd < rd && bd < ld) {
                 this.pos.y += bd
-                this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
+				if (this.bounce != 0)
+					this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
+				else
+					this.speed.y = Math.max(this.speed.y, 0)
                 this.collidedWith(el, "bottom")
             } else if (ld <= rd) {
                 this.pos.x += ld
@@ -459,6 +477,29 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
+
+	static canvasFromString(str, h) {
+		str = str.split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
+		let canvas = document.createElement("canvas")
+		canvas.height = h
+		canvas.width = Math.ceil(str.length / h)
+		console.log(canvas.height, canvas.width)
+		let ctx = canvas.getContext('2d')
+		let dat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+		for (let i = 0; i < str.length; i++)
+			dat.data[(Math.floor(i / canvas.height) + (i % canvas.height) * canvas.width) * 4 + 3] = str[i] == "0" ? 0 : 255
+		ctx.putImageData(dat, 0, 0)
+		return canvas
+	}
+
+	static bin(n, l) {
+		let r = n.toString(2)
+		if (l === undefined) return r
+		while (r.length < l)
+			r = "0" + r
+		return r
+	}
+
     static lerp(a, b, v) {
         return a * (1 - v) + b * v
     }
@@ -617,3 +658,7 @@ class Vec2 {
         return x > x1 && x < x2 && y > y1 && y < y2
     }
 }
+
+// Setting up font
+let _font = `>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_N[B:SKU^K_#0")P ^0"? 1$09@#P!O]F9F%H"&$ $ !I )8-V?P, ,  , `
+// CTool.canvasFromString(_font, 4)
