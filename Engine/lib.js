@@ -1,4 +1,38 @@
 
+window.requestAnimFrame = (function() {
+	return  window.requestAnimationFrame       || 
+			window.webkitRequestAnimationFrame || 
+			window.mozRequestAnimationFrame    || 
+			window.oRequestAnimationFrame      || 
+			window.msRequestAnimationFrame     || 
+			function(cb, e){
+				window.setTimeout(cb, 1000 / 45)
+			}
+})()
+
+window.requestInterval = function(fn, delay, arg) {
+	if (!window.requestAnimationFrame
+		&& !window.webkitRequestAnimationFrame
+		&& !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame)
+		&& !window.oRequestAnimationFrame
+		&& !window.msRequestAnimationFrame)
+			return window.setInterval((arg)=>{fn.call(arg)}, delay, arg)
+	let start = Date.now(),
+		handle = new Object(),
+		last = Date.now()
+	function loop() {
+		let current = Date.now(), delta = current - start
+		if (delta >= delay) {
+			fn.call(arg)
+			start = current - (delta % delay)
+		}
+		last = current
+		handle.value = requestAnimFrame(loop)
+	}
+	handle.value = requestAnimFrame(loop)
+	return handle
+}
+
 class Console {
     constructor(h, col) {
         let metaTags = {
@@ -26,25 +60,26 @@ class Console {
         window.ondeviceorientation = window.onresize
         window.onresize()
         this.el.style.objectFit = "contain"
-        this.el.style.position = "absolute"
+        this.el.style.position = "fixed"
         this.el.style.transform = "translate(-50%,-50%)"
         this.el.style.left = this.el.style.top = "50%"
-        this.ctx = this.el.getContext('2d')
+        this.ctx = this.el.getContext('2d', {alpha: false})
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
         this.imageElements = []
-        this.sprites = [] // Everything that is a sprite
-        this.bgSprites = [] // Sprites that go behind everything
-        this.tiles = [] // Everything that is a tile
-        this.objects = [] // Everything that is an object
+		this.backgroundColor = "black"
+        this.objects = []
         this.camPos = new Vec2(0, 0)
         this.followInterval = 0
         this.physics = {
             gravity: new Vec2(0.0, 0.015),
             // friction: new Vec2(0.9, 0.995)
-            friction: new Vec2(0.9, 0.995),
-            groundFriction: new Vec2(0.9, 0.995)
+            friction: new Vec2(0.9, 0.997),
+            groundFriction: new Vec2(0.9, 0.997),
+
+			cZeroThresh: 0.001 // The speed at witch the engine can consider the object stationary.
         }
+		this.frameTotalCollisions = 0
         this.fonts = {"": "20px Arial"}
 		this.nFont("std", new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U`, 4))
 		this.font("std")
@@ -145,59 +180,61 @@ class Console {
     init(fn) { fn() }
 
     loop(fn) {
-        // Yes, these run on 45 fps. Deal with it.
+        // Yes, this runs on 45 fps. Deal with it.
         this.loopFn = fn
-        setInterval(this.updateAll, 1000 / 45, this) // 1000 / 45
+		this.lastTime = Date.now()
+		this.frameRate = 45
+        window.requestInterval(this.updateAll, 1000 / 45, this)
+        // window.setInterval(function(ths){
+		// 	ths.updateAll.call(ths)
+		// }, 1000 / 45, this)
     }
 
-    updateAll(ths) {
-        ths.camPos.lerp(
-            (-ths.following.pos.x + ths.width  / 2) - ths.following.speed.x * 12 - ths.following.w * ths.following.s * 0.5,
-            (-ths.following.pos.y + ths.height / 2) - ths.following.speed.y * 4  - ths.following.h * ths.following.s * 0.5,
-             ths.followInterval)
-        ths.ctx.clearRect(0, 0, ths.width, ths.height)
-        for (let s = 0; s < ths.bgSprites.length; s++) { ths.bgSprites[s].draw() }
-        for (let s = 0; s < ths.tiles.length; s++) { ths.tiles[s].draw() }
-        for (let s = 0; s < ths.sprites.length; s++) { ths.sprites[s].draw() }
-        for (let s = 0; s < ths.objects.length; s++) {
-            if (ths.objects[s].constructor.name == "PhysicsActor") {
-                ths.objects[s].collided = false
-                ths.objects[s].onGround = false
-                for (let a = 0; a < 5; a++) {
-                    ths.objects[s].physics()
-                    for (let t = 0; t < ths.tiles.length; t++) {
-                        ths.objects[s].avoidCollision(ths.tiles[t])
-                    }
-                    for (let t = 0; t < ths.objects.length; t++) {
-                        if (s != t) ths.objects[s].avoidCollision(ths.objects[t])
-                    }
-                }
-            }
-            ths.objects[s].draw()
-        }
-        ths.loopFn()
-        ths.frameCount++
+	// The loop!
+    updateAll() {
+		// Calculate frame rate
+		this.frameRate = CTool.lerp(this.frameRate, 1000 / (Date.now() - this.lastTime), 0.05)
+		this.lastTime = Date.now()
+		// Move camera towards targeted object
+        this.camPos.lerp(
+            (-this.following.pos.x + this.width  / 2) - this.following.speed.x * 12 - this.following.w * this.following.s * 0.5,
+            (-this.following.pos.y + this.height / 2) - this.following.speed.y * 4  - this.following.h * this.following.s * 0.5,
+             this.followInterval)
+		// Clear screen
+        // ths.ctx.clearRect(0, 0, ths.width, ths.height)
+		this.ctx.fillStyle = this.backgroundColor
+		this.ctx.fillRect(0, 0, this.width, this.height)
+
+		// Loop through all objects, and then again for PhysicsActors
+		this.frameTotalCollisions = 0
+		for (let o = 0; o < this.objects.length; o++) {
+			if (this.objects[o].constructor.name == "PhysicsActor") {
+				this.objects[o].collided = false
+				this.objects[o].onGround = false
+                    this.objects[o].physics()
+			}
+			this.objects[o].draw()
+		}
+		
+        this.loopFn() // Call user loop function
+        this.frameCount++ // Increment frame count
     }
 
-    // Objects can have animation and physics.
+    // Adds something to the scene.
     nObj(obj) {
         return this.objects[this.objects.push(this.imageThing(obj)) - 1]
     }
 
-    // Sprites can have animation, but no physics.
-    nSprite(spr) {
-        return this.sprites[this.sprites.push(this.imageThing(spr)) - 1]
-    }
+	// Removes an object from the scene.
+	// Does *not* remove any image elements or sources.
+	rObj(obj) {
+		this.rIdx(this.objects.indexOf(obj))
+	}
 
-    // Sprites can have animation, but no physics.
-    nBgSprite(spr) {
-        return this.bgSprites[this.bgSprites.push(this.imageThing(spr)) - 1]
-    }
-
-    // Tiles can have (static) physics, but no animation.
-    nTile(til) {
-        return this.tiles[this.tiles.push(this.imageThing(til)) - 1]
-    }
+	// Removes an object by its index in the `this.objects` list.
+	rIdx(idx) {
+		return this.objects.splice(idx, 1)
+	}
 
     // Adding any image thing. Supposed to be private.
     imageThing(spr) {
@@ -259,6 +296,7 @@ class Console {
     }
 }
 
+// A type of source
 class CImage {
 	constructor(text, h) {
 		this.isText = true
@@ -267,6 +305,7 @@ class CImage {
 	}
 }
 
+// The constructor for anything that renders on the programmer's side.
 class Sprite {
     constructor(src, x, y, w, h, scale, centered) {
         this.type = "Sprite"
@@ -277,31 +316,35 @@ class Sprite {
         this.s = scale | 1
         this.c = centered
         this.animation = [0, 0, true] // frame, timer, paused
+		this.animationOffset = 0
         this.animationStates = {} // start, end, timer, loop, pause frame
         this.animationState = ""
         this.showHitbox = false // false
         this.flipped = false
         this.collided = false
         this.collisionEvents = []
-        this.hb = {top: 0, bottom: 0, left: 0, right: 0}
+        this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
     }
 
-    hbOffsets(hb) { this.hb = hb }
+    hbOffsets(hb) {
+		this.hb = hb
+		this.hb.slr = hb.left + hb.right
+		this.hb.stb = hb.top + hb.bottom
+	}
 
     getHb() {
-        if (this.flipped) {
-            return [
-                this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.right * this.s,
-                this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
-                this.w * this.s - (0 + this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
-            ]
-        } else {
-            return [
-                this.pos.x - (this.c ? this.w / 2 : 0) + this.hb.left * this.s,
-                this.pos.y - (this.c ? this.h / 2 : 0) + this.hb.top * this.s,
-                this.w * this.s - (0 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (0 + this.hb.top * this.s + this.hb.bottom * this.s)
-            ]
-        }
+		if (this.flipped) {
+			return [
+				this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.right * this.s,
+				this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
+				this.w * this.s - (this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+			]
+		}
+		return [
+			this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.left * this.s,
+			this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
+			this.w * this.s - (this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+		]
     }
 
     drawHb() {
@@ -379,10 +422,11 @@ class Sprite {
             }
         }
         // Sprite
+		if (!this.parentCon.imageElements[this.src].complete) return
         let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
         this.parentCon.ctx.fillStyle = repeatedPattern
         repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s, 
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.flipped ? (-(this.animation[0] + 1) * this.w) : (this.animation[0] * this.w)) * this.s,
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w) : ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
             Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y)
         ]))
         this.parentCon.ctx.fillRect(
@@ -401,6 +445,7 @@ class Tile extends Sprite {
     constructor(src, x, y, w, h, s, c) {
         super(src, x, y, w, h, s ,c)
         this.type = "Tile"
+		this.hasPhysics = true
     }
 }
 
@@ -408,6 +453,7 @@ class PhysicsActor extends Sprite {
     constructor(src, x, y, w, h, s, c) {
         super(src, x, y, w, h, s, c)
         this.type = "PhysicsActor"
+		this.hasPhysics = true
         this.speed = new Vec2(0, 0)
         this.locked = false
         this.hb = {top: 0, bottom: 0, left: 0, right: 0}
@@ -423,23 +469,33 @@ class PhysicsActor extends Sprite {
         let b1 = this.getHb()
         let b2 = hbe.getHb()
 
-        if (b1[1] + b1[3] >= b2[1]
-        &&  b1[0] + b1[2] >= b2[0]
-        && (b1[1] + b1[3]) - b1[3] <= (b2[1] + b2[3])
-        && (b1[0] + b1[2]) - b1[2] <= (b2[0] + b2[2])) {
+        if (b1[1] + b1[3] > b2[1]
+        &&  b1[0] + b1[2] > b2[0]
+        && (b1[1] + b1[3]) - b1[3] < (b2[1] + b2[3])
+        && (b1[0] + b1[2]) - b1[2] < (b2[0] + b2[2])) {
             return true
         }
         return false
     }
 
     physics(el) {
-        this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics[(this.collided && this.groundFriction ? "groundFriction" : "friction")].x
-        this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics[(this.collided && this.groundFriction ? "groundFriction" : "friction")].y
-        this.pos.add(this.speed)
+		for (let pf = 0; pf < 5; pf++) {
+			this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
+			this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
+			this.pos.x += this.speed.x
+			this.pos.y += this.speed.y
+			for (let t = 0; t < this.parentCon.objects.length; t++) {
+				if (this.parentCon.objects[t] == this
+				|| (!this.parentCon.objects[t].hasPhysics)
+				|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > (this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h) * (this.s + this.parentCon.objects[t].s)) continue
+				this.avoidCollision(this.parentCon.objects[t])
+			}
+		}
     }
 
     avoidCollision(el) {
         if (this.intersects(el)) {
+			this.parentCon.frameTotalCollisions++
             let b1 = this.getHb()
             let b2 = el.getHb()
             el.collided = true
@@ -451,7 +507,10 @@ class PhysicsActor extends Sprite {
             let bd = ((b2[1] + b2[3]) - b1[1])
             if (td < rd && td < ld && td < bd) {
                 this.pos.y -= td
-                this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
+				if (this.bounce != 0)
+	                this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
+				else
+					this.speed.y = Math.min(this.speed.y, 0)
                 this.onGround = true
                 this.collidedWith(el, "top")
             } else if (bd < rd && bd < ld) {
@@ -477,13 +536,11 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
-
 	static canvasFromString(str, h) {
 		str = str.split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
 		let canvas = document.createElement("canvas")
 		canvas.height = h
 		canvas.width = Math.ceil(str.length / h)
-		console.log(canvas.height, canvas.width)
 		let ctx = canvas.getContext('2d')
 		let dat = ctx.getImageData(0, 0, canvas.width, canvas.height)
 		for (let i = 0; i < str.length; i++)
@@ -498,6 +555,11 @@ class CTool {
 		while (r.length < l)
 			r = "0" + r
 		return r
+	}
+
+	static round(n, d) {
+		d = 10 ** (d || 0)
+		return Math.round(n * d) / d
 	}
 
     static lerp(a, b, v) {
@@ -520,8 +582,15 @@ class CTool {
         img.src = src
     }
 
-    static findTilePos(tiles, type, def) {
-        let offs = def ? def : new Vec2(0, 0)
+	/**
+	 * Finds a speciifc tile in a tile array.
+	 * @param {Array} tiles List of tiles
+	 * @param {string} type Type of tile to find
+	 * @param {Vec2} [fallBack] Fallback when there's no tile found.
+	 * @returns {Vec2}
+	 */
+    static findTilePos(tiles, type, fallBack) {
+        let offs = fallBack ? fallBack : new Vec2(0, 0)
         for (let b = 0; b < tiles.length; b++) {
             if (tiles[b].type == type) {
                 offs.set(tiles[b].x, tiles[b].y)
@@ -531,13 +600,19 @@ class CTool {
         return offs
     }
 
+	/**
+	 * Gets a tile array from an image source
+	 * @param {*} src 
+	 * @param {*} types 
+	 * @param {*} callback 
+	 */
     static tileMapFrom(src, types, callback) {
         this.getImagePixels(src, (px, w, h) => {
             function getType(p1, p2, p3) {
                 for (let t in types)
                     if (types[t][1] == p1 && types[t][2] == p2 && types[t][3] == p3)
                         return t
-                return false
+                return `${p1},${p2},${p3}`
             }
             // Return bars
             let bars = []
@@ -568,6 +643,7 @@ class CTool {
                 }
             }
             for (let b = 0; b < bars.length; b++) {
+				if (types[bars[b][4]] === undefined) CTool.error("Color", bars[b][4], "not in table.")
                 bars[b] = {
                     type: types[bars[b][4]][0],
                     x: bars[b][0],
@@ -579,6 +655,10 @@ class CTool {
             callback(bars)
         })
     }
+
+	static error(...t) {
+		console.error(t.join(" "))
+	}
 }
 
 class Vec2 {
@@ -586,6 +666,11 @@ class Vec2 {
         this.x = x
         this.y = y
     }
+
+	log() {
+		console.log(this + '')
+		return this
+	}
 
     lerp(x, y, a) {
         this.x = CTool.lerp(this.x, x, a)
@@ -621,10 +706,15 @@ class Vec2 {
         return new Vec2(this.x * v, this.y * v)
     }
 
-    add(v) {
+    addV(v) {
         this.x += v.x
         this.y += v.y
     }
+
+	// Added, doesn't mutate
+	addd(v) {
+		return new Vec2(this.x + v.x, this.y + v.y)
+	}
 
     // Normalizes, doesn't return
     normalize() {
@@ -657,6 +747,16 @@ class Vec2 {
     pointInRect(x1, y1, x2, y2, x, y) {
         return x > x1 && x < x2 && y > y1 && y < y2
     }
+
+	// Gets squared distance
+	distSquared(v) {
+		return (this.x - v.x) ** 2 + (this.y - v.y) ** 2
+	}
+
+	// Gets distance in x plus distance in y
+	cartesianDist(v) {
+		return Math.abs(this.x - v.x) + Math.abs(this.y - v.y)
+	}
 }
 
 // Setting up font

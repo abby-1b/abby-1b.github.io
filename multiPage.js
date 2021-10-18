@@ -7,7 +7,7 @@ function openPage(pageLocation) {
 		pageLocation += "/site.mdc"
 		fetch(pageLocation).then(r => r.text().then(text => {
 			text = mdToHtml(text)
-			document.body.children[0].innerHTML = text.text
+			document.getElementById("content").innerHTML = text.text
 			document.title = text.meta.title || "Code (I Guess)"
 			if (text.meta.navbar) {
 	

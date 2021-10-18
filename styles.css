@@ -20,11 +20,21 @@ html {
 	min-width: 100vw;
 }
 
+#bannerImage {
+	width: 100vw;
+	height: 50vh;
+	background-attachment: fixed;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
 #content {
-	margin-top: 10vh;
-	margin-bottom: 10vh;
+	margin-top: 5vh;
+	margin-bottom: 13vh;
 	margin-left: calc(max(20px, calc(100vw - 600px)) / 2);
 	width: min(600px, calc(100vw - 20px));
+	line-height: 1.6em;
 }
 
 a {
@@ -33,17 +43,23 @@ a {
 
 * {
 	list-style: none;
-	font-family: monospace;
+	/* font-family: monospace; */
+	font-family: Arial, Helvetica, sans-serif;
 	color: rgba(var(--fg),1);
 }
 
 h1, h2, h3, h4, h5, h6 {
 	color: rgba(var(--fg), var(--accentSeeThrough));
 	text-shadow: 0.3px -0.3px rgb(var(--accent));
+	line-height: 1em;
+	margin-top: 2em;
+	margin-bottom: 0.2em; 
+	padding-bottom: 0.2em;
+	border-bottom: 1px solid rgba(var(--accent), calc(var(--accentSeeThrough) * 0.8));
 }
 
 .spacer {
-	height: 12px;
+	height: 15px;
 	width: 100%;
 }
 
@@ -73,8 +89,8 @@ li:before {
 }
 li {
 	margin-left: 2em;
-	margin-top: .2em;
-	text-indent: -2em;
+	margin-top: .8em;
+	text-indent: -1.8em;
 }
 
 .unchecked:before, .checked:before, .important:before, .question:before {

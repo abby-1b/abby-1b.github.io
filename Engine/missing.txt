@@ -1,3 +1,0 @@
-[ ] Dialog
-    [ ] "M3 shouldn't go back." at the beginning
-[x] Better input system

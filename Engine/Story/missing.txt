@@ -1,0 +1,16 @@
+Game:
+	[x] Better input system
+	[ ] Better gameplay
+		[ ] When the player touches a piece of trash, it gets absorbed
+		[ ] When you touched a piece of trash, you can now double jump!
+		[ ] Make trash dispenser
+	[ ] Startup screen
+	[ ] Dialog
+		[ ] "M3 shouldn't go back." at the beginning
+		[ ] The rest
+
+Engine:
+	[x] Deleting objects
+	[x] iPhone performance issues
+	[ ] Particle system
+	[ ] Object rearranging
