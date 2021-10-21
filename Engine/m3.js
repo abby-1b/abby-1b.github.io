@@ -89,8 +89,8 @@ con.init(() => {
         TRASH: ["trash", 255, 230, 109]
     }, (bars) => {
 		console.log(bars)
-		const ss = 8
-		player.pos.addV(CTool.findTilePos(bars, "player").muld(ss))
+		const ss = 1 // 8
+		player.pos.addVec(CTool.findTilePos(bars, "player").multiplied(ss))
         // console.log(bars.length + " bars instanced.")
         for (let b = 0; b < bars.length; b++) {
             if (["player", "plant"].includes(bars[b].type)) continue
@@ -185,6 +185,6 @@ let gameLoop = () => {
     if (player.speed.x != 0) player.flipped = player.speed.x < 0
 
     if (!player.locked)
-        player.speed.addV(new Vec2(
-            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().mulr(0.25))
+        player.speed.addVec(new Vec2(
+            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().multiplyRet(0.25))
 }
