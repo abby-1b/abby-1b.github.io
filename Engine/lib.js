@@ -67,7 +67,7 @@ class Console {
         this.ctx.imageSmoothingEnabled= false
         this.imageIndexes = {}
         this.imageElements = []
-		this.backgroundColor = "black"
+		this.backgroundColor = col
         this.objects = []
         this.camPos = new Vec2(0, 0)
         this.followInterval = 0
@@ -84,8 +84,9 @@ class Console {
 		this.nFont("std", new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U`, 4))
 		this.font("std")
         this.events = {}
-        this.loopFn = () => {}
         this.initFn = () => {}
+		this.preLoopFn = () => {}
+        this.loopFn = () => {}
         this.frameCount = 0
         document.body.appendChild(this.el)
         document.body.style.overflow = "hidden"
@@ -171,14 +172,20 @@ class Console {
     }
 
     // Camera
-    follow(el, interval) {
+    follow(el, interval, speedPos) {
         this.following = el
-        this.followInterval = interval
+        this.followInterval = [interval, speedPos]
     }
 
-    // Loop
+	// Init, runs when everything is ready. Or in this case, instantly.
     init(fn) { fn() }
 
+	// Runs before the main loop, before the frame elements are moved.
+	preLoop(fn) {
+		this.preLoopFn = fn
+	}
+	
+	// Main library loop
     loop(fn) {
         // Yes, this runs on 45 fps. Deal with it.
         this.loopFn = fn
@@ -192,18 +199,20 @@ class Console {
 
 	// The loop!
     updateAll() {
+
 		// Calculate frame rate
 		this.frameRate = CTool.lerp(this.frameRate, 1000 / (Date.now() - this.lastTime), 0.05)
 		this.lastTime = Date.now()
 		// Move camera towards targeted object
-        this.camPos.lerp(
-            (-this.following.pos.x + this.width  / 2) - this.following.speed.x * 12 - this.following.w * this.following.s * 0.5,
-            (-this.following.pos.y + this.height / 2) - this.following.speed.y * 4  - this.following.h * this.following.s * 0.5,
-             this.followInterval)
+		this.camPos.lerp(
+			(this.following.pos.x - this.width  / 2) + this.following.speed.x * this.followInterval[1].x + this.following.w * this.following.s * 0.5,
+			(this.following.pos.y - this.height / 2) + this.following.speed.y * this.followInterval[1].y + this.following.h * this.following.s * 0.5,
+			 this.followInterval[0])
 		// Clear screen
-        // ths.ctx.clearRect(0, 0, ths.width, ths.height)
 		this.ctx.fillStyle = this.backgroundColor
 		this.ctx.fillRect(0, 0, this.width, this.height)
+
+		this.preLoopFn()
 
 		// Loop through all objects, and then again for PhysicsActors
 		this.frameTotalCollisions = 0
@@ -265,6 +274,11 @@ class Console {
 		spr.src = this.imageIndexes[spr.src]
 		return spr
     }
+
+	// Sets the background color
+	background(col) {
+		this.backgroundColor = col
+	}
 
 	// Font name, CImage
     nFont(name, img) {
@@ -426,12 +440,12 @@ class Sprite {
         let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
         this.parentCon.ctx.fillStyle = repeatedPattern
         repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s, 
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) - (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w) : ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y)
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - this.parentCon.camPos.x) - (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w) : ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - this.parentCon.camPos.y)
         ]))
         this.parentCon.ctx.fillRect(
-            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x),
-            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y),
+            Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - this.parentCon.camPos.x),
+            Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - this.parentCon.camPos.y),
             this.w * this.s, this.h * this.s)
         // Hitbox
         if (this.showHitbox) {
@@ -666,6 +680,10 @@ class Vec2 {
         this.x = x
         this.y = y
     }
+
+	rounded() {
+		return new Vec2(Math.round(this.x), Math.round(this.y))
+	}
 
 	log() {
 		console.log(this + '')
