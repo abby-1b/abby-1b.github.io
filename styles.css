@@ -71,7 +71,7 @@ m {
 	font-family: monospace;
 	background-color: rgba(var(--fg),0.1);
 	border-radius: 3px;
-	display: inline-block;
+	/* display: inline-block; */
 	padding: 2px;
 	margin: 1px;
 }
