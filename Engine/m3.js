@@ -80,8 +80,8 @@ player.onCollision(function(el, d) {
 // ]
 
 con.init(() => {
-    con.follow(player, 0.1)
-    CTool.tileMapFrom("Maps/OpenWorld.png", {
+    con.follow(player, 0.5, new Vec2(0, 0))
+    CTool.tileMapFrom("Maps/OpenWorld.png", { // "Maps/OpenWorld.png"
         PLAYER: ["player", 78, 205, 196],
 		PLANT: ["plant", 31, 255, 40],
         BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
@@ -100,6 +100,7 @@ con.init(() => {
             }
             let s = con.nObj(new Tile(bars[b].type, ss * bars[b].x, ss * bars[b].y, ss * bars[b].w, ss * bars[b].h, false))
         }
+		con.preLoop(preLoop)
         con.loop(gameLoop)
     })
 })
@@ -133,14 +134,21 @@ con.init(() => {
 //     }
 // }
 
-let gameLoop = () => {
+let preLoop = () => {
+
+	let bf = CTool.map(con.camPos.y, 156, -1204, 0, 1)
+
 	for (let p = 0; p < background.length; p++) {
 		background[p].w = con.width + 32
-		background[p].pos.x = -con.camPos.x + con.width / 2
-		background[p].pos.y = (-con.camPos.y + con.height / 2) / (p / 500 + 1)
-		background[p].animation[0] = (-con.camPos.x / 4000) * (p / 10 + 1)
+		background[p].pos.x =  -con.camPos.x + con.width / 2
+		background[p].pos.y = (-con.camPos.y + con.height / 2) / (p / 300 + 1)
+		background[p].animation[0] = CTool.lerp(background[p].animation[0], (-con.camPos.x / 1000) * (p / 10 + 1), 0.4)
 	}
-    con.text(CTool.round(con.frameRate, 2), 1, 1)
+}
+
+let gameLoop = () => {
+    // con.text(CTool.round(con.frameRate, 2), 1, 1)
+	con.text(con.camPos.rounded(), 1, 1)
     
     if ('s' in con.keys && player.onGround) {
         player.isCrouched = true
