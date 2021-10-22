@@ -10,7 +10,7 @@ Probably. Would it be possible to finish a complex game with a tight
 deadline and still have room to write about it? If so, how?
 
 ~ Organization. I won't be able to finish anything without setting goals, and then splitting those goals into smaller goals.
-~ Perseverence. I can't stop working on a problem just because it seems hard. This is going to be a recurring theme, but this might be an issue.
+~ Perseverance. I can't stop working on a problem just because it seems hard. This is going to be a recurring theme, but this might be an issue.
 ~ Schedule. If there's no schedule for the different features of the game, there's going to be no game.
 
 So that's the plan for these 12 weeks! It shouldn't be too much of
@@ -21,13 +21,32 @@ everything falls together cohesively.
 
 Finally started getting the website itself (http://codeiguess.github.io/GameOfWords) working. It's going to be using a game engine I made a while back, and am still working on. The hardest part, however, are the ideas that I want to implement. I really should start writing these down and structuring them before working on the main game.
 
-~ Multiplayer: Something similar to a Kahoot game, with a host to start the game and multiple guests joining and playing. This would be something similar to a multiple-choice but with a bit of gameplay, something like having to move your character to the correct position.
+~ Multiplayer: Something similar to a Kahoot game, with a host to start the game and multiple guests joining and playing. This would be something similar to a multiple-choice but with a bit of game-play, something like having to move your character to the correct position.
 ~ Ease of use: If it's hard to set up, takes too long, or is too slow to use, it's going to fail. This goes for both the host making the quiz and the students using it. Codes used for connecting can't be 20 characters long, and since this is a small platform it could be two to three characters long.
 ~ Small details, _game juice_: Game juice refers to all the things that make a game fun to play, regardless of the characteristics of the game, or the things the player has to do. If the player is doing _anything_ in the game, it should be fun. Again, this applies for both the host (when making the quiz) and the guest (when playing the quiz). Make it fun to make quizzes!
 
-Great, we have something to aim for!
+Great, I have something to aim for!
 
 Now, the things I want to get done this week:
 
-[ ] Encoding and decoding an ID to make it completely unique (maybe by using Base64 and adding characters to the left and right?)
-[ ] Checking if an ID is already taken and re-generating until one is found.
+[x] Encoding and decoding an ID to make it completely unique (by base-64 encoding a three letter base-16 code)
+[x] Checking if an ID is already taken and re-generating until one is found. This was unnecessary, because the platform will be small and there's 4096 possible codes.
+
+And the extra things I ended up doing:
+[x] Removed a few game IDs from occurring. These include every instance of the number `69`, and the (hex) numbers `420` `666`, `A55`, and `BAD`. These add up to 36, leaving us with a total of 4060 IDs instead of 4096.
+[x] Styling for the host page
+
+# Basic networking (Oct 21, 2021)
+
+How do players connect to the host? How does the host communicate with the players (maxing out at about 20-30)? These are the things I have to figure out this week. 
+
+This website will be up on GitHub Pages. It's a free service that offers static sites. This means I can't code anything server-side. This _also_ means I can't make any servers to connect the guests to the hosts, and I can't keep any kind of count on the number of users currently on the website; coincidentally making moderating the game a living hell because _there's no server to code for_.
+
+So, how would one make a multiplayer game, again, _without a server?_ The answer is using client-to-client connections, more commonly known as peer-to-peer. This means that instead of every guest and host connecting to a central server, the guests and hosts connect to each other (almost) directly.
+
+For this, I'm going to use the PeerJS library.
+
+Things for this week:
+
+[ ] Getting host to guest interactions working.
+[ ] A naming system for guests to chose their names
