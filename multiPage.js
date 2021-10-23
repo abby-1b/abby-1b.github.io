@@ -1,6 +1,8 @@
 invert()
 hud()
 
+// background-image:url('BannerSmall.png')
+
 function openPage(pageLocation) {
 	if (pageLocation[0] == "?" || pageLocation === "") {
 		if (pageLocation !== '') pageLocation = '/' + pageLocation.slice(1)
