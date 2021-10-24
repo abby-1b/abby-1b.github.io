@@ -1,0 +1,51 @@
+
+/* cubic-bezier(0.680, -0.550, 0.265, 1.550) */
+
+* {
+	user-select: none;
+	font-family: monospace;
+}
+
+:root {
+	--pixelSize: 2px;
+	--borderSize: 5px;
+	--col: #bbf8d9;
+}
+
+body {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	background-color: var(--col);
+}
+
+#codeContainer {
+	width: 3ch;
+	height: 12vh;
+	background-color: white;
+	font-size: 12vh;
+	position: absolute;
+	line-height: 1em;
+	padding: calc(2 * var(--borderSize));
+	padding-top: var(--borderSize);
+	padding-bottom: var(--borderSize);
+	--pixelSize: 0.65vh;
+	--borderSize: 3vh;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.simpleBorders {
+	border: var(--pixelSize) solid black;
+}
+
+.borders {
+	border: var(--pixelSize) solid black;
+	border-bottom: calc(var(--pixelSize) + var(--borderSize)) solid black;
+}
+
+.nlh {
+	line-height: 0;
+}
