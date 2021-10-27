@@ -440,8 +440,8 @@ class Sprite {
 			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - Math.round(this.parentCon.camPos.y))
 		]))
 		this.parentCon.ctx.fillRect(
-			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - this.parentCon.camPos.x),
-			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - this.parentCon.camPos.y),
+			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - Math.round(this.parentCon.camPos.x)),
+			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - Math.round(this.parentCon.camPos.y)),
 			this.w * this.s, this.h * this.s)
 		// Hitbox
 		if (this.showHitbox) {
