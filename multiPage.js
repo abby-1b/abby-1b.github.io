@@ -6,13 +6,16 @@ hud()
 function openPage(pageLocation) {
 	if (pageLocation[0] == "?" || pageLocation === "") {
 		if (pageLocation !== '') pageLocation = '/' + pageLocation.slice(1)
+		let normalPageLocation = pageLocation + ""
 		pageLocation += "/site.mdc"
 		fetch(pageLocation).then(r => r.text().then(text => {
 			text = mdToHtml(text)
 			document.getElementById("content").innerHTML = text.text
 			document.title = text.meta.title || "Code (I Guess)"
+			// document.getElementById("bannerImage").style.backgroundImage = "url('" + text.meta.banner + "')"
+			document.getElementById("bannerImage").src = normalPageLocation + "/" + text.meta.banner
 			if (text.meta.navbar) {
-	
+				// Enable navbar here
 			}
 		}))
 	} else {
