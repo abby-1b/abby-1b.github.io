@@ -1,8 +1,8 @@
 
 // Logging
-let logDepth = 0
+var logDepth = 0
 function logD() {
-	var err = new Error()
+	let err = new Error()
     logDepth = err.stack.split("\n").length - 1
 }
 function log(...i) {
@@ -11,5 +11,9 @@ function log(...i) {
 }
 
 // Peer
-let tPeer = -1 // Peer object
-let tCode = -1 // The code
+var tPeer = -1 // Peer object
+var tCode = -1 // The code
+
+function codeToID(code) {
+	return "gow_" + btoa(code)
+}
