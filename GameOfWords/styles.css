@@ -20,21 +20,31 @@ body {
 	background-color: var(--col);
 }
 
-#codeContainer {
-	width: 3ch;
-	height: 12vh;
+.container {
 	background-color: white;
-	font-size: 12vh;
-	position: absolute;
 	line-height: 1em;
 	padding: calc(2 * var(--borderSize));
 	padding-top: var(--borderSize);
 	padding-bottom: var(--borderSize);
 	--pixelSize: 0.65vh;
 	--borderSize: 3vh;
+	text-align: center;
+}
+
+#nameContainer {
+	width: 10ch;
+	height: 10vh;
+	font-size: 10vh;
+}
+
+#codeContainer {
+	width: 3ch;
+	height: 12vh;
+	font-size: 12vh;
+	/*position: absolute;
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%); */
 }
 
 .simpleBorders {
@@ -48,4 +58,16 @@ body {
 
 .nlh {
 	line-height: 0;
+}
+
+.hidden {
+	display: none;
+}
+
+.frame {
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
