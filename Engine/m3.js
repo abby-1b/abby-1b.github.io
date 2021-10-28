@@ -135,7 +135,6 @@ con.init(() => {
 // }
 
 let preLoop = () => {
-
 	let bf = CTool.map(con.camPos.y, 156, -1204, 0, 1)
 
 	for (let p = 0; p < background.length; p++) {
