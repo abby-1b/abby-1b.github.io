@@ -12,6 +12,11 @@
 	--col: #bbf8d9;
 }
 
+h1 {
+	padding-top: 0;
+	margin-top: 0;
+}
+
 body {
 	padding: 0;
 	margin: 0;
@@ -23,16 +28,16 @@ body {
 .container {
 	background-color: white;
 	line-height: 1em;
-	padding: calc(2 * var(--borderSize));
-	padding-top: var(--borderSize);
-	padding-bottom: var(--borderSize);
+	padding: calc(1 * var(--borderSize));
+	padding-top: calc(0.5 * var(--borderSize));
+	padding-bottom: calc(0.5 * var(--borderSize));
 	--pixelSize: 0.65vh;
-	--borderSize: 3vh;
+	--borderSize: 2vh;
 	text-align: center;
 }
 
 #nameContainer {
-	width: 10ch;
+	width: min(10ch, 85vw);
 	height: 10vh;
 	font-size: 10vh;
 }
@@ -70,4 +75,62 @@ body {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+.gridFrame {
+	justify-self: center;
+	align-self: center;
+	text-align: center;
+}
+
+#hostGrid {
+	width: 100vw;
+	height: 100vh;
+	display: grid;
+
+	grid-template: 1fr 3fr / 100%;
+}
+
+#nameGrid {
+	width: 100%;
+	height: 100%;
+	padding: 20px;
+	box-sizing: border-box;
+	display: grid;
+	gap: 20px;
+	grid-template: repeat(6, 1fr) / repeat(3, 1fr);
+
+	transition: all .1s;
+}
+
+@media only screen and (max-device-width: 812px)  { 
+	#nameGrid {
+		grid-template: repeat(9, 1fr) / repeat(2, 1fr);
+	}
+}
+
+.nameBounce {
+	text-align: center;
+	animation: bounceSideways .2s ease-out none;
+	word-break: break-all;
+}
+
+@keyframes bounceSideways {
+  0%   { transform: rotate(-2deg) scale(1.2) }
+  100% { transform: rotate( 0deg) scale(1) }
+}
+
+
+#menuButton {
+	position: fixed;
+	padding: calc(0.2 * var(--borderSize));
+	width: 35px;
+	height: 30px;
+	--pixelSize: 4px;
+	--borderSize: 8px;
+	margin: 5px;
+	/* letter-spacing: -4px; */
+	line-height: 27px;
+	font-size: 16px;
+	/* text-align: center; */
 }
