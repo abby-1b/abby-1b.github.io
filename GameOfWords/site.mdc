@@ -49,5 +49,6 @@ For this, I'm going to use the PeerJS library.
 
 Things for this week:
 
-[ ] Getting host to guest interactions working.
-[ ] A naming system for guests to chose their names
+[x] Getting host to guest interactions working
+[x] A naming system for guests to chose their names
+[ ] Filtering profanity in names
