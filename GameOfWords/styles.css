@@ -123,14 +123,24 @@ body {
 
 #menuButton {
 	position: fixed;
-	padding: calc(0.2 * var(--borderSize));
+	padding: 1px;
 	width: 35px;
 	height: 30px;
 	--pixelSize: 4px;
 	--borderSize: 8px;
 	margin: 5px;
 	/* letter-spacing: -4px; */
-	line-height: 27px;
+	line-height: 28px;
 	font-size: 16px;
 	/* text-align: center; */
+}
+
+#menuButton:hover {
+	--borderSize: 9px;
+	transform: translateY(-1px);
+}
+
+#menuButton:active {
+	--borderSize: 0px;
+	transform: translateY(8px);
 }
