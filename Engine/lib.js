@@ -204,10 +204,11 @@ class Console {
 		this.frameRate = CTool.lerp(this.frameRate, 1000 / (Date.now() - this.lastTime), 0.05)
 		this.lastTime = Date.now()
 		// Move camera towards targeted object
-		this.camPos.lerp(
-			(this.following.pos.x - this.width  / 2) + this.following.speed.x * this.followInterval[1].x + this.following.w * this.following.s * 0.5,
-			(this.following.pos.y - this.height / 2) + this.following.speed.y * this.followInterval[1].y + this.following.h * this.following.s * 0.5,
-			 this.followInterval[0])
+		if (this.following)
+			this.camPos.lerp(
+				(this.following.pos.x - this.width  / 2) + this.following.speed.x * this.followInterval[1].x + this.following.w * this.following.s * 0.5,
+				(this.following.pos.y - this.height / 2) + this.following.speed.y * this.followInterval[1].y + this.following.h * this.following.s * 0.5,
+				this.followInterval[0])
 		// Clear screen
 		this.ctx.fillStyle = this.backgroundColor
 		this.ctx.fillRect(0, 0, this.width, this.height)
