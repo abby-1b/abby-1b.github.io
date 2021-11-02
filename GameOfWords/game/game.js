@@ -6,13 +6,15 @@ let con = new Console(200, "white")
 // player.bounce = 0.8
 
 let tileSet = new TileSet("../Art/TestSetNew.png", 8, 8)
-let tileMap = con.nObj(new TileMap(tileSet, 6, 6, [
-   0, 0, 0, 0, 0, 0,
-   1, 0, 1, 0, 0, 0,
-   0, 0, 1, 1, 1, 0,
-   0, 0, 0, 0, 1, 0,
-   0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0,
+let tileMap = con.nObj(new TileMap(tileSet, 8, 8, [
+   1, 1, 0, 0, 0, 0, 0, 0,
+   1, 1, 0, 0, 1, 0, 0, 0,
+   1, 0, 0, 1, 1, 0, 0, 0,
+   0, 0, 0, 1, 1, 1, 1, 0,
+   0, 0, 1, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 1, 0, 0,
+   0, 0, 1, 0, 0, 1, 0, 1,
+   0, 0, 0, 0, 0, 1, 0, 1
 ]))
 
 con.init(() => {
