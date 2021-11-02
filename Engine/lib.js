@@ -232,7 +232,11 @@ class Console {
 
 	// Adds something to the scene.
 	nObj(obj) {
-		return this.objects[this.objects.push(this.imageThing(obj)) - 1]
+		obj.parentCon = this
+		if (["TileMap".includes(obj.type)])
+			return this.objects[this.objects.push(obj) - 1]
+		else
+			return this.objects[this.objects.push(this.imageThing(obj)) - 1]
 	}
 
 	// Removes an object from the scene.
@@ -248,7 +252,7 @@ class Console {
 
 	// Adding any image thing. Supposed to be private.
 	imageThing(spr) {
-		spr.parentCon = this
+		console.log("imageThing:", spr)
 		if (spr.src.isText) {
 			this.imageIndexes[spr.src] = this.imageElements.push(spr.src.canvas) - 1
 			spr.imageLoaded()
@@ -452,17 +456,116 @@ class Sprite {
 	}
 }
 
+// Old tile class. Unused.
 class Tile extends Sprite {
-	constructor(src, x, y, w, h, s, c) {
-		super(src, x, y, w, h, s ,c)
+	constructor(src, x, y, w, h, s, centered) {
+		super(src, x, y, w, h, s, centered)
 		this.type = "Tile"
 		this.hasPhysics = true
 	}
 }
 
+// Declares a set of tiles from a source image.
+class TileSet {
+	/**
+	 * Utility for drawing adaptive tilesets quickly.
+	 * @param {String} src Source for the tileset
+	 * @param {number} tw Tile width
+	 * @param {number} th Tile height
+	 */
+	constructor(src, tw, th) {
+		this.type = "TileSet"
+		this.src = src
+		this.tw = tw
+		this.th = th
+
+		this.tiles = []
+		this.loaded = false
+		this.loadCb = () => {}
+		
+		CTool.getImagePixels(src, (data, dw, dh) => {
+			for (let ty = 0; ty < dh; ty += th) {
+				for (let tx = 0; tx < dw; tx += tw) {
+					let ct = []
+					for (let y = 0; y < th; y++) {
+						for (let x = 0; x < tw; x++) {
+							let i = ((x + tx) + (y + ty) * dw) * 4
+							ct.push(data[i])
+							ct.push(data[i + 1])
+							ct.push(data[i + 2])
+							ct.push(data[i + 3])
+						}
+					}
+					this.tiles.push(CTool.canvasFromPixels(ct, tw, th))
+				}
+			}
+			this.loaded = true
+			this.loadCb()
+		})
+	}
+
+	onDone(callback) {
+		if (this.done) callback()
+		else this.loadCb = callback
+	}
+}
+
+// Declares an arrangement of a tileset on a given map.
+class TileMap {
+	constructor(ts, w, h, dt) {
+		this.type = "TileMap"
+		this.tileSet = ts
+		this.wt = w
+		this.ht = h
+		this.x = 0
+		this.y = 0
+		this.map = dt
+		this.cnv = document.createElement('canvas')
+		this.cnv.width  = this.tileSet.tw * this.wt
+		this.cnv.height = this.tileSet.th * this.ht
+		this.ctx = this.cnv.getContext('2d')
+
+		// let nbToIdx = [
+		// 	10, 14, 6, 2,
+		// 	11, 15, 7, 3,
+		// 	 9, 13, 5, 1,
+		// 	 8, 12, 4, 0
+		// ]
+
+		let nbToIdx = [
+			15,  3, 6, 2,
+			11, 15, 7, 3,
+			 9, 13, 5, 1,
+			 8, 12, 4, 0
+		]
+
+		this.tileSet.onDone(() => {
+			for (let i = 0; i < this.ht * this.wt; i++) {
+				if (dt[i] != 0) {
+					let ti = dt[i]
+					let mv = 0
+					if (dt[i - w] == ti) mv |= 1 // UP
+					if (dt[i + w] == ti) mv |= 2 // DOWN
+					if (dt[i - 1] == ti) mv |= 4 // LEFT
+					if (dt[i + 1] == ti) mv |= 8 // RIGHT
+					if (i == 6) console.log(mv, nbToIdx[mv])
+					this.ctx.drawImage(this.tileSet.tiles[nbToIdx[mv]], (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
+				}
+				this.ctx.font = "8px Arial"
+				// this.ctx.fillText(i, (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th + 7)
+			}
+		})
+	}
+
+	draw() {
+		if (!tileSet.loaded) returns
+		this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
+	}
+}
+
 class PhysicsActor extends Sprite {
-	constructor(src, x, y, w, h, s, c) {
-		super(src, x, y, w, h, s, c)
+	constructor(src, x, y, w, h, s, centered) {
+		super(src, x, y, w, h, s, centered)
 		this.type = "PhysicsActor"
 		this.hasPhysics = true
 		this.speed = new Vec2(0, 0)
@@ -519,9 +622,15 @@ class PhysicsActor extends Sprite {
 			let bd = ((b2[1] + b2[3]) - b1[1])
 			if (td < rd && td < ld && td < bd) {
 				this.pos.y -= td
-				if (this.bounce != 0)
-					this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
-				else
+				if (this.bounce != 0) {
+					// This stops the thing from infinitely bouncing.
+					if (this.speed.y < 0.1 && this.speed.y != 0) {
+						this.pos.y += td / 2
+						this.speed.y = 0
+					} else {
+						this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
+					}
+				} else
 					this.speed.y = Math.min(this.speed.y, 0)
 				this.onGround = true
 				this.collidedWith(el, "top")
@@ -548,24 +657,6 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
-	/**
-	 * Gets an editable canvas from a source string. 
-	 * @param {String} str Data string that contains the image data.
-	 * @param {number} h The height of the canvas, as it's not encoded in the string.
-	 * @returns {HTMLCanvasElement}
-	 */
-	static canvasFromString(str, h) {
-		str = str.split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
-		let canvas = document.createElement("canvas")
-		canvas.height = h
-		canvas.width = Math.ceil(str.length / h)
-		let ctx = canvas.getContext('2d')
-		let dat = ctx.getImageData(0, 0, canvas.width, canvas.height)
-		for (let i = 0; i < str.length; i++)
-			dat.data[(Math.floor(i / canvas.height) + (i % canvas.height) * canvas.width) * 4 + 3] = str[i] == "0" ? 0 : 255
-		ctx.putImageData(dat, 0, 0)
-		return canvas
-	}
 
 	/**
 	 * Turns a number to binary
@@ -631,6 +722,43 @@ class CTool {
 			callback(canvas.getContext('2d').getImageData(0, 0, img.width, img.height).data, img.width, img.height)
 		}
 		img.src = src
+	}
+
+
+	/**
+	 * Gets an editable canvas from a source string. 
+	 * @param {String} str Data string that contains the image data.
+	 * @param {number} h The height of the canvas, as it's not encoded in the string.
+	 * @returns {HTMLCanvasElement}
+	 */
+	 static canvasFromString(str, h) {
+		str = str.split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
+		let canvas = document.createElement("canvas")
+		canvas.height = h
+		canvas.width = Math.ceil(str.length / h)
+		let ctx = canvas.getContext('2d')
+		let dat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+		for (let i = 0; i < str.length; i++)
+			dat.data[(Math.floor(i / canvas.height) + (i % canvas.height) * canvas.width) * 4 + 3] = str[i] == "0" ? 0 : 255
+		ctx.putImageData(dat, 0, 0)
+		return canvas
+	}
+
+	/**
+	 * Gets an editable canvas from an array of pixels.
+	 * @param {Array} data Pixels
+	 * @param {number} w Width
+	 * @param {number} h Height
+	 */
+	static canvasFromPixels(data, w, h) {
+		let canvas = document.createElement("canvas")
+		canvas.width = w
+		canvas.height = h
+		let ctx = canvas.getContext('2d')
+		let dat = ctx.getImageData(0, 0, w, h)
+		for (let i = 0; i < data.length; i++) dat.data[i] = data[i]
+		ctx.putImageData(dat, 0, 0)
+		return canvas
 	}
 
 	/**
