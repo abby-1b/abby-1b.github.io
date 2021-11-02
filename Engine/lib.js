@@ -532,24 +532,24 @@ class TileMap {
 		// 	 8, 12, 4, 0
 		// ]
 
-		let nbToIdx = [
-			15,  3, 6, 2,
-			11, 15, 7, 3,
-			 9, 13, 5, 1,
-			 8, 12, 4, 0
-		]
+		let nbToIdx = []
 
 		this.tileSet.onDone(() => {
 			for (let i = 0; i < this.ht * this.wt; i++) {
 				if (dt[i] != 0) {
 					let ti = dt[i]
 					let mv = 0
-					if (dt[i - w] == ti) mv |= 1 // UP
-					if (dt[i + w] == ti) mv |= 2 // DOWN
-					if (dt[i - 1] == ti) mv |= 4 // LEFT
-					if (dt[i + 1] == ti) mv |= 8 // RIGHT
-					if (i == 6) console.log(mv, nbToIdx[mv])
-					this.ctx.drawImage(this.tileSet.tiles[nbToIdx[mv]], (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
+					if (dt[i - w    ] == ti) mv |=  1 // UP
+					if (dt[i + w    ] == ti) mv |=  2 // DOWN
+					if (dt[i - 1    ] == ti) mv |=  4 // LEFT
+					if (dt[i + 1    ] == ti) mv |=  8 // RIGHT
+					if (dt[i - w - 1] == ti) mv |= 16 // UP-LEFT
+					if (dt[i - w + 1] == ti) mv |= 32 // UP-RIGHT
+					if (dt[i + w - 1] == ti) mv |= 64 // DOWN-LEFT
+					if (dt[i + w + 1] == ti) mv |=128 // DOWN-RIGHT
+					mv = nbToIdx[mv]
+					if (mv == undefined) mv = 36
+					this.ctx.drawImage(this.tileSet.tiles[mv], (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
 				}
 				this.ctx.font = "8px Arial"
 				// this.ctx.fillText(i, (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th + 7)
@@ -558,7 +558,7 @@ class TileMap {
 	}
 
 	draw() {
-		if (!tileSet.loaded) returns
+		if (!tileSet.loaded) return
 		this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
 	}
 }
