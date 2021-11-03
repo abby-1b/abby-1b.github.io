@@ -6,9 +6,10 @@ tPeer = new Peer()
 let conn = -1
 
 let keypressListener = function(e) {
+	if (e.key == "Enter")
+		this.removeEventListener('keypress', keypressListener)
 	if (this == codeContainer) {
 		if (e.key == "Enter" && this.value.length == 3) {
-			this.removeEventListener('keypress', keypressListener)
 			tCode = this.value
 			connectToCode()
 		}
@@ -31,7 +32,6 @@ let keypressListener = function(e) {
 		}
 	} else if (this == nameContainer) {
 		if (e.key == "Enter") {
-			this.removeEventListener('keypress', keypressListener)
 			tPeer.on('connection', (conn) => {
 				conn.on('data', (data) => {
 					console.log("Received:", data)
@@ -56,7 +56,15 @@ function connectToCode() {
 		console.log("Received:", data)
 		if (data.startsWith("name:")) {
 			if (data.split(':')[1] == '0') {
-				console.log("Name not available!")
+				let errCode = data.split(':')[2]
+				if (errCode == '0') {
+					console.log("Already in use.")
+				} else if (errCode == '1') {
+					console.log("Too long.")
+				} else if (errCode == '2') {
+					console.log(["We don't do that here.", "Not so fast!", "Yeah, no.", "That's not allowed.", "We don't do that here!!!"][Math.floor(Math.random() * 5)])
+				}
+				nameContainer.addEventListener('keypress', keypressListener)
 			} else {
 				console.log("Name registered!")
 			}

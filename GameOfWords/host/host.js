@@ -18,7 +18,7 @@ function genCode() {
 				} else if (n.length > 20) {
 					conn.send("name:0:1")
 					log(n, "longer than 20 chars.")
-				} else if (profane(n)) {
+				} else if (profane(n) && settings.fltrProf) {
 					conn.send("name:0:2")
 					log(n, "watch your profanity.")
 				} else {
@@ -50,6 +50,7 @@ let profanities = decodeArray('WyJmdWNrIiwic2hpdCIsIjQyMCIsIjQybyIsInBpc3MiLCJwa
 
 // Checks for profanity in words.
 function profane(n) {
+	if (n == "prof") return true
 	n = decons(n)[0]
 
 	// It's a filter. All of these are bad. Don't read them. Please.
@@ -94,6 +95,24 @@ function encodeArray(arr) {
 
 // Menu
 let menuButton = document.getElementById('menuButton')
+let menuContainer = document.getElementById('menuContainer')
 menuButton.addEventListener('click', (e) => {
-	
+	if (menuContainer.style.display == 'block') {
+		menuContainer.style.display = ''
+	} else {
+		menuContainer.style.display = 'block'
+	}
 })
+menuContainer.addEventListener('click', (e) => {
+	menuContainer.style.display = ''
+})
+
+menuContainer.children[0].children[0].addEventListener('click', (e) => { editSettings(e.target, 'profanity'); e.stopPropagation() })
+
+let settings = {fltrProf: true}
+function editSettings(obj, t) {
+	if (t == 'profanity') {
+		settings.fltrProf = !settings.fltrProf
+		obj.innerHTML = "Profanity filter:<br>" + (settings.fltrProf ? "ON" : "OFF")
+	}
+}
