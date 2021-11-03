@@ -91,8 +91,11 @@ class Console {
 		document.body.appendChild(this.el)
 		document.body.style.overflow = "hidden"
 		this.keys = {}
-		window.addEventListener('keydown', e => { if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now(); if (e.key == ' ') e.preventDefault() })
-		window.addEventListener('keyup'  , e => { if (  e.key.toLowerCase() in this.keys ) delete this.keys[e.key.toLowerCase()] })
+		window.addEventListener('keydown', e => {
+			if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now()
+			if (e.key == ' ') e.preventDefault()
+		})
+		window.addEventListener('keyup'  , e => { if (e.key.toLowerCase() in this.keys) delete this.keys[e.key.toLowerCase()] })
 	}
 
 	// Controls
@@ -441,7 +444,9 @@ class Sprite {
 		let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
 		this.parentCon.ctx.fillStyle = repeatedPattern
 		repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s,
-			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - Math.round(this.parentCon.camPos.x)) - (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w) : ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
+			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - Math.round(this.parentCon.camPos.x))
+				- (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w)
+					: ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
 			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - Math.round(this.parentCon.camPos.y))
 		]))
 		this.parentCon.ctx.fillRect(
@@ -505,60 +510,173 @@ class TileSet {
 	}
 
 	onDone(callback) {
-		if (this.done) callback()
+		if (this.loaded) callback()
 		else this.loadCb = callback
 	}
 }
 
 // Declares an arrangement of a tileset on a given map.
 class TileMap {
+
+	/**
+	 * Generates a tilemap from an array of pixels.
+	 * @param {Array} px Pixel data in RGBA form.
+	 * @param {number} w Width of pixel data
+	 * @param {number} h Height of pixel data
+	 * @param {Array} types Types of tiles
+	 * @param {function} callback Callback
+	 */
+	static tileMapFromPixels(px, w, types) {
+		function getType(p1, p2, p3) {
+			for (let t in types)
+				if (types[t][0] == p1 && types[t][1] == p2 && types[t][2] == p3)
+					return t
+			return `${p1},${p2},${p3}`
+		}
+		// Return bars
+		let bars = []
+		// Tiles already iterated through
+		let did = []
+		for (let p = 0; p < px.length; p += 4) {
+			if (did.includes(p)) continue
+			did.push(p)
+			let x = ((p / 4) % w)
+			let y = (Math.floor((p / 4) / w))
+			if (px[p + 3] != 0) {
+				let tp = getType(px[p], px[p + 1], px[p + 2])
+				let ch = 1
+				while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
+					did.push(p + w * (ch++) * 4)
+				bars.push([x, y, 1, ch, tp])
+			}
+		}
+		for (let b = 0; b < bars.length; b++) {
+			for (let a = 0; a < bars.length; a++) {
+				if (a == b) continue
+				if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1]
+					&& bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
+					bars.splice(a, 1)
+					if (a < b) { b-- }
+					a--
+					bars[b][2]++
+				}
+			}
+		}
+		for (let b = 0; b < bars.length; b++) {
+			if (types[bars[b][4]] === undefined) CTool.error("Color", bars[b][4], "not in table.")
+			bars[b] = {
+				type: bars[b][4],
+				x: bars[b][0], y: bars[b][1],
+				w: bars[b][2], h: bars[b][3]
+			}
+		}
+		return bars
+	}
+
+	/**
+	 * Gets a tile array from an image source
+	 * @param {String} src 
+	 * @param {Array} types 
+	 * @param {Function} callback 
+	 */
+	static tileMapFrom(src, types, callback) {
+		this.getImagePixels(src, (px, w, h) => {
+			this.tileMapFromPixels(px, w, types, callback)
+		})
+	}
+
+	/**
+	 * Creates a tilemap from a source and a tileset.
+	 * @param {String} src Image source
+	 * @param {TileSet} ts Tileset
+	 * @returns {TileMap} Tilemap
+	 */
+	static from(src, ts, types) {
+		let tm = new TileMap(ts, -1)
+		CTool.getImagePixels(src, (data, dw, dh) => {
+			tm.wt = dw
+			tm.ht = dh
+			tm.map = new Array(dw * dh).fill(0)
+			let bars = this.tileMapFromPixels(data, dw, types)
+			for (let b = 0; b < bars.length; b++) {
+				console.log(bars[b], bars[b].w * bars[b].h)
+				for (let y = 0; y < bars[b].h; y++) {
+					for (let x = 0; x < bars[b].w; x++) {
+						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.ht] = 1
+					}
+				}
+			}
+			tm.init()
+		})
+		return tm
+	}
+
 	constructor(ts, w, h, dt) {
 		this.type = "TileMap"
 		this.tileSet = ts
 		this.wt = w
 		this.ht = h
+		this.map = dt
 		this.x = 0
 		this.y = 0
-		this.map = dt
+		if (this.wt != -1) this.init()
+	}
+
+	init() {
 		this.cnv = document.createElement('canvas')
 		this.cnv.width  = this.tileSet.tw * this.wt
 		this.cnv.height = this.tileSet.th * this.ht
 		this.ctx = this.cnv.getContext('2d')
 
-		// let nbToIdx = [
-		// 	10, 14, 6, 2,
-		// 	11, 15, 7, 3,
-		// 	 9, 13, 5, 1,
-		// 	 8, 12, 4, 0
-		// ]
-
-		let nbToIdx = []
+		let nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,-1,-1,39,47,-1,31,-1,-1,-1,-1,38,42,-1,4,36,24,-1,-1,-1,-1,-1,-1,-1,44,-1,28,38,41,-1,7,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,45,-1,46,-1,-1,-1,-1,-1,-1,11,19,37,-1,-1,-1,-1,-1,6,40,-1,-1,-1,-1,-1,47,-1,35,-1,-1,-1,-1,-1,-1,-1,23,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,30,-1,-1,-1,-1,-1,-1,-1,-1,37,-1,8,16,-1,-1,5,43,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,20,-1,-1,-1,32,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,29,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,8,-1,-1,-1,10,9,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,-1,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,33]
 
 		this.tileSet.onDone(() => {
 			for (let i = 0; i < this.ht * this.wt; i++) {
-				if (dt[i] != 0) {
-					let ti = dt[i]
+				if (this.map[i] != 0 && this.map[i] != undefined) {
+					let ti = this.map[i]
 					let mv = 0
-					if (dt[i - w    ] == ti) mv |=  1 // UP
-					if (dt[i + w    ] == ti) mv |=  2 // DOWN
-					if (dt[i - 1    ] == ti) mv |=  4 // LEFT
-					if (dt[i + 1    ] == ti) mv |=  8 // RIGHT
-					if (dt[i - w - 1] == ti) mv |= 16 // UP-LEFT
-					if (dt[i - w + 1] == ti) mv |= 32 // UP-RIGHT
-					if (dt[i + w - 1] == ti) mv |= 64 // DOWN-LEFT
-					if (dt[i + w + 1] == ti) mv |=128 // DOWN-RIGHT
+					if (this.map[i - this.wt] == ti) mv |=  1 // UP
+					if (this.map[i + this.wt] == ti) mv |=  2 // DOWN
+					if (i % this.wt != 0           && this.map[i - 1    ] == ti) mv |=  4 // LEFT
+					if (i % this.wt != this.wt - 1 && this.map[i + 1    ] == ti) mv |=  8 // RIGHT
+					if (i % this.wt != 0           && this.map[i - this.wt - 1] == ti) mv |= 16 // UP-LEFT
+					if (i % this.wt != this.wt - 1 && this.map[i - this.wt + 1] == ti) mv |= 32 // UP-RIGHT
+					if (i % this.wt != 0           && this.map[i + this.wt - 1] == ti) mv |= 64 // DOWN-LEFT
+					if (i % this.wt != this.wt - 1 && this.map[i + this.wt + 1] == ti) mv |=128 // DOWN-RIGHT
+					// console.log(mv, nbToIdx[mv])
 					mv = nbToIdx[mv]
-					if (mv == undefined) mv = 36
-					this.ctx.drawImage(this.tileSet.tiles[mv], (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
+					if (mv == undefined || mv == -1) mv = 22
+					this.ctx.drawImage(this.tileSet.tiles[mv],
+						(i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
 				}
-				this.ctx.font = "8px Arial"
-				// this.ctx.fillText(i, (i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th + 7)
 			}
 		})
+
+		this.loaded = true
+	}
+
+
+	/**
+	 * Finds a specific tile in this tilemap
+	 * @param {Array} tiles List of tiles
+	 * @param {string} type Type of tile to find
+	 * @param {Vec2} [fallBack] Fallback when there's no tile found
+	 * @returns {Vec2} The position found
+	 */
+	 findTilePos(tiles, type, fallBack) {
+		let offs = fallBack ? fallBack : new Vec2(0, 0)
+		for (let b = 0; b < tiles.length; b++) {
+			if (tiles[b].type == type) {
+				offs.set(tiles[b].x, tiles[b].y)
+				break
+			}
+		}
+		return offs
 	}
 
 	draw() {
 		if (!tileSet.loaded) return
+		if (!this.loaded) return
 		this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
 	}
 }
@@ -759,80 +877,6 @@ class CTool {
 		for (let i = 0; i < data.length; i++) dat.data[i] = data[i]
 		ctx.putImageData(dat, 0, 0)
 		return canvas
-	}
-
-	/**
-	 * Finds a specific tile in a tile array.
-	 * @param {Array} tiles List of tiles
-	 * @param {string} type Type of tile to find
-	 * @param {Vec2} [fallBack] Fallback when there's no tile found.
-	 * @returns {Vec2}
-	 */
-	static findTilePos(tiles, type, fallBack) {
-		let offs = fallBack ? fallBack : new Vec2(0, 0)
-		for (let b = 0; b < tiles.length; b++) {
-			if (tiles[b].type == type) {
-				offs.set(tiles[b].x, tiles[b].y)
-				break
-			}
-		}
-		return offs
-	}
-
-	/**
-	 * Gets a tile array from an image source
-	 * @param {String} src 
-	 * @param {Array} types 
-	 * @param {Function} callback 
-	 */
-	static tileMapFrom(src, types, callback) {
-		this.getImagePixels(src, (px, w, h) => {
-			function getType(p1, p2, p3) {
-				for (let t in types)
-					if (types[t][1] == p1 && types[t][2] == p2 && types[t][3] == p3)
-						return t
-				return `${p1},${p2},${p3}`
-			}
-			// Return bars
-			let bars = []
-			// Tiles already iterated through
-			let did = []
-			for (let p = 0; p < px.length; p += 4) {
-				if (did.includes(p)) continue
-				did.push(p)
-				let x = ((p / 4) % w) - 8
-				let y = (Math.floor((p / 4) / w)) - 8
-				if (px[p + 3] != 0) {
-					let tp = getType(px[p], px[p + 1], px[p + 2])
-					let ch = 1
-					while (getType(px[p + w * ch * 4], px[p + 1 + w * ch * 4], px[p + 2 + w * ch * 4]) == tp)
-						did.push(p + w * (ch++) * 4)
-					bars.push([x, y, 1, ch, tp])
-				}
-			}
-			for (let b = 0; b < bars.length; b++) {
-				for (let a = 0; a < bars.length; a++) {
-					if (a == b) continue
-					if (bars[a][4] == bars[b][4] && bars[a][1] == bars[b][1] && bars[a][3] == bars[b][3] && bars[a][0] - 1 == (bars[b][0] + bars[b][2] - 1)) {
-						bars.splice(a, 1)
-						if (a < b) { b-- }
-						a--
-						bars[b][2] ++
-					}
-				}
-			}
-			for (let b = 0; b < bars.length; b++) {
-				if (types[bars[b][4]] === undefined) CTool.error("Color", bars[b][4], "not in table.")
-				bars[b] = {
-					type: types[bars[b][4]][0],
-					x: bars[b][0],
-					y: bars[b][1],
-					w: bars[b][2],
-					h: bars[b][3]
-				}
-			}
-			callback(bars)
-		})
 	}
 
 	/**
