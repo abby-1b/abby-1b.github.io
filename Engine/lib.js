@@ -175,6 +175,12 @@ class Console {
 	}
 
 	// Camera
+	/**
+	 * Makes the camera follow an element
+	 * @param {*} el Element to be followed
+	 * @param {number} interval How fast to follow the element. Specifies the amount to lerp each frame.
+	 * @param {Vec2} speedPos How much the element's speed affects the position of the camera
+	 */
 	follow(el, interval, speedPos) {
 		this.following = el
 		this.followInterval = [interval, speedPos]
@@ -236,7 +242,7 @@ class Console {
 	// Adds something to the scene.
 	nObj(obj) {
 		obj.parentCon = this
-		if (["TileMap".includes(obj.type)])
+		if (["TileMap"].includes(obj.type))
 			return this.objects[this.objects.push(obj) - 1]
 		else
 			return this.objects[this.objects.push(this.imageThing(obj)) - 1]
@@ -255,7 +261,6 @@ class Console {
 
 	// Adding any image thing. Supposed to be private.
 	imageThing(spr) {
-		console.log("imageThing:", spr)
 		if (spr.src.isText) {
 			this.imageIndexes[spr.src] = this.imageElements.push(spr.src.canvas) - 1
 			spr.imageLoaded()
@@ -440,7 +445,7 @@ class Sprite {
 			}
 		}
 		// Sprite
-		if (!this.parentCon.imageElements[this.src].complete) return
+		if (typeof this.src == 'string' || !this.parentCon.imageElements[this.src].complete) return
 		let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
 		this.parentCon.ctx.fillStyle = repeatedPattern
 		repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s,
@@ -522,9 +527,7 @@ class TileMap {
 	 * Generates a tilemap from an array of pixels.
 	 * @param {Array} px Pixel data in RGBA form.
 	 * @param {number} w Width of pixel data
-	 * @param {number} h Height of pixel data
 	 * @param {Array} types Types of tiles
-	 * @param {function} callback Callback
 	 */
 	static tileMapFromPixels(px, w, types) {
 		function getType(p1, p2, p3) {
@@ -599,13 +602,13 @@ class TileMap {
 			tm.map = new Array(dw * dh).fill(0)
 			let bars = this.tileMapFromPixels(data, dw, types)
 			for (let b = 0; b < bars.length; b++) {
-				console.log(bars[b], bars[b].w * bars[b].h)
 				for (let y = 0; y < bars[b].h; y++) {
 					for (let x = 0; x < bars[b].w; x++) {
 						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.ht] = 1
 					}
 				}
 			}
+			tm.colliders = bars
 			tm.init()
 		})
 		return tm
@@ -620,6 +623,9 @@ class TileMap {
 		this.x = 0
 		this.y = 0
 		if (this.wt != -1) this.init()
+
+		// {type, x, y, w, h}
+		this.colliders = []
 	}
 
 	init() {
@@ -677,7 +683,7 @@ class TileMap {
 	draw() {
 		if (!tileSet.loaded) return
 		if (!this.loaded) return
-		this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
+		this.parentCon.ctx.drawImage(this.cnv, Math.round(this.x - this.parentCon.camPos.x), Math.round(this.y - this.parentCon.camPos.y))
 	}
 }
 
@@ -710,15 +716,17 @@ class PhysicsActor extends Sprite {
 	}
 
 	physics(el) {
+		// Repeat 5 times per frame. Since it's ran separately for each PhysicsActor
+		// it's very inaccurate, but this is mostly to avoid phasing through objects.
 		for (let pf = 0; pf < 5; pf++) {
 			this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
 			this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
 			this.pos.x += this.speed.x
 			this.pos.y += this.speed.y
 			for (let t = 0; t < this.parentCon.objects.length; t++) {
-				if (this.parentCon.objects[t] == this
-					|| (!this.parentCon.objects[t].hasPhysics)
-					|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > 
+				if (this.parentCon.objects[t] == this // Same as self, skip
+					|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
+					|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
 					(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
 					* (this.s + this.parentCon.objects[t].s)) continue
 				this.avoidCollision(this.parentCon.objects[t])
