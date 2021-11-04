@@ -1,4 +1,11 @@
+/**
+ * @fileOverview A JS library for making games.
+ * @author Code (I Guess)
+ */
+// Fully tryharding this.
 
+// These are used to keep a steady framerate. The framerate is supposed
+// to be 45, but it ends up running at 50 for some reason.
 window.requestAnimFrame = (function() {
 	return  window.requestAnimationFrame       || 
 			window.webkitRequestAnimationFrame || 
@@ -33,8 +40,17 @@ window.requestInterval = function(fn, delay, arg) {
 	return handle
 }
 
+/**
+ * The main console class! This runs all the games and is
+ * basically a wrapper around all the classes' functions.
+ */
 class Console {
-	constructor(h, col) {
+	/**
+	 * The main console class!
+	 * @param {number} height Height (in pixels) of the game. The width is dynamic.
+	 * @param {String} backgroundColor Background color for when something is transparent.
+	 */
+	constructor(height, backgroundColor) {
 		let metaTags = {
 			"viewport": "width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0",
 			"apple-mobile-web-app-capable": "yes"
@@ -46,13 +62,13 @@ class Console {
 			document.head.appendChild(meta)
 		}
 		document.body.style.margin = document.body.style.padding = "0"
-		document.body.style.backgroundColor = col | "white"
+		document.body.style.backgroundColor = backgroundColor | "white"
 		this.el = document.createElement("canvas")
 		this.el.style.width = "100vw"
 		this.el.style.height = "100vh"
 		window.onresize = () => {
-			this.width = Math.ceil((window.innerWidth / window.innerHeight) * h)
-			this.height = Math.ceil(h)
+			this.width = Math.ceil((window.innerWidth / window.innerHeight) * height)
+			this.height = Math.ceil(height)
 			this.el.width = this.width
 			this.el.height = this.height
 		}
@@ -67,7 +83,7 @@ class Console {
 		this.ctx.imageSmoothingEnabled= false
 		this.imageIndexes = {}
 		this.imageElements = []
-		this.backgroundColor = col
+		this.backgroundColor = backgroundColor
 		this.objects = []
 		this.camPos = new Vec2(0, 0)
 		this.followInterval = 0
@@ -99,52 +115,81 @@ class Console {
 	}
 
 	// Controls
-	nEvent(n, f) {
-		this.events[n] = [f, false]
+
+	/**
+	 * Adds a new event for when a key os pressed.
+	 * @param {String} name Name for the event
+	 * @param {Function} funct Function to be ran when the event is triggered
+	 */
+	nEvent(name, funct) {
+		this.events[name] = [funct || (() => {}), false]
 	}
 
-	onKeyPressed(k, n) {
-		if (typeof k === "string") {
+	/**
+	 * Runs an event when a key is pressed.
+	 * @param {String} keyName Name of the key to to check for
+	 * @param {String} eventName Name of the event to run
+	 */
+	onKeyPressed(keyName, eventName) {
+		if (typeof keyName === "string") {
 			window.addEventListener('keydown', e => {
-				if (e.key == k && !e.repeat) {
-					this.events[n][1] = true
-					this.events[n][0]()
+				if (e.key == keyName && !e.repeat) {
+					this.events[eventName][1] = true
+					this.events[eventName][0]()
 				}
 			})
 			window.addEventListener('keyup', e => {
-				if (e.key == k)
-					this.events[n][1] = false
+				if (e.key == keyName)
+					this.events[eventName][1] = false
 			})
 		} else {
 			window.addEventListener('keydown', e => {
-				if (k.includes(e.key) && !e.repeat) {
-					this.events[n][1] = true
-					this.events[n][0]()
+				if (keyName.includes(e.key) && !e.repeat) {
+					this.events[eventName][1] = true
+					this.events[eventName][0]()
 				}
 			})
 			window.addEventListener('keyup', e => {
-				if (k.includes(e.key))
-					this.events[n][1] = false
+				if (keyName.includes(e.key))
+					this.events[eventName][1] = false
 			})
 		}
 	}
 
-	eventOngoing(n) {
-		return this.events[n][1]
+	/**
+	 * Checks if an event is currently ongoing.
+	 * @param {String} eventName Name of the event to check
+	 * @returns Wether or not the event is ongoing
+	 */
+	eventOngoing(eventName) {
+		if (!(eventName in this.events)) CTool.error("Event '" + eventName + "' does not exist.")
+		return this.events[eventName][1]
 	}
 
-	isKeyDown(k) {
-		return k in this.keys
+	/**
+	 * Checks if a key is pressed
+	 * @param {String} keyName Name of the key to check
+	 * @returns Wether or not the key is pressed
+	 */
+	isKeyDown(keyName) {
+		return keyName in this.keys
 	}
 
 	// Touch
-	touchArea(h, v, events) {
+
+	/**
+	 * Sets a touch area to act as buttons to trigger events.
+	 * @param {number} height Height of touch area array
+	 * @param {number} width Width of touch area array
+	 * @param {Array} events Array of events to run when the screen is touched
+	 */
+	touchArea(height, width, events) {
 		this.currentTouches = {}
 		var ths = this
 		window.addEventListener("touchstart", function(e) {
 			for (let ct = 0; ct < e.changedTouches.length; ct++) {
-				let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth + 1))
-				  + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
+				let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * height / (window.innerWidth + 1))
+				  + height * Math.floor(Math.round(e.changedTouches[ct].clientY) * width / (window.innerHeight + 1))
 				ths.currentTouches[e.changedTouches[ct].identifier] = i
 				try {
 					ths.events[events[i]][1] = true
@@ -156,8 +201,8 @@ class Console {
 		})
 		window.addEventListener("touchmove", function(e) {
 			for (let ct = 0; ct < e.changedTouches.length; ct++) {
-				let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * h / (window.innerWidth  + 1))
-				  + h * Math.floor(Math.round(e.changedTouches[ct].clientY) * v / (window.innerHeight + 1))
+				let i = Math.floor(Math.round(e.changedTouches[ct].clientX) * height / (window.innerWidth  + 1))
+				  + height * Math.floor(Math.round(e.changedTouches[ct].clientY) * width / (window.innerHeight + 1))
 				if (i != ths.currentTouches[e.changedTouches[ct].identifier]) {
 					ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1] = false
 					ths.currentTouches[e.changedTouches[ct].identifier] = i
@@ -186,27 +231,36 @@ class Console {
 		this.followInterval = [interval, speedPos]
 	}
 
-	// Init, runs when everything is ready. Or in this case, instantly.
+	/**
+	 * Init, runs when everything is ready; in this case, instantly.
+	 * @param {Function} fn Function to be ran when everything is ready
+	 */
 	init(fn) { fn() }
 
-	// Runs before the main loop, before the frame elements are moved.
+	/**
+	 * Runs before the main loop, before the frame elements are moved.
+	 * @param {Function} fn Function to be ran before the loop executes
+	 */
 	preLoop(fn) {
 		this.preLoopFn = fn
 	}
 	
-	// Main library loop
+	/**
+	 * Runs after the main loop, when all the elements are moved.
+	 * @param {Function} fn Function to be ran after the loop executes
+	 */
 	loop(fn) {
 		// Yes, this runs on 45 fps. Deal with it.
 		this.loopFn = fn
 		this.lastTime = Date.now()
 		this.frameRate = 45
 		window.requestInterval(this.updateAll, 1000 / 45, this)
-		// window.setInterval(function(ths){
-		// 	ths.updateAll.call(ths)
-		// }, 1000 / 45, this)
 	}
 
-	// The loop!
+	/**
+	 * Main loop for the game. Runs the preLoop, moves everything, and runs the normal loop functions.
+	 * @private
+	 */
 	updateAll() {
 
 		// Calculate frame rate
@@ -239,7 +293,14 @@ class Console {
 		this.frameCount++ // Increment frame count
 	}
 
-	// Adds something to the scene.
+	/**
+	 * Adds an object to the scene.
+	 * @example
+	 * let x = con.nObj(new Sprite(...))
+	 * 
+	 * @param {*} obj Object to be added. Can be of any library type, such as a Sprite, PhysicsActor, Tile, TileMap, ect.
+	 * @returns The added object.
+	 */
 	nObj(obj) {
 		obj.parentCon = this
 		if (["TileMap"].includes(obj.type))
@@ -248,18 +309,31 @@ class Console {
 			return this.objects[this.objects.push(this.imageThing(obj)) - 1]
 	}
 
-	// Removes an object from the scene.
-	// Does *not* remove any image elements or sources.
+	/**
+	 * Removes an object from the scene.
+	 * Does ***not*** remove any image elements or sources.
+	 * @param {*} obj Object to be removed
+	 * @returns The removed object
+	 */
 	rObj(obj) {
-		this.rIdx(this.objects.indexOf(obj))
+		return this.rObjIdx(this.objects.indexOf(obj))
 	}
 
-	// Removes an object by its index in the `this.objects` list.
-	rIdx(idx) {
+	/**
+	 * Removes an object by its index in the `this.objects` list.
+	 * @param {*} idx Index to remove
+	 * @returns The removed object
+	 */
+	rObjIdx(idx) {
 		return this.objects.splice(idx, 1)
 	}
 
-	// Adding any image thing. Supposed to be private.
+	/**
+	 * Adds any image thing from a sprite
+	 * @param {*} spr Sprite class to load as an image thing
+	 * @returns The given sprite
+	 * @private
+	 */
 	imageThing(spr) {
 		if (spr.src.isText) {
 			this.imageIndexes[spr.src] = this.imageElements.push(spr.src.canvas) - 1
@@ -286,21 +360,37 @@ class Console {
 		return spr
 	}
 
-	// Sets the background color
-	background(col) {
-		this.backgroundColor = col
+	/**
+	 * Sets the background color.
+	 * @param {String} color Color to set
+	 */
+	background(color) {
+		this.backgroundColor = color
 	}
 
-	// Font name, CImage
-	nFont(name, img) {
-		this.fonts[name] = img
+	/**
+	 * Creates a new font from a CImage.
+	 * @param {*} name Font name
+	 * @param {CImage} image Image to use as font
+	 */
+	nFont(name, image) {
+		this.fonts[name] = image
 	}
 
-	// Sets the font that's currently being used
+	/**
+	 * Sets the font that's currently being used
+	 * @param {String} name Font name
+	 */
 	font(name) {
 		this.currentFont = name
 	}
 
+	/**
+	 * Draws text to the screen. Drawing starts at the upper left corner.
+	 * @param {*} text Text to draw (can be any type, as it gets converted)
+	 * @param {*} x X Position to draw at
+	 * @param {*} y Y Position to draw at
+	 */
 	text(text, x, y) {
 		let f = this.fonts[this.currentFont].canvas
 		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
@@ -310,13 +400,27 @@ class Console {
 		}
 	}
 
-	rect(x, y, w, h, c) {
-		this.ctx.fillStyle = c
+	/**
+	 * Draws a filled rectangle to the screen. Drawing starts at the upper left corner.
+	 * @param {number} x X Position to draw at
+	 * @param {number} y Y Position to draw at
+	 * @param {number} w Width of the rectangle
+	 * @param {number} h Height of the rectangle
+	 * @param {String} color Color to draw with
+	 */
+	rect(x, y, w, h, color) {
+		this.ctx.fillStyle = color
 		this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
 	}
 
-	point(x, y, c) {
-		this.ctx.fillStyle = c
+	/**
+	 * Draws a single pixel at a given position.
+	 * @param {number} x X Position to draw at
+	 * @param {number} y Y Position to draw at
+	 * @param {String} color Color to draw with
+	 */
+	point(x, y, color) {
+		this.ctx.fillStyle = color
 		this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
 	}
 }
@@ -685,6 +789,20 @@ class TileMap {
 		if (!this.loaded) return
 		this.parentCon.ctx.drawImage(this.cnv, Math.round(this.x - this.parentCon.camPos.x), Math.round(this.y - this.parentCon.camPos.y))
 	}
+
+	/**
+	 * Gets the hitbox of a specific collision box within the tilemap
+	 * @param {number} cn Number of collision box to get
+	 * @returns Hitbox data as an array with [x, y, w, h]
+	 */
+	getHb(cn) {
+		return [
+			this.colliders[cn].x * this.tileSet.tw,
+			this.colliders[cn].y * this.tileSet.th,
+			this.colliders[cn].w * this.tileSet.tw,
+			this.colliders[cn].h * this.tileSet.th
+		]
+	}
 }
 
 class PhysicsActor extends Sprite {
@@ -703,9 +821,9 @@ class PhysicsActor extends Sprite {
 		return (this.friction = new Vec2(x, y))
 	}
 
-	intersects(hbe) {
+	intersects(hbe, cn) {
 		let b1 = this.getHb()
-		let b2 = hbe.getHb()
+		let b2 = hbe.getHb(cn)
 
 		if (b1[1] + b1[3] > b2[1]
 		&&  b1[0] + b1[2] > b2[0]
@@ -724,21 +842,27 @@ class PhysicsActor extends Sprite {
 			this.pos.x += this.speed.x
 			this.pos.y += this.speed.y
 			for (let t = 0; t < this.parentCon.objects.length; t++) {
-				if (this.parentCon.objects[t] == this // Same as self, skip
-					|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
-					|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
-					(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
-					* (this.s + this.parentCon.objects[t].s)) continue
-				this.avoidCollision(this.parentCon.objects[t])
+				if (this.parentCon.objects[t].type == "TileMap") {
+					for (let c = 0; c < this.parentCon.objects[t].colliders.length; c++) {
+						this.avoidCollision(this.parentCon.objects[t], c)
+					}
+				} else {
+					if (this.parentCon.objects[t] == this // Same as self, skip
+						|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
+						|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
+						(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
+						* (this.s + this.parentCon.objects[t].s)) continue
+					this.avoidCollision(this.parentCon.objects[t])
+				}
 			}
 		}
 	}
 
-	avoidCollision(el) {
-		if (this.intersects(el)) {
+	avoidCollision(el, cn) {
+		if (this.intersects(el, cn)) {
 			this.parentCon.frameTotalCollisions++
 			let b1 = this.getHb()
-			let b2 = el.getHb()
+			let b2 = el.getHb(cn)
 			el.collided = true
 			this.collided = true
 			
@@ -892,7 +1016,9 @@ class CTool {
 	 * @param  {...any} things The arguments for this error
 	 */
 	static error(...things) {
-		console.error(things.join(" "))
+		throw ("error: " + things.join(" ") + "\n" + (()=>{
+			return "(" + new Error().stack.split('\n')[3].trim().split("/").reverse()[0]
+		})())
 	}
 }
 
@@ -998,6 +1124,21 @@ class Vec2 {
 	}
 }
 
+
+class Controllers {
+	static types = {
+		"platformer": {
+			"left": ['a', 'A', "ArrowLeft"],
+			"right": ['d', 'D', "ArrowRight"],
+			"jump": [' ', 'w', 'W', "ArrowUp"]
+		}
+	}
+	static new(console, type) {
+		if (console.type) console = console.parentCon
+		for (let evt in this.types[type])
+			console.onKeyPressed(this.types[type][evt], evt)
+	}
+}
+
 // Setting up font
 let _font = `>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_N[B:SKU^K_#0")P ^0"? 1$09@#P!O]F9F%H"&$ $ !I )8-V?P, ,  , `
-// CTool.canvasFromString(_font, 4)
