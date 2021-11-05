@@ -1149,12 +1149,21 @@ class Controllers {
 		"platformer": {
 			"left": ['a', 'A', "ArrowLeft"],
 			"right": ['d', 'D', "ArrowRight"],
-			"jump": [' ', 'w', 'W', "ArrowUp"]
+			"jump": [' ', 'w', 'W', "ArrowUp"],
+			"_touch": [2, 2, [
+				"jump", "jump",
+				"left", "right"
+			]]
 		}
 	}
 	static new(element, type) {
-		for (let evt in this.types[type])
-			element.parentCon.onKeyPressed(this.types[type][evt], evt)
+		for (let evt in this.types[type]) {
+			if (evt == "_touch") {
+				element.parentCon.touchArea(...this.types[type][evt])
+			} else {
+				element.parentCon.onKeyPressed(this.types[type][evt], evt)
+			}
+		}
 	}
 }
 
