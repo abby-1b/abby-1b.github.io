@@ -708,7 +708,7 @@ class TileMap {
 			for (let b = 0; b < bars.length; b++) {
 				for (let y = 0; y < bars[b].h; y++) {
 					for (let x = 0; x < bars[b].w; x++) {
-						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.ht] = 1
+						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.wt] = 1
 					}
 				}
 			}
@@ -730,6 +730,8 @@ class TileMap {
 
 		// {type, x, y, w, h}
 		this.colliders = []
+
+		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
 	}
 
 	init() {
@@ -738,7 +740,18 @@ class TileMap {
 		this.cnv.height = this.tileSet.th * this.ht
 		this.ctx = this.cnv.getContext('2d')
 
-		let nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,-1,-1,39,47,-1,31,-1,-1,-1,-1,38,42,-1,4,36,24,-1,-1,-1,-1,-1,-1,-1,44,-1,28,38,41,-1,7,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,45,-1,46,-1,-1,-1,-1,-1,-1,11,19,37,-1,-1,-1,-1,-1,6,40,-1,-1,-1,-1,-1,47,-1,35,-1,-1,-1,-1,-1,-1,-1,23,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,30,-1,-1,-1,-1,-1,-1,-1,-1,37,-1,8,16,-1,-1,5,43,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,20,-1,-1,-1,32,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,29,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,8,-1,-1,-1,10,9,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,-1,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,33]
+		let nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,-1,-1,39,47,-1,31,-1,-1,-1,-1,38,42,-1,4,36,24,-1,-1,-1,-1,-1,-1,37,44,-1,28,38,41,-1,7,-1,-1,-1,-1,-1,47,-1,-1,-1,44,-1,-1,-1,45,-1,46,36,-1,0,-1,39,-1,11,19,37,-1,-1,-1,38,-1,6,40,-1,-1,-1,-1,-1,47,11,35,-1,-1,-1,-1,-1,-1,-1,23,36,24,0,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,45,-1,30,36,-1,0,-1,-1,-1,-1,-1,37,-1,8,16,-1,-1,5,43,36,24,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,8,20,-1,-1,-1,32,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,29,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,8,-1,-1,-1,10,9,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,10,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17,-1,-1,-1,-1,-1,-1,-1,35,-1,-1,-1,20,-1,45,10,33]
+
+		const UP = 1
+		const DOWN = 2
+		const LEFT = 4
+		const RIGHT = 8
+		const ULEFT = 16
+		const URIGHT = 32
+		const DLEFT = 64
+		const DRIGHT = 128
+
+		console.log(JSON.stringify(nbToIdx))
 
 		this.tileSet.onDone(() => {
 			for (let i = 0; i < this.ht * this.wt; i++) {
@@ -790,6 +803,12 @@ class TileMap {
 		this.parentCon.ctx.drawImage(this.cnv, Math.round(this.x - this.parentCon.camPos.x), Math.round(this.y - this.parentCon.camPos.y))
 	}
 
+	hbOffsets(hb) {
+		this.hb = hb
+		this.hb.slr = hb.left + hb.right
+		this.hb.stb = hb.top + hb.bottom
+	}
+
 	/**
 	 * Gets the hitbox of a specific collision box within the tilemap
 	 * @param {number} cn Number of collision box to get
@@ -797,10 +816,10 @@ class TileMap {
 	 */
 	getHb(cn) {
 		return [
-			this.colliders[cn].x * this.tileSet.tw,
-			this.colliders[cn].y * this.tileSet.th,
-			this.colliders[cn].w * this.tileSet.tw,
-			this.colliders[cn].h * this.tileSet.th
+			this.colliders[cn].x * this.tileSet.tw + this.hb.left,
+			this.colliders[cn].y * this.tileSet.th + this.hb.top,
+			this.colliders[cn].w * this.tileSet.tw - (this.hb.left + this.hb.right),
+			this.colliders[cn].h * this.tileSet.th - (this.hb.top + this.hb.bottom)
 		]
 	}
 }
@@ -1133,10 +1152,9 @@ class Controllers {
 			"jump": [' ', 'w', 'W', "ArrowUp"]
 		}
 	}
-	static new(console, type) {
-		if (console.type) console = console.parentCon
+	static new(element, type) {
 		for (let evt in this.types[type])
-			console.onKeyPressed(this.types[type][evt], evt)
+			element.parentCon.onKeyPressed(this.types[type][evt], evt)
 	}
 }
 
