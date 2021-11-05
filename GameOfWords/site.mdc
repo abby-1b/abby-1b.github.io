@@ -69,8 +69,8 @@ Developing a game mechanic is no small task, making this week slightly stressful
 
 Here's a checklist, from most to least important:
 
-[ ] Basic player movement
-[ ] Basic physics
+[x] Basic player movement
+[x] Basic physics
 [ ] Game mechanic
 [ ] Sending questions between the host and the guests
 [ ] Player animation (very unlikely)
