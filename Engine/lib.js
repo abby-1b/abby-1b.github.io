@@ -4,42 +4,6 @@
  */
 // Fully tryharding this.
 
-// These are used to keep a steady framerate. The framerate is supposed
-// to be 45, but it ends up running at 50 for some reason.
-window.requestAnimFrame = (function() {
-	return  window.requestAnimationFrame       || 
-			window.webkitRequestAnimationFrame || 
-			window.mozRequestAnimationFrame    || 
-			window.oRequestAnimationFrame      || 
-			window.msRequestAnimationFrame     || 
-			function(cb, e){
-				window.setTimeout(cb, 1000 / 45)
-			}
-})()
-
-window.requestInterval = function(fn, delay, arg) {
-	if (!window.requestAnimationFrame
-		&& !window.webkitRequestAnimationFrame
-		&& !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame)
-		&& !window.oRequestAnimationFrame
-		&& !window.msRequestAnimationFrame)
-			return window.setInterval((arg)=>{fn.call(arg)}, delay, arg)
-	let start = Date.now(),
-		handle = new Object(),
-		last = Date.now()
-	function loop() {
-		let current = Date.now(), delta = current - start
-		if (delta >= delay) {
-			fn.call(arg)
-			start = current - (delta % delay)
-		}
-		last = current
-		handle.value = requestAnimFrame(loop)
-	}
-	handle.value = requestAnimFrame(loop)
-	return handle
-}
-
 /**
  * The main console class! This runs all the games and is
  * basically a wrapper around all the classes' functions.
@@ -252,9 +216,12 @@ class Console {
 	loop(fn) {
 		// Yes, this runs on 45 fps. Deal with it.
 		this.loopFn = fn
-		this.lastTime = Date.now()
+		this.lastTime = window.performance.now()
 		this.frameRate = 45
-		window.requestInterval(this.updateAll, 1000 / 45, this)
+		// window.requestInterval(this.updateAll, 1000 / 45, this)
+		setInterval(() => {
+			this.updateAll.call(this)
+		}, 1000 / 60)//1000 / 45)
 	}
 
 	/**
@@ -264,8 +231,10 @@ class Console {
 	updateAll() {
 
 		// Calculate frame rate
-		this.frameRate = CTool.lerp(this.frameRate, 1000 / (Date.now() - this.lastTime), 0.05)
-		this.lastTime = Date.now()
+		this.deltaTime = (window.performance.now() - this.lastTime)
+		if (this.deltaTime != 0)
+			this.frameRate = CTool.lerp(this.frameRate, 1000 / this.deltaTime, 0.05)
+		this.lastTime = window.performance.now()
 		// Move camera towards targeted object
 		if (this.following)
 			this.camPos.lerp(
@@ -742,14 +711,21 @@ class TileMap {
 
 		let nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,-1,-1,39,47,-1,31,-1,-1,-1,-1,38,42,-1,4,36,24,-1,-1,-1,-1,-1,-1,37,44,-1,28,38,41,-1,7,-1,-1,-1,-1,-1,47,-1,-1,-1,44,-1,-1,-1,45,-1,46,36,-1,0,-1,39,-1,11,19,37,-1,-1,-1,38,-1,6,40,-1,-1,-1,-1,-1,47,11,35,-1,-1,-1,-1,-1,-1,-1,23,36,24,0,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,45,-1,30,36,-1,0,-1,-1,-1,-1,-1,37,-1,8,16,-1,-1,5,43,36,24,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,8,20,-1,-1,-1,32,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,29,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,8,-1,-1,-1,10,9,-1,-1,-1,-1,-1,-1,11,-1,-1,-1,-1,-1,-1,-1,10,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17,-1,-1,-1,-1,-1,-1,-1,35,-1,-1,-1,20,-1,45,10,33]
 
-		const UP = 1
-		const DOWN = 2
-		const LEFT = 4
-		const RIGHT = 8
-		const ULEFT = 16
+		const UP     = 1
+		const DOWN   = 2
+		const LEFT   = 4
+		const RIGHT  = 8
+		const ULEFT  = 16
 		const URIGHT = 32
-		const DLEFT = 64
+		const DLEFT  = 64
 		const DRIGHT = 128
+
+		nbToIdx[ULEFT+UP+URIGHT] = 24
+		nbToIdx[DLEFT+LEFT+ULEFT+UP+URIGHT] = 47
+		nbToIdx[DOWN+LEFT+ULEFT+UP+URIGHT] = 35
+		nbToIdx[ULEFT+UP+URIGHT+RIGHT+DRIGHT] = 44
+		nbToIdx[ULEFT+UP+URIGHT+DOWN] = 12
+		nbToIdx[ULEFT+UP+URIGHT+DOWN+RIGHT] = 20
 
 		console.log(JSON.stringify(nbToIdx))
 
@@ -856,10 +832,10 @@ class PhysicsActor extends Sprite {
 		// Repeat 5 times per frame. Since it's ran separately for each PhysicsActor
 		// it's very inaccurate, but this is mostly to avoid phasing through objects.
 		for (let pf = 0; pf < 5; pf++) {
-			this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
-			this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
-			this.pos.x += this.speed.x
-			this.pos.y += this.speed.y
+			// this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
+			// this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
+			this.pos.x += (this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x)
+			this.pos.y += (this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y)
 			for (let t = 0; t < this.parentCon.objects.length; t++) {
 				if (this.parentCon.objects[t].type == "TileMap") {
 					for (let c = 0; c < this.parentCon.objects[t].colliders.length; c++) {
