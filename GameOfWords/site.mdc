@@ -79,12 +79,12 @@ Here's a checklist, from most to least important:
 
 Basic movement and physics are working, but no way to interact with the outside world. I'll work something out to make some collectible powerups translate to picking an option on the screen. 
 
-I have to keep in mind that there will likely be multiple games, and therefore multiple ways to choose your options. Currently, the main game will probably feature a way to swing between platforms and get to the chosen option, but another gamemode can be added to make the game switch to something easier, like a shooter where you have to shoot the right option. The gameplay option could even be disabled altogether, making for very fast-paced gameplay.
+I have to keep in mind that there will likely be multiple games, and therefore multiple ways to choose your options. Currently, the main game will probably feature a way to swing between platforms and get to the chosen option, but another game mode can be added to make the game switch to something easier, like a shooter where you have to shoot the right option. The gameplay option could even be disabled altogether, making for very fast-paced gameplay.
 
-Another feature that would be nice to get working would be a way for the students themselves to recieve the questions and answers. I have no clue on wether this should be enabled by default, but it seems like a viable option to make small hosts (like people who host on their phones) more viable.
+Another feature that would be nice to get working on could be a way for the students themselves to receive the questions and answers. I have no clue on whether this should be enabled by default, but it seems like a viable option to make small hosts (like people who host on their phones) more viable.
 
 Here's the checklist for this week:
 
-[ ] Actually starting the game from the host (which I haven't done, since there is no game yet lmao)
+[ ] Actually starting the game from the host (which I haven't done since there is no game yet lmao)
 [ ] Putting the player down on a game when a question is asked
 [ ] Answering the question from inside the game (in a simple way at first)
