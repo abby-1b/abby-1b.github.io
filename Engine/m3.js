@@ -1,6 +1,9 @@
 
 let con = new Console(200, "#ebe3c5")
 
+con.physics.gravity = new Vec2(0, 0.01)
+con.physics.friction = new Vec2(0.93, 0.997)
+
 // Controls
 con.nEvent("jump", () => {
     if (!player.onGround && player.extraJumps <= 0) return
@@ -53,12 +56,15 @@ player.groundFriction = false
 // player.showHitbox = true
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
-player.onCollision(function(el, d) {
-	// console.log(d)
-    if (el.srcStr == "Tiles/Bounce.png" && d == "top") {
-        player.speed.y = -2.3
-        player.animate("jump")
-    } else if (el.srcStr == "Sprites/Trash.png") {
+player.onCollision(function(el, d, i) {
+	if (i != undefined) {
+		console.log(el.colliders[i].type)
+		if (el.colliders[i].type == "BOUNCE" && d == "top") {
+			player.speed.y = -2.3
+	        player.animate("jump")
+		}
+	}
+    if (el.srcStr == "Sprites/Trash.png") {
 		con.rObj(el)
 		player.extraJumps++
     }
@@ -79,30 +85,40 @@ player.onCollision(function(el, d) {
 //     [287, "M3 should jump. [space]"]
 // ]
 
+// let tileSet = new TileSet("Tiles/SmallBrick.png", 8, 8)
+let tileSet = new TileSet("../GameOfWords/game/Art/TestSetNew.png", 8, 8)
+let tileMap = con.nObj(TileMap.from("Maps/Map1.png", tileSet, {
+	PLAYER: [78, 205, 196],
+	PLANT: [31, 255, 40],
+	BRICK: [168, 168, 168],
+	BOUNCE: [26, 83, 92],
+	TRASH: [255, 230, 109]
+}))
+
 con.init(() => {
     con.follow(player, 0.5, new Vec2(0, 0))
-    CTool.tileMapFrom("Maps/OpenWorld.png", { // "Maps/OpenWorld.png"
-        PLAYER: ["player", 78, 205, 196],
-		PLANT: ["plant", 31, 255, 40],
-        BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
-        BOUNCE: ["Tiles/Bounce.png", 26, 83, 92],
-        TRASH: ["trash", 255, 230, 109]
-    }, (bars) => {
-		console.log(bars)
-		const ss = 1 // 8
-		player.pos.addVec(CTool.findTilePos(bars, "player").multiplied(ss))
-        // console.log(bars.length + " bars instanced.")
-        for (let b = 0; b < bars.length; b++) {
-            if (["player", "plant"].includes(bars[b].type)) continue
-            if (bars[b].type == "trash") {
-                con.nObj(new PhysicsActor("Sprites/Trash.png", ss * bars[b].x, ss * bars[b].y, ss * 2, ss * 2))
-                continue
-            }
-            let s = con.nObj(new Tile(bars[b].type, ss * bars[b].x, ss * bars[b].y, ss * bars[b].w, ss * bars[b].h, false))
-        }
-		con.preLoop(preLoop)
-        con.loop(gameLoop)
-    })
+    // CTool.tileMapFrom("Maps/OpenWorld.png", { // "Maps/OpenWorld.png"
+    //     PLAYER: ["player", 78, 205, 196],
+	// 	PLANT: ["plant", 31, 255, 40],
+    //     BRICK: ["Tiles/SmallBrick.png", 168, 168, 168],
+    //     BOUNCE: ["Tiles/Bounce.png", 26, 83, 92],
+    //     TRASH: ["trash", 255, 230, 109]
+    // }, (bars) => {
+	// 	console.log(bars)
+	// 	const ss = 1 // 8
+	// 	player.pos.addVec(CTool.findTilePos(bars, "player").multiplied(ss))
+    //     // console.log(bars.length + " bars instanced.")
+    //     for (let b = 0; b < bars.length; b++) {
+    //         if (["player", "plant"].includes(bars[b].type)) continue
+    //         if (bars[b].type == "trash") {
+    //             con.nObj(new PhysicsActor("Sprites/Trash.png", ss * bars[b].x, ss * bars[b].y, ss * 2, ss * 2))
+    //             continue
+    //         }
+    //         let s = con.nObj(new Tile(bars[b].type, ss * bars[b].x, ss * bars[b].y, ss * bars[b].w, ss * bars[b].h, false))
+    //     }
+	// 	con.preLoop(preLoop)
+    //     con.loop(gameLoop)
+    // })
 })
 
 // let tos = [] // Timeouts
@@ -134,7 +150,7 @@ con.init(() => {
 //     }
 // }
 
-let preLoop = () => {
+con.preLoop(() => {
 	let bf = CTool.map(con.camPos.y, 156, -1204, 0, 1)
 
 	for (let p = 0; p < background.length; p++) {
@@ -143,11 +159,12 @@ let preLoop = () => {
 		background[p].pos.y = (-con.camPos.y + con.height / 2) / (p / 300 + 1)
 		background[p].animation[0] = CTool.lerp(background[p].animation[0], (-con.camPos.x / 1000) * (p / 10 + 1), 0.4)
 	}
-}
+})
 
-let gameLoop = () => {
+con.loop(() => {
     // con.text(CTool.round(con.frameRate, 2), 1, 1)
-	con.text(con.camPos.rounded(), 1, 1)
+	con.text(player.pos.rounded(), 1, 1)
+	con.text(player.pos.multiplied(1 / 8).rounded(), 1, 6)
     
     if ('s' in con.keys && player.onGround) {
         player.isCrouched = true
@@ -186,4 +203,4 @@ let gameLoop = () => {
     if (!player.locked)
         player.speed.addVec(new Vec2(
             (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().multiplyRet(0.25))
-}
+})
