@@ -491,9 +491,9 @@ class Sprite {
 	play(n) { this.animation[2] = false; if (n != undefined) { this.animation[0] = n } }
 	frame(n) { this.animation[0] = n }
 
-	collidedWith(el, d) {
+	collidedWith(el, d, i) {
 		for (let e = 0; e < this.collisionEvents.length; e++)
-			this.collisionEvents[e](el, d)
+			this.collisionEvents[e](el, d, i)
 	}
 
 	onCollision(fn) {
@@ -871,22 +871,22 @@ class PhysicsActor extends Sprite {
 				} else
 					this.speed.y = Math.min(this.speed.y, 0)
 				this.onGround = true
-				this.collidedWith(el, "top")
+				this.collidedWith(el, "top", cn)
 			} else if (bd < rd && bd < ld) {
 				this.pos.y += bd
 				if (this.bounce != 0)
 					this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
 				else
 					this.speed.y = Math.max(this.speed.y, 0)
-				this.collidedWith(el, "bottom")
+				this.collidedWith(el, "bottom", cn)
 			} else if (ld <= rd) {
 				this.pos.x += ld
 				this.speed.x = -this.speed.x * this.bounce
-				this.collidedWith(el, "left")
+				this.collidedWith(el, "left", cn)
 			} else {
 				this.pos.x -= rd
 				this.speed.x = -this.speed.x * this.bounce
-				this.collidedWith(el, "right")
+				this.collidedWith(el, "right", cn)
 			}
 		} else {
 			el.collided = false
