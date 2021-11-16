@@ -2,8 +2,8 @@
 let con = new Console(200, "white")
 
 let tileSet = new TileSet("Art/TestSetNew.png", 8, 8)
-let tileMap = con.nObj(TileMap.from("Maps/Map1.png", tileSet, {
-	TILE: [197, 204, 184]
+let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
+	TILE: [197, 204, 184, tileSet]
 }))
 tileMap.hbOffsets({top: 4, bottom: 0, left: 0, right: 0})
 
