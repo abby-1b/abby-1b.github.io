@@ -1,8 +1,8 @@
 
 let con = new Console(200, "#ebe3c5")
 
-con.physics.gravity = new Vec2(0, 0.01)
-con.physics.friction = new Vec2(0.93, 0.997)
+con.physics.gravity = new Vec2(0, 0.018)
+con.physics.friction = new Vec2(0.92, 0.9985)
 
 // Controls
 con.nEvent("jump", () => {
@@ -58,7 +58,7 @@ player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 player.onCollision(function(el, d, i) {
 	if (i != undefined) {
-		console.log(el.colliders[i].type)
+		// console.log(el.colliders[i].type)
 		if (el.colliders[i].type == "BOUNCE" && d == "top") {
 			player.speed.y = -2.3
 	        player.animate("jump")
@@ -87,16 +87,16 @@ player.onCollision(function(el, d, i) {
 
 // let tileSet = new TileSet("Tiles/SmallBrick.png", 8, 8)
 let tileSet = new TileSet("../GameOfWords/game/Art/TestSetNew.png", 8, 8)
-let tileMap = con.nObj(TileMap.from("Maps/Map1.png", tileSet, {
+let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	PLAYER: [78, 205, 196],
 	PLANT: [31, 255, 40],
-	BRICK: [168, 168, 168],
+	BRICK: [168, 168, 168, tileSet],
 	BOUNCE: [26, 83, 92],
 	TRASH: [255, 230, 109]
 }))
 
 con.init(() => {
-    con.follow(player, 0.5, new Vec2(0, 0))
+    con.follow(player, 0.2, new Vec2(25, 0))
     // CTool.tileMapFrom("Maps/OpenWorld.png", { // "Maps/OpenWorld.png"
     //     PLAYER: ["player", 78, 205, 196],
 	// 	PLANT: ["plant", 31, 255, 40],
@@ -163,8 +163,8 @@ con.preLoop(() => {
 
 con.loop(() => {
     // con.text(CTool.round(con.frameRate, 2), 1, 1)
-	con.text(player.pos.rounded(), 1, 1)
-	con.text(player.pos.multiplied(1 / 8).rounded(), 1, 6)
+	con.text(player.speed.rounded(), 1, 1)
+	// con.text(player.pos.multiplied(1 / 8).rounded(), 1, 6)
     
     if ('s' in con.keys && player.onGround) {
         player.isCrouched = true
