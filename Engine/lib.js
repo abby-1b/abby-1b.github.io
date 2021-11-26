@@ -692,7 +692,6 @@ class TileMap {
 			let bars = this.tileMapFromPixels(data, dw, types)
 			for (let b = 0; b < bars.length; b++) {
 				let n = Object.keys(types).indexOf(bars[b].type)
-				console.log(n)
 				for (let y = 0; y < bars[b].h; y++) {
 					for (let x = 0; x < bars[b].w; x++) {
 						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.wt] = n
@@ -700,12 +699,9 @@ class TileMap {
 				}
 			}
 			tm.colliders = []
-			for (let b = 0; b < bars.length; b++) {
-				if (types[bars[b].type][3]) {
+			for (let b = 0; b < bars.length; b++)
+				if (types[bars[b].type][3])
 					tm.colliders.push(bars[b])
-				}
-			}
-			// tm.colliders = bars
 			tm.init()
 		})
 		return tm
@@ -714,12 +710,15 @@ class TileMap {
 	constructor(tileSets, w, h, mapData) {
 		this.type = "TileMap"
 		this.tileSets = tileSets
-		for (let t in this.tileSets) {
+		this.loadableSets = 0
+		for (let t in this.tileSets)
 			if (this.tileSets[t]) {
 				this.tileSet = this.tileSets[t]
 				break
 			}
-		}
+		for (let t in this.tileSets)
+			if (this.tileSets[t]) this.loadableSets++
+
 		this.wt = w
 		this.ht = h
 		this.map = mapData
@@ -739,7 +738,7 @@ class TileMap {
 		this.cnv.height = this.tileSet.th * this.ht
 		this.ctx = this.cnv.getContext('2d')
 
-		let nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,-1,-1,39,47,-1,31,-1,-1,-1,-1,38,42,-1,4,36,24,-1,-1,-1,-1,-1,-1,37,44,-1,28,38,41,-1,7,-1,24,-1,12,-1,47,-1,35,-1,44,-1,20,-1,45,-1,46,36,-1,0,-1,39,-1,11,19,37,-1,-1,-1,38,-1,6,40,-1,-1,-1,-1,-1,47,11,35,-1,-1,-1,-1,-1,-1,-1,23,36,24,0,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,21,-1,-1,-1,-1,-1,47,-1,-1,-1,-1,-1,-1,-1,45,-1,30,36,-1,0,-1,-1,-1,-1,-1,37,-1,8,16,-1,-1,5,43,36,24,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,8,20,-1,-1,-1,32,-1,-1,-1,-1,-1,-1,-1,-1,-1,44,-1,-1,-1,-1,-1,29,-1,-1,0,12,-1,-1,11,-1,-1,-1,8,-1,-1,-1,10,9,-1,-1,-1,-1,-1,-1,11,35,-1,-1,-1,-1,-1,-1,10,18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,20,-1,-1,10,17,-1,-1,-1,-1,-1,-1,-1,35,-1,-1,-1,20,-1,45,10,33]
+		this.nbToIdx = [36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,0,12,39,47,3,31,37,25,1,13,38,42,-1,4,36,24,0,12,39,27,3,-1,37,44,1,28,38,41,-1,7,36,24,0,12,39,47,3,31,37,44,-1,28,38,45,2,46,36,24,0,12,39,-1,11,19,37,25,1,-1,38,26,6,40,36,24,0,12,39,47,11,35,37,25,1,13,38,42,6,23,36,24,0,12,39,27,11,19,-1,44,1,28,38,41,6,34,36,24,0,12,39,47,11,35,-1,44,1,28,38,45,6,30,36,-1,0,12,39,27,-1,-1,37,25,8,16,38,26,5,43,36,24,0,12,39,47,3,31,37,25,-1,16,-1,42,5,21,36,24,0,12,39,27,3,15,37,44,8,20,38,41,5,32,36,24,0,12,-1,47,3,31,37,44,8,20,38,45,5,29,36,24,0,12,39,27,11,19,37,25,8,16,38,26,10,9,36,24,0,24,39,47,11,35,37,25,8,16,38,42,10,18,36,24,0,12,-1,-1,11,19,-1,44,8,20,38,41,10,17,-1,24,0,12,39,47,11,35,-1,44,8,20,38,45,10,33]
 
 		const UP     = 1
 		const DOWN   = 2
@@ -750,33 +749,45 @@ class TileMap {
 		const DLEFT  = 64
 		const DRIGHT = 128
 
-		nbToIdx[ULEFT+LEFT+DLEFT+RIGHT] = 38
-		nbToIdx[URIGHT+UP+ULEFT+LEFT+DLEFT+DOWN] = 35
+		// this.nbToIdx[ULEFT+LEFT+DLEFT+RIGHT] = 38
 
-		console.log(JSON.stringify(nbToIdx))
+		let st = 0
+		for (let b = 0; b < this.nbToIdx.length; b++) if (this.nbToIdx[b] != -1) st++
+		console.log("missing", (this.nbToIdx.length - st))
 
-		this.tileSet.onDone(() => {
-			for (let i = 0; i < this.ht * this.wt; i++) {
-				if (this.map[i] != 0 && this.map[i] != undefined) {
-					let ti = this.map[i]
-					let mv = 0
-					if (this.map[i - this.wt] == ti) mv |=  1 // UP
-					if (this.map[i + this.wt] == ti) mv |=  2 // DOWN
-					if (i % this.wt != 0           && this.map[i - 1    ] == ti) mv |=  4 // LEFT
-					if (i % this.wt != this.wt - 1 && this.map[i + 1    ] == ti) mv |=  8 // RIGHT
-					if (i % this.wt != 0           && this.map[i - this.wt - 1] == ti) mv |= 16 // UP-LEFT
-					if (i % this.wt != this.wt - 1 && this.map[i - this.wt + 1] == ti) mv |= 32 // UP-RIGHT
-					if (i % this.wt != 0           && this.map[i + this.wt - 1] == ti) mv |= 64 // DOWN-LEFT
-					if (i % this.wt != this.wt - 1 && this.map[i + this.wt + 1] == ti) mv |=128 // DOWN-RIGHT
-					// console.log(mv, nbToIdx[mv])
-					mv = nbToIdx[mv]
-					if (mv == undefined || mv == -1) mv = 22
-					this.ctx.drawImage(this.tileSet.tiles[mv],
-						(i % this.wt) * this.tileSet.tw, Math.floor(i / this.wt) * this.tileSet.th)
-				}
+		console.log(JSON.stringify(this.nbToIdx))
+
+		this.loadedSets = 0
+		for (let t = 0; t < this.tileSets.length; t++)
+			if (this.tileSets[t])
+				this.tileSets[t].onDone(() => {
+					this.loadedSets++
+					if (this.loadedSets == this.loadableSets)
+						this.allTilesetsLoaded()
+				})
+	}
+
+	allTilesetsLoaded() {
+		for (let i = 0; i < this.ht * this.wt; i++) {
+			if (this.map[i] != 0 && this.map[i] != undefined) {
+				let ti = this.map[i]
+				let mv = 0
+				if (this.map[i - this.wt] == ti) mv |=  1 // UP
+				if (this.map[i + this.wt] == ti) mv |=  2 // DOWN
+				if (i % this.wt != 0           && this.map[i - 1    ] == ti) mv |=  4 // LEFT
+				if (i % this.wt != this.wt - 1 && this.map[i + 1    ] == ti) mv |=  8 // RIGHT
+				if (i % this.wt != 0           && this.map[i - this.wt - 1] == ti) mv |= 16 // UP-LEFT
+				if (i % this.wt != this.wt - 1 && this.map[i - this.wt + 1] == ti) mv |= 32 // UP-RIGHT
+				if (i % this.wt != 0           && this.map[i + this.wt - 1] == ti) mv |= 64 // DOWN-LEFT
+				if (i % this.wt != this.wt - 1 && this.map[i + this.wt + 1] == ti) mv |=128 // DOWN-RIGHT
+				// console.log(mv, nbToIdx[mv])
+				mv = this.nbToIdx[mv]
+				if (mv == undefined || mv == -1) mv = 22
+				this.ctx.drawImage(this.tileSets[ti].tiles[mv],
+					(i % this.wt) * this.tileSets[ti].tw, Math.floor(i / this.wt) * this.tileSets[ti].th)
 			}
-		})
-
+		}
+		this.nbToIdx = []
 		this.loaded = true
 	}
 
@@ -788,7 +799,7 @@ class TileMap {
 	 * @param {Vec2} [fallBack] Fallback when there's no tile found
 	 * @returns {Vec2} The position found
 	 */
-	 findTilePos(tiles, type, fallBack) {
+	findTilePos(tiles, type, fallBack) {
 		let offs = fallBack ? fallBack : new Vec2(0, 0)
 		for (let b = 0; b < tiles.length; b++) {
 			if (tiles[b].type == type) {
@@ -800,7 +811,7 @@ class TileMap {
 	}
 
 	draw() {
-		if (!tileSet.loaded) return
+		// if (!this.tileSets[0].loaded) return
 		if (!this.loaded) return
 		this.parentCon.ctx.drawImage(this.cnv, Math.round(this.x - this.parentCon.camPos.x), Math.round(this.y - this.parentCon.camPos.y))
 	}
