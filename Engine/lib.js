@@ -217,36 +217,53 @@ class Console {
 		// Yes, this runs on 45 fps. Deal with it.
 		this.loopFn = fn
 		this.lastTime = window.performance.now()
-		this.frameRate = 45
-		// window.requestInterval(this.updateAll, 1000 / 45, this)
+		this.frameRate = 60
+
+		// Graphics interval
 		setInterval(() => {
-			this.updateAll.call(this)
-		}, 1000 / 60)//1000 / 45)
+			this.doGraphics.call(this)
+		}, 1000 / 60)
+
+		// Physics interval
+		setInterval(() => {
+			this.doPhysics.call(this)
+		}, 4)
 	}
 
 	/**
 	 * Main loop for the game. Runs the preLoop, moves everything, and runs the normal loop functions.
 	 * @private
 	 */
-	updateAll() {
+	doGraphics() {
 
 		// Calculate frame rate
 		this.deltaTime = (window.performance.now() - this.lastTime)
 		if (this.deltaTime != 0)
 			this.frameRate = CTool.lerp(this.frameRate, 1000 / this.deltaTime, 0.05)
 		this.lastTime = window.performance.now()
+
+		// Clear screen
+		this.ctx.fillStyle = this.backgroundColor
+		this.ctx.fillRect(0, 0, this.width, this.height)
+
+		for (let o = 0; o < this.objects.length; o++)
+			this.objects[o].draw()
+
+		this.preLoopFn()
+		
+		this.loopFn() // Call user loop function
+		this.frameCount++ // Increment frame count
+	}
+
+	/** */
+	doPhysics() {
 		// Move camera towards targeted object
 		if (this.following)
 			this.camPos.lerp(
 				(this.following.pos.x - this.width  / 2) + this.following.speed.x * this.followInterval[1].x + this.following.w * this.following.s * 0.5,
 				(this.following.pos.y - this.height / 2) + this.following.speed.y * this.followInterval[1].y + this.following.h * this.following.s * 0.5,
 				this.followInterval[0])
-		// Clear screen
-		this.ctx.fillStyle = this.backgroundColor
-		this.ctx.fillRect(0, 0, this.width, this.height)
-
-		this.preLoopFn()
-
+		
 		// Loop through all objects, and then again for PhysicsActors
 		this.frameTotalCollisions = 0
 		for (let o = 0; o < this.objects.length; o++) {
@@ -255,11 +272,7 @@ class Console {
 				this.objects[o].onGround = false
 				this.objects[o].physics()
 			}
-			this.objects[o].draw()
 		}
-		
-		this.loopFn() // Call user loop function
-		this.frameCount++ // Increment frame count
 	}
 
 	/**
@@ -667,32 +680,49 @@ class TileMap {
 	 * @param {TileSet} ts Tileset
 	 * @returns {TileMap} Tilemap
 	 */
-	static from(src, ts, types) {
-		let tm = new TileMap(ts, -1)
+	static from(src, types) {
+		let tileSets = []
+		for (let t in types)
+			tileSets.push(types[t][3])
+		let tm = new TileMap(tileSets, -1)
 		CTool.getImagePixels(src, (data, dw, dh) => {
 			tm.wt = dw
 			tm.ht = dh
 			tm.map = new Array(dw * dh).fill(0)
 			let bars = this.tileMapFromPixels(data, dw, types)
 			for (let b = 0; b < bars.length; b++) {
+				let n = Object.keys(types).indexOf(bars[b].type)
+				console.log(n)
 				for (let y = 0; y < bars[b].h; y++) {
 					for (let x = 0; x < bars[b].w; x++) {
-						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.wt] = 1
+						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.wt] = n
 					}
 				}
 			}
-			tm.colliders = bars
+			tm.colliders = []
+			for (let b = 0; b < bars.length; b++) {
+				if (types[bars[b].type][3]) {
+					tm.colliders.push(bars[b])
+				}
+			}
+			// tm.colliders = bars
 			tm.init()
 		})
 		return tm
 	}
 
-	constructor(ts, w, h, dt) {
+	constructor(tileSets, w, h, mapData) {
 		this.type = "TileMap"
-		this.tileSet = ts
+		this.tileSets = tileSets
+		for (let t in this.tileSets) {
+			if (this.tileSets[t]) {
+				this.tileSet = this.tileSets[t]
+				break
+			}
+		}
 		this.wt = w
 		this.ht = h
-		this.map = dt
+		this.map = mapData
 		this.x = 0
 		this.y = 0
 		if (this.wt != -1) this.init()
@@ -719,6 +749,9 @@ class TileMap {
 		const URIGHT = 32
 		const DLEFT  = 64
 		const DRIGHT = 128
+
+		nbToIdx[ULEFT+LEFT+DLEFT+RIGHT] = 38
+		nbToIdx[URIGHT+UP+ULEFT+LEFT+DLEFT+DOWN] = 35
 
 		console.log(JSON.stringify(nbToIdx))
 
@@ -822,26 +855,22 @@ class PhysicsActor extends Sprite {
 	}
 
 	physics(el) {
-		// Repeat 5 times per frame. Since it's ran separately for each PhysicsActor
-		// it's very inaccurate, but this is mostly to avoid phasing through objects.
-		for (let pf = 0; pf < 5; pf++) {
-			// this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
-			// this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
-			this.pos.x += (this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x)
-			this.pos.y += (this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y)
-			for (let t = 0; t < this.parentCon.objects.length; t++) {
-				if (this.parentCon.objects[t].type == "TileMap") {
-					for (let c = 0; c < this.parentCon.objects[t].colliders.length; c++) {
-						this.avoidCollision(this.parentCon.objects[t], c)
-					}
-				} else {
-					if (this.parentCon.objects[t] == this // Same as self, skip
-						|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
-						|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
-						(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
-						* (this.s + this.parentCon.objects[t].s)) continue
-					this.avoidCollision(this.parentCon.objects[t])
+		// this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
+		// this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
+		this.pos.x += (this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x)
+		this.pos.y += (this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y)
+		for (let t = 0; t < this.parentCon.objects.length; t++) {
+			if (this.parentCon.objects[t].type == "TileMap") {
+				for (let c = 0; c < this.parentCon.objects[t].colliders.length; c++) {
+					this.avoidCollision(this.parentCon.objects[t], c)
 				}
+			} else {
+				if (this.parentCon.objects[t] == this // Same as self, skip
+					|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
+					|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
+					(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
+					* (this.s + this.parentCon.objects[t].s)) continue
+				this.avoidCollision(this.parentCon.objects[t])
 			}
 		}
 	}
