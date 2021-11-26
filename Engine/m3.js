@@ -54,6 +54,8 @@ player.addAnimation("cmov", { start: 18, end: 19, timer: 5 , loop: true, pause: 
 player.extraJumps = 999
 player.groundFriction = false
 // player.showHitbox = true
+player.pos = new Vec2(1191, 152)
+
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
 player.onCollision(function(el, d, i) {
@@ -85,18 +87,16 @@ player.onCollision(function(el, d, i) {
 //     [287, "M3 should jump. [space]"]
 // ]
 
-// let tileSet = new TileSet("Tiles/SmallBrick.png", 8, 8)
-let tileSet = new TileSet("../GameOfWords/game/Art/TestSetNew.png", 8, 8)
 let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	PLAYER: [78, 205, 196],
 	PLANT: [31, 255, 40],
-	BRICK: [168, 168, 168, tileSet],
-	BOUNCE: [26, 83, 92],
+	BRICK: [168, 168, 168, new TileSet("../GameOfWords/game/Art/TestSetNew.png", 8, 8)], // Tiles/SmallBrick.png
+	BOUNCE: [26, 83, 92, new TileSet("Tiles/BouncePad.png", 8, 8)],
 	TRASH: [255, 230, 109]
 }))
 
 con.init(() => {
-    con.follow(player, 0.2, new Vec2(25, 0))
+    con.follow(player, 0.1, new Vec2(10, 0))
     // CTool.tileMapFrom("Maps/OpenWorld.png", { // "Maps/OpenWorld.png"
     //     PLAYER: ["player", 78, 205, 196],
 	// 	PLANT: ["plant", 31, 255, 40],
