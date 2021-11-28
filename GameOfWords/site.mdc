@@ -1,0 +1,90 @@
+{
+	"title": "Game of Words",
+	"banner": "game/Art/Trees.png",
+	"navbar": false
+}
+
+# Game of Words! (Oct 11, 2021)
+
+Wouldn't it be nice to be able to practice English while having fun?
+Probably. Would it be possible to finish a complex game with a tight
+deadline and still have room to write about it? If so, how?
+
+~ Organization. I won't be able to finish anything without setting goals and splitting those goals into smaller goals.
+~ Perseverance. I can't stop working on a problem just because it seems difficult. This is going to be a recurring theme, but this might be an issue.
+~ Schedule. If there's no schedule for the different features of the game, there's going to be no game.
+
+So that's the plan for these 12 weeks! It shouldn't be too much of
+a stretch, it just needs to fall on small, consistent deadlines until
+everything falls together cohesively.
+
+# Getting the website to work (Oct 14, 2021)
+
+I finally started getting the website itself (http://codeiguess.github.io/GameOfWords) working. I'll be using a game engine I made a while back and am still working on. The hardest part, however, is the ideas that I want to implement. I really should start writing these down and structuring them before working on the main game.
+
+~ Multiplayer: Something similar to a Kahoot game, with a host to start the game and multiple guests joining and playing. This would be something similar to a multiple-choice quiz with a bit of gameplay. Something similar to having to move your character to the correct position.
+~ Ease of use: If it's hard to set up, takes too long, or is too slow to use, it's going to fail. This goes for both the host making the quiz and the students using it. Codes used for connecting can't be 20 characters long, and since this is a small platform, it could be two to three characters long.
+~ Small details, _game juice_: Game juice refers to all the things that make a game fun to play, regardless of the characteristics of the game or the things the player has to do. If the player is doing _anything_ in the game, it should be fun. Again, this applies to the host (when making the quiz) and the guest (when playing the quiz). Make it fun to make quizzes!
+
+Great, I have something to aim for!
+
+Now, the things I want to get done this week:
+
+[x] Encoding and decoding an ID to make it unique (by base-64 encoding a three-letter base-16 code)
+[x] Checking if an ID is already taken and re-generating until one is found. This was unnecessary because the platform will be small, and there are 4096 possible codes in total.
+
+And a few extra things I ended up doing:
+[x] Removed a few game IDs from occurring. These include every instance of the number `69`, and the (hex) numbers `420` `666`, `A55`, and `BAD`. These add up to 36, leaving us with a total of 4060 IDs instead of 4096.
+[x] Styling for the host page
+
+# Basic networking (Oct 21, 2021)
+
+How do players connect to the host? How does the host communicate with the players (maxing out at about 20-30)? These are the things I have to figure out this week. 
+
+This website will be up on GitHub Pages. It's a free service that offers static sites. I can't code anything server-side. This _also_ means I can't make any servers to connect the guests to the hosts, and I can't keep any sort of count on the number of users currently on the website; coincidentally making moderating the game a living hell because _there's no server to code for_.
+
+So, how would one make a multiplayer game, again, _without a server?_ The answer is using client-to-client connections, more commonly known as peer-to-peer. This means that instead of every guest and host connecting to a central server, the guests and hosts connect to each other (almost) directly.
+
+For this, I'm going to use the PeerJS library.
+
+Things for this week:
+
+[x] Getting host to guest interactions working
+[x] A naming system for guests to choose their names
+[x] Filtering profanity in names
+[x] Settings menu for profanity (and other settings, eventually)
+[x] Improved website design and animations
+
+# Art and gameplay (Oct 31, 201)
+
+Great! It took a while to do, but all the things I wanted to do got done. Getting network interactions working was a pain, but in the end, it all worked out. Guests can connect to hosts seamlessly and without being in the same network with ease.
+
+I also made some art for the game, as you can see in the website's banner. The idea is to develop a forest/nature-themed platformer with snappy controls and tons of animations. 
+
+Now for some more pressing matters, I have to get the game itself working!
+
+This week will mostly be for setup, making the game work to any extent possible, and maybe starting to develop a game mechanic.
+
+Developing a game mechanic is no small task, making this week slightly stressful, as it will determine how fun the end game will be!
+
+Here's a checklist, from most to least important:
+
+[x] Basic player movement
+[x] Basic physics
+[!] Game mechanic
+[!] Sending questions between the host and the guests
+[!] Player animation (very unlikely)
+
+# Linking the game to the guest/host system (Nov 10, 2021)
+
+Basic movement and physics are working, but no way to interact with the outside world. I'll work something out to make some collectible powerups translate to picking an option on the screen. 
+
+I have to keep in mind that there will likely be multiple games, and therefore multiple ways to choose your options. Currently, the main game will probably feature a way to swing between platforms and get to the chosen option, but another game mode can be added to make the game switch to something easier, like a shooter where you have to shoot the right option. The gameplay option could even be disabled altogether, making for very fast-paced gameplay.
+
+Another feature that would be nice to get working on could be a way for the students themselves to receive the questions and answers. I have no clue on whether this should be enabled by default, but it seems like a viable option to make small hosts (like people who host on their phones) more viable.
+
+Here's the checklist for this week:
+
+[ ] Actually starting the game from the host (which I haven't done since there is no game yet lmao)
+[ ] Putting the player down on a game when a question is asked
+[ ] Answering the question from inside the game (in a simple way at first)
