@@ -8,7 +8,7 @@ int lon = 0;
 String output = "";
 
 void setup() {
-  size(800, 800);
+  size(700, 800);
   fnt = loadImage("../font.png");
   noSmooth();
   
@@ -43,7 +43,7 @@ void draw() {
   println(c1, c2, "  :  ", unbinary(lb.substring(0, 6)), unbinary(lb.substring(6)));
   
   lon++;
-  if (lon > 8 * 8 - 1) {
+  if (lon > 8 * 9 - 1) {
     
     println();
     println(output);
@@ -54,7 +54,9 @@ void draw() {
     spl = output.split("\"");
     output = join(spl, "\\\"");
     
-    println("{" + output + "}");
+    print("{");
+    print(output);
+    println("}");
     
     noLoop();
   }

@@ -1,7 +1,5 @@
 let _homeWidth = 15
 
-let pixelSize = 2
-
 let _canvas = document.getElementById("canvas")
 let _normalCtx = _canvas.getContext("2d")
 _normalCtx.imageSmoothingEnabled = false
@@ -40,7 +38,7 @@ function _error(t, err) {
 		//errStr += "  Line: " + err.filter(e => e.includes("eval at"))[0].split(":").slice(-2).join(" : ").replace(")", "")
 	}
 	_errors.push(errStr)
-	_startOS()
+	_startos()
 }
 
 /// CHANGE CANVAS
@@ -249,8 +247,8 @@ class Sprite {
 }
 
 /// FONT
-let _fontData =  "5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(:PGXY(_X_(*1B42\"Y\"*4B1:3R6O]5 JH' 70XX22M 2 >8SP 0 2[S00021 /@IE]V*QB<"
-  , _fontMapping="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()!?/\\[]#^*-+=|\"'<>.,&:;`~%@{}"
+let _fontData =  "5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[XO(:PGXY(_X_(*1B42\"Y\"*4B1:3R6O]5 JH' 70XX22M 2 >8SP 0 2[S00021 /@IE]V*QB< '"
+  , _fontMapping="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()!?/\\[]#^*-+=|\"'<>.,&:;`~%@{}_"
   , _gl = a => {
     let s  = new Sprite(3, 4)
       , _s = e =>(_fontData.charCodeAt(e)-32).toString(2).padStart(6,"0")
@@ -263,8 +261,10 @@ let _fontData =  "5]W_<CUN^G^D\\OOMZ79ONMDG_MUM]O_DVQ\\D\\/Z2MOMZM_J5O2YG]X20R8[
     s.compile()
     return s
 }
-let _font = [...Array(66).keys()].map(e => _gl(e))
+let _font = [...Array(67).keys()].map(e => _gl(e))
+  , _unknownLetterIdx = _fontMapping.indexOf('?')
 
+// Draws text to the screen
 function text(t, x, y) {
 	if (arguments.length < 3) { _error("'text' not given enough arguments!") }
     t += ''
@@ -274,6 +274,7 @@ function text(t, x, y) {
     for (let a in t) {
         if (t[a] == ' ') continue
         let _idx = _fontMapping.indexOf(t[a])
+        if (_idx == -1) { _idx = _unknownLetterIdx }
         if (_font[_idx].color != _compiledFill) {
             _font[_idx].setAllColor(_fill)
         }
@@ -306,7 +307,7 @@ _canvas.ontouchstart = function(e) {
     }*/
     if (e.type == "touchstart") {
         for (let a = 0; a < e.changedTouches.length; a++) {
-            touch.push(new Touch(e.changedTouches[a].clientX / pixelSize - 0.5, e.changedTouches[a].clientY / pixelSize - 0.5, e.changedTouches[a].identifier))
+            touch.push(new Touch(e.changedTouches[a].clientX / _pixelSize - 0.5, e.changedTouches[a].clientY / _pixelSize - 0.5, e.changedTouches[a].identifier))
         }
     } else {
         for (let a = 0; a < e.changedTouches.length; a++) {
@@ -324,8 +325,8 @@ _canvas.ontouchmove = function(e) {
             if (touch[b].id == e.changedTouches[a].identifier && !touch[b]._frameMoved) {
                 touch[b].lx = touch[b].x
                 touch[b].ly = touch[b].y
-                touch[b].x = e.changedTouches[a].clientX / pixelSize - 0.5
-                touch[b].y = e.changedTouches[a].clientY / pixelSize - 0.5
+                touch[b].x = e.changedTouches[a].clientX / _pixelSize - 0.5
+                touch[b].y = e.changedTouches[a].clientY / _pixelSize - 0.5
                 touch[b]._frameMoved = true
                 // break (untested)
             }
@@ -339,7 +340,7 @@ _canvas.ontouchmove = function(e) {
 _canvas.onmousedown = function(e) {
     e.preventDefault()
     if (e.type == "mousedown") {
-        touch.push(new Touch(e.clientX / pixelSize - 0.5, e.clientY / pixelSize - 0.5, -1))
+        touch.push(new Touch(e.clientX / _pixelSize - 0.5, e.clientY / _pixelSize - 0.5, -1))
     } else {
         touch = []
     }
@@ -350,14 +351,14 @@ _canvas.onmousemove = function(e) {
     e.preventDefault()
     if (touch.length == 1) {
         if (touch[0]._frameMoved) {
-            touch[0].x = e.clientX / pixelSize - 0.5
-            touch[0].y = e.clientY / pixelSize - 0.5
+            touch[0].x = e.clientX / _pixelSize - 0.5
+            touch[0].y = e.clientY / _pixelSize - 0.5
             return
         }
         touch[0].lx = touch[0].x
         touch[0].ly = touch[0].y
-        touch[0].x = e.clientX / pixelSize - 0.5
-        touch[0].y = e.clientY / pixelSize - 0.5
+        touch[0].x = e.clientX / _pixelSize - 0.5
+        touch[0].y = e.clientY / _pixelSize - 0.5
         touch[0]._frameMoved = true
     }
 }
@@ -408,22 +409,16 @@ function _checkButtons() {
 /// OS INTERFACE FUNCTIONS
 
 let _keyboardKeys = [[
-    "-+*/:;()&\"",
+    "-+*/;(){}\"",
     "qwertyuiop",
     "asdfghjkl ",
     "zxcvbnm   ",
     "       \n\n\n"
 ], [
-    "-+*/:;()&\"",
+    "-+*/;(){}\"",
     "1234567890",
-    "[]{}#%^*+= ",
+    "[]&:#%^*+= ",
     ".,?!'<>   ",
-    "       \n\n\n"
-], [
-    " ",
-    " ",
-    " ",
-    " ",
     "       \n\n\n"
 ]]
 let _kbExtraButtons = [
@@ -436,12 +431,29 @@ let _keyboardMode = 0
 
 let kbButtons = []
 let kbJustPressed = []
+let _kbHardwarePressed = []
+let _kbHardwareUnpressed = []
 
 function _drawKeyboard() {
+	if (haskeyboard()) {
+		kbJustPressed = _kbHardwarePressed
+		kbButtons.push(...kbJustPressed)
+		kbButtons = kbButtons.filter(e => !_kbHardwareUnpressed.includes(e))
+		_kbHardwarePressed = []
+		_kbHardwareUnpressed = []
+		//console.log(kbButtons)
+		return false
+	}
     let allPressed = []
     let kh = 120
     let bh = kh / 5
     let bw = width / 10
+    
+    fill(0)
+    fillRect(0, height - kh, width, kh)
+    stroke(255)
+    fill(255)
+    
     for (let a = (_keyboardMode == 2 ? 4 : 0); a < 5; a++) {
         rect(0, a * bh + (height - kh) - 1, width - 1, 0)
         let ck = _keyboardKeys[_keyboardMode][a]
@@ -485,7 +497,42 @@ function _drawKeyboard() {
     
     kbJustPressed = allPressed.filter(e => !kbButtons.includes(e))
     kbButtons = allPressed
+    
+    return true
 }
+
+/// HARDWARE KEYBOARD
+
+let _keyMap = {
+	"Enter":      "\n",
+	"Backspace":  "BACK",
+	"ArrowLeft":  "ALFT",
+	"ArrowRight": "ARGH",
+	"ArrowUp":    "ARUP",
+	"ArrowDown":  "ADWN",
+	"Tab":        "TABB",
+	"Control":    "CTRL",
+	"Escape":     "ESCP"
+}
+
+document.onkeydown = function __onkeydown(e) {
+	console.log(e.key)
+	_kbHardwarePressed.push(__mapKey(e.key))
+	e.preventDefault()
+}
+
+document.onkeyup = function __onkeyup(e) {
+	_kbHardwareUnpressed.push(__mapKey(e.key))
+	e.preventDefault()
+}
+
+function __mapKey(k) {
+	if (k in _keyMap) {
+		return _keyMap[k]
+	}
+	return k.toLowerCase()
+}
+
 
 // Document functions
 document.addEventListener('contextmenu', e => e.preventDefault())
@@ -504,19 +551,23 @@ function _runScript(c, name) {
         
         _buttons = []
         _touch = []
+        kbJustPressed = []
+        kbButtons = []
+        _kbHardwarePressed = []
+        _kbHardwareUnpressed = []
         frameCount = 0
         _currentUnloadFunction = _fns[2]
 
-        _canvas.width = window.innerWidth / pixelSize
-        _canvas.height = window.innerHeight / pixelSize
+        _canvas.width = window.innerWidth / _pixelSize
+        _canvas.height = window.innerHeight / _pixelSize
         width = _canvas.width
         height = _canvas.height
 
         _fns[0]()
 
         window.onresize = function __onresize() {
-            _canvas.width = window.innerWidth / pixelSize
-            _canvas.height = window.innerHeight / pixelSize
+            _canvas.width = window.innerWidth / _pixelSize
+            _canvas.height = window.innerHeight / _pixelSize
             width = _canvas.width
             height = _canvas.height
             _fns[1]()
@@ -533,13 +584,36 @@ function _runScript(c, name) {
                     if (_currentCodeName == "") {
                         _fns[3]()
                     } else {
-                        _startOS()
+                        _startos()
                     }
+                }
+            }
+            if (kbJustPressed.includes("ESCP")) {
+            	if (_currentCodeName == "") {
+                    _fns[3]()
+                } else {
+                    _startos()
                 }
             }
             frameCount++
         }, 1000. / 45)
     }, 1000. / 45)
+}
+
+function haskeyboard() {
+  return !([
+    'iPad Simulator',
+    'iPhone Simulator',
+    'iPod Simulator',
+    'iPad',
+    'iPhone',
+    'iPod'
+  ].includes(navigator.platform) || (navigator.userAgent.includes("Mac") && "ontouchend" in document))
+}
+
+let _pixelSize = 2
+if (!haskeyboard()) {
+	_pixelSize = 1
 }
 
 window.onbeforeunload = function __beforeUnload(event) {
@@ -551,10 +625,13 @@ window.onerror = function __errorHandler(errorMsg, url, lineNo, columnNo, error)
     return true
 }
 
-function _startOS() {
+function _startos() {
+	if (_drawInterval != null) {
+        clearInterval(_drawInterval)
+    }
     fetch("os.js").then(r => r.text().then(function(c){_runScript(c, "")}))
 }
-_startOS()
+_startos()
 
 /// ASK FOR INPUT
 
