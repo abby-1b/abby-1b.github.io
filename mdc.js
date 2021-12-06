@@ -54,5 +54,9 @@ function mdToHtml(t) {
 	// Removes all the unused things
 		.replace(/\n\</g, "<")
 		.replace(/>\n/g, ">")
+	
+	// Images
+		.replace(/\(\(/g, "<img src='GameOfWords/images/")
+		.replace(/\)\)/g, ".png' style='width: 100%'>")
 	return {text: t, meta: m}
 }

@@ -66,7 +66,8 @@ class Console {
 		this.events = {}
 		this.initFn    = () => {}
 		this.preLoopFn = () => {}
-		this.loopFn    = () => {}
+		// this.drawFn    = () => {}
+		// this.loopFn    = () => {}
 		this.frameCount = 0
 		document.body.appendChild(this.el)
 		document.body.style.overflow = "hidden"
@@ -208,21 +209,33 @@ class Console {
 	preLoop(fn) {
 		this.preLoopFn = fn
 	}
+
+	/**
+	 * 
+	 * @param {*} fn Function to be ran
+	 */
+	draw(fn) {
+		this.drawFn = fn
+	}
 	
 	/**
-	 * Runs after the main loop, when all the elements are moved.
-	 * @param {Function} fn Function to be ran after the loop executes
+	 * 
+	 * @param {Function} fn Function to be ran
 	 */
 	loop(fn) {
-		// Yes, this runs on 45 fps. Deal with it.
+		if (!this.drawFn)
+			CTool.error("No draw function defined.")
+		
 		this.loopFn = fn
+
+		// Framerate calculation setup
 		this.lastTime = window.performance.now()
-		this.frameRate = 60
+		this.frameRate = 120
 
 		// Graphics interval
 		setInterval(() => {
 			this.doGraphics.call(this)
-		}, 1000 / 60)
+		}, 1000 / 200)
 
 		// Physics interval
 		setInterval(() => {
@@ -235,7 +248,6 @@ class Console {
 	 * @private
 	 */
 	doGraphics() {
-
 		// Calculate frame rate
 		this.deltaTime = (window.performance.now() - this.lastTime)
 		if (this.deltaTime != 0)
@@ -246,12 +258,15 @@ class Console {
 		this.ctx.fillStyle = this.backgroundColor
 		this.ctx.fillRect(0, 0, this.width, this.height)
 
+		this.ctx.translate(-Math.round(this.camPos.x), -Math.round(this.camPos.y))
 		for (let o = 0; o < this.objects.length; o++)
 			this.objects[o].draw()
 
+		this.ctx.translate(Math.round(this.camPos.x), Math.round(this.camPos.y))
+
 		this.preLoopFn()
 		
-		this.loopFn() // Call user loop function
+		this.drawFn() // Call user loop function
 		this.frameCount++ // Increment frame count
 	}
 
@@ -273,6 +288,8 @@ class Console {
 				this.objects[o].physics()
 			}
 		}
+
+		this.loopFn()
 	}
 
 	/**
@@ -383,6 +400,35 @@ class Console {
 	}
 
 	/**
+	 * Draws a single pixel at a given position.
+	 * @param {number} x X Position to draw at
+	 * @param {number} y Y Position to draw at
+	 * @param {String} color Color to draw with
+	 */
+	point(x, y, color) {
+		this.ctx.fillStyle = color
+		this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
+	}
+
+	/**
+	 * Draws a line to the screen.
+	 * @param {number} x X Position to draw at
+	 * @param {number} y Y Position to draw at
+	 * @param {number} w Width of the rectangle
+	 * @param {number} h Height of the rectangle
+	 * @param {String} color Color to draw with
+	 */
+	line(x1, y1, x2, y2, color) {
+		this.ctx.fillStyle = color
+		this.ctx.beginPath()
+		this.ctx.moveTo(x1, y1)
+		this.ctx.lineTo(x2, y2)
+		this.ctx.stroke()
+		// this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
+		this.ctx.strokeRect(Math.floor(x1) + 0.5, Math.floor(y1) + 0.5, Math.floor(x2 - x1), Math.floor(y2 - y1))
+	}
+
+	/**
 	 * Draws a filled rectangle to the screen. Drawing starts at the upper left corner.
 	 * @param {number} x X Position to draw at
 	 * @param {number} y Y Position to draw at
@@ -393,17 +439,6 @@ class Console {
 	rect(x, y, w, h, color) {
 		this.ctx.fillStyle = color
 		this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
-	}
-
-	/**
-	 * Draws a single pixel at a given position.
-	 * @param {number} x X Position to draw at
-	 * @param {number} y Y Position to draw at
-	 * @param {String} color Color to draw with
-	 */
-	point(x, y, color) {
-		this.ctx.fillStyle = color
-		this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
 	}
 }
 
@@ -461,13 +496,13 @@ class Sprite {
 	drawHb() {
 		if (this.flipped) {
 			this.parentCon.ctx.strokeRect(
-				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.right * this.s,
-				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.right * this.s,
+				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top * this.s,
 				this.w * this.s - (1 + this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
 		} else {
 			this.parentCon.ctx.strokeRect(
-				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) + this.parentCon.camPos.x) + 0.5 + this.hb.left * this.s,
-				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) + this.parentCon.camPos.y) + 0.5 + this.hb.top * this.s,
+				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left * this.s,
+				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top * this.s,
 				this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
 		}
 	}
@@ -515,8 +550,8 @@ class Sprite {
 
 	draw() {
 		// Animation
-		if (!this.animation[2]) {
-			if (this.animation[1]-- == 0) {
+		if (!this.animation[2]) { // if not paused
+			if ((this.animation[1] -= 60 / this.parentCon.frameRate) <= 0) {
 				this.animation[1] = this.animationStates[this.animationState][2]
 				if (this.animation[0] == this.animationStates[this.animationState][4])
 					this.animation[2] = true
@@ -535,20 +570,27 @@ class Sprite {
 		let repeatedPattern = this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src], 'repeat')
 		this.parentCon.ctx.fillStyle = repeatedPattern
 		repeatedPattern.setTransform(new DOMMatrix([(this.flipped ? -this.s : this.s), 0, 0, this.s,
-			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - Math.round(this.parentCon.camPos.x))
+			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) // - Math.round(this.parentCon.camPos.x))
 				- (this.flipped ? (-(this.animation[0] + 1 + this.animationOffset) * this.w)
 					: ((this.animation[0] + this.animationOffset) * this.w)) * this.s,
-			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - Math.round(this.parentCon.camPos.y))
+			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) // - Math.round(this.parentCon.camPos.y))
 		]))
 		this.parentCon.ctx.fillRect(
-			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0) - Math.round(this.parentCon.camPos.x)),
-			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0) - Math.round(this.parentCon.camPos.y)),
+			Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)), //- Math.round(this.parentCon.camPos.x)),
+			Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)), //- Math.round(this.parentCon.camPos.y)),
 			this.w * this.s, this.h * this.s)
 		// Hitbox
 		if (this.showHitbox) {
 			this.parentCon.ctx.strokeStyle = (this.collided ? "#f0f9" : "#f009")
 			this.drawHb()
 		}
+	}
+
+	finalPos(centered) {
+		return new Vec2(
+			(this.pos.x - this.parentCon.camPos.x) + (centered ? this.w / 2 : 0),
+			this.pos.y - this.parentCon.camPos.y + (centered ? this.h / 2 : 0)
+		)
 	}
 }
 
@@ -690,8 +732,12 @@ class TileMap {
 			tm.ht = dh
 			tm.map = new Array(dw * dh).fill(0)
 			let bars = this.tileMapFromPixels(data, dw, types)
+			// Loop through all the bars
 			for (let b = 0; b < bars.length; b++) {
-				let n = Object.keys(types).indexOf(bars[b].type)
+				// Get its type
+				let n = Object.keys(types).indexOf(bars[b].type) + 1
+
+				// Fill the map in with its pixels
 				for (let y = 0; y < bars[b].h; y++) {
 					for (let x = 0; x < bars[b].w; x++) {
 						tm.map[(x + bars[b].x) + (y + bars[b].y) * tm.wt] = n
@@ -751,9 +797,9 @@ class TileMap {
 
 		// this.nbToIdx[ULEFT+LEFT+DLEFT+RIGHT] = 38
 
-		let st = 0
-		for (let b = 0; b < this.nbToIdx.length; b++) if (this.nbToIdx[b] != -1) st++
-		console.log("missing", (this.nbToIdx.length - st))
+		// let st = 0
+		// for (let b = 0; b < this.nbToIdx.length; b++) if (this.nbToIdx[b] != -1) st++
+		// console.log("missing", (this.nbToIdx.length - st))
 
 		console.log(JSON.stringify(this.nbToIdx))
 
@@ -768,26 +814,29 @@ class TileMap {
 	}
 
 	allTilesetsLoaded() {
+		// console.log("All tilesets loaded!")
 		for (let i = 0; i < this.ht * this.wt; i++) {
-			if (this.map[i] != 0 && this.map[i] != undefined) {
-				let ti = this.map[i]
+			let ti = this.map[i] // Tile index
+			if (ti != 0 && ti != undefined && this.tileSets[ti - 1] != undefined) {
 				let mv = 0
-				if (this.map[i - this.wt] == ti) mv |=  1 // UP
-				if (this.map[i + this.wt] == ti) mv |=  2 // DOWN
-				if (i % this.wt != 0           && this.map[i - 1    ] == ti) mv |=  4 // LEFT
-				if (i % this.wt != this.wt - 1 && this.map[i + 1    ] == ti) mv |=  8 // RIGHT
+				if (this.map[i - this.wt] == ti) mv |= 1 // UP
+				if (this.map[i + this.wt] == ti) mv |= 2 // DOWN
+				if (i % this.wt != 0           && this.map[i - 1          ] == ti) mv |=  4 // LEFT
+				if (i % this.wt != this.wt - 1 && this.map[i + 1          ] == ti) mv |=  8 // RIGHT
 				if (i % this.wt != 0           && this.map[i - this.wt - 1] == ti) mv |= 16 // UP-LEFT
 				if (i % this.wt != this.wt - 1 && this.map[i - this.wt + 1] == ti) mv |= 32 // UP-RIGHT
 				if (i % this.wt != 0           && this.map[i + this.wt - 1] == ti) mv |= 64 // DOWN-LEFT
 				if (i % this.wt != this.wt - 1 && this.map[i + this.wt + 1] == ti) mv |=128 // DOWN-RIGHT
-				// console.log(mv, nbToIdx[mv])
+				ti--
 				mv = this.nbToIdx[mv]
 				if (mv == undefined || mv == -1) mv = 22
 				this.ctx.drawImage(this.tileSets[ti].tiles[mv],
-					(i % this.wt) * this.tileSets[ti].tw, Math.floor(i / this.wt) * this.tileSets[ti].th)
+					(i % this.wt) * this.tileSets[ti].tw,
+					Math.floor(i / this.wt) * this.tileSets[ti].th)
 			}
 		}
 		this.nbToIdx = []
+		// this.map = []
 		this.loaded = true
 	}
 
@@ -813,7 +862,9 @@ class TileMap {
 	draw() {
 		// if (!this.tileSets[0].loaded) return
 		if (!this.loaded) return
-		this.parentCon.ctx.drawImage(this.cnv, Math.round(this.x - this.parentCon.camPos.x), Math.round(this.y - this.parentCon.camPos.y))
+		this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
+			// Math.round(this.x - this.parentCon.camPos.x),
+			// Math.round(this.y - this.parentCon.camPos.y))
 	}
 
 	hbOffsets(hb) {
@@ -1097,6 +1148,13 @@ class Vec2 {
 	// Multiplied, doesn't mutate
 	multiplied(v) {
 		return new Vec2(this.x * v, this.y * v)
+	}
+
+	// Divides, Returns
+	divideRet(v) {
+		this.x /= v
+		this.y /= v
+		return this
 	}
 
 	addVec(v) {

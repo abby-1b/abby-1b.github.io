@@ -18,6 +18,8 @@ So that's the plan for these 12 weeks! It shouldn't be too much of
 a stretch, it just needs to fall on small, consistent deadlines until
 everything falls together cohesively.
 
+((c1))
+
 # Getting the website to work (Oct 14, 2021)
 
 I finally started getting the website itself (http://codeiguess.github.io/GameOfWords) working. I'll be using a game engine I made a while back and am still working on. The hardest part, however, is the ideas that I want to implement. I really should start writing these down and structuring them before working on the main game.
@@ -37,6 +39,8 @@ And a few extra things I ended up doing:
 [x] Removed a few game IDs from occurring. These include every instance of the number `69`, and the (hex) numbers `420` `666`, `A55`, and `BAD`. These add up to 36, leaving us with a total of 4060 IDs instead of 4096.
 [x] Styling for the host page
 
+((c2))
+
 # Basic networking (Oct 21, 2021)
 
 How do players connect to the host? How does the host communicate with the players (maxing out at about 20-30)? These are the things I have to figure out this week. 
@@ -54,6 +58,8 @@ Things for this week:
 [x] Filtering profanity in names
 [x] Settings menu for profanity (and other settings, eventually)
 [x] Improved website design and animations
+
+((g1))
 
 # Art and gameplay (Oct 31, 201)
 
@@ -88,3 +94,5 @@ Here's the checklist for this week:
 [ ] Actually starting the game from the host (which I haven't done since there is no game yet lmao)
 [ ] Putting the player down on a game when a question is asked
 [ ] Answering the question from inside the game (in a simple way at first)
+
+((g2))

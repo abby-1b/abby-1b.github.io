@@ -3,7 +3,7 @@ let glCanvas = null;
 
 // Aspect ratio and coordinate system
 // details
-let aspectRatio;
+let aspectRatio = 1
 let currentScale = [1.0, 1.0];
 
 // Vertex information
@@ -21,11 +21,14 @@ let uGlobalColor;
 let previousTime = 0.0;
 let degreesPerSecond = 90.0;
 
+// Texture
+let texture;
+
 window.addEventListener("load", startup, false);
 
 function startup() {
 	glCanvas = document.getElementById("glcanvas");
-	gl = glCanvas.getContext("webgl", {antialias: false});
+	gl = glCanvas.getContext("webgl2", {antialias: false});
 
 	const shaderSet = [
 		{
@@ -44,30 +47,34 @@ function startup() {
 	// currentScale = [1.0, aspectRatio];
 	currentScale = [2 / glCanvas.width, -2 / glCanvas.height];
 
-	let x1 = 10;
-	let y1 = 5;
-	let x2 = 40;
-	let y2 = 35;
-	let a = Math.atan2(x2 - x1, y2 - y1);
-	sin = Math.sin(a - Math.PI / 2) * 0.5;
-	cos = Math.cos(a - Math.PI / 2) * 0.5;
+	// let x1 = 5;
+	// let y1 = 9;
+	// let x2 = 55;
+	// let y2 = 37;
+	// let a = Math.atan2(x2 - x1, y2 - y1);
+	// sin = Math.sin(a - Math.PI / 2) * 0.5; // 0.5
+	// cos = Math.cos(a - Math.PI / 2) * 0.5;
+	// vertexArray = new Float32Array([
+	// 	x1 - sin, y1 - cos, x1 + sin, y1 + cos, x2 + sin, y2 + cos,
+	// 	x1 - sin, y1 - cos, x2 - sin, y2 - cos, x2 + sin, y2 + cos
+	// ]);
+
 	vertexArray = new Float32Array([
-		x1 - sin, y1 - cos, x1 + sin, y1 + cos, x2 + sin, y2 + cos,
-		x1 - sin, y1 - cos, x2 - sin, y2 - cos, x2 + sin, y2 + cos
-	]);
+		0, 0, glCanvas.width, 0, glCanvas.width, glCanvas.height,
+		0, 0, 0, glCanvas.height, glCanvas.width, glCanvas.height
+	])
 
 	vertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
 
 	vertexNumComponents = 2;
-	vertexCount = vertexArray.length/vertexNumComponents;
-
-	currentAngle = 0.0;
+	vertexCount = vertexArray.length / vertexNumComponents;
 
 	// Image
-	let texture = loadTexture(gl, "../Tiles/Bounce.png");
+	texture = loadImageAndCreateTextureInfo("../Tiles/BouncePad.png");
 
+	// Start animation
 	animateScene();
 }
 
@@ -111,12 +118,12 @@ function animateScene() {
 	gl.clearColor(0.8, 0.9, 1.0, 1.0);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
+	gl.bindTexture(gl.TEXTURE_2D, texture.texture);
+
 	gl.useProgram(shaderProgram);
 
-	uScalingFactor =
-		gl.getUniformLocation(shaderProgram, "uScalingFactor");
-	uGlobalColor =
-		gl.getUniformLocation(shaderProgram, "uGlobalColor");
+	uScalingFactor = gl.getUniformLocation(shaderProgram, "uScalingFactor");
+	uGlobalColor = gl.getUniformLocation(shaderProgram, "uGlobalColor");
 
 	gl.uniform2fv(uScalingFactor, currentScale);
 	gl.uniform4fv(uGlobalColor, [0.0, 0.2, 0.8, 1.0]);
@@ -129,42 +136,41 @@ function animateScene() {
 	gl.enableVertexAttribArray(aVertexPosition);
 	gl.vertexAttribPointer(aVertexPosition, vertexNumComponents,
 		gl.FLOAT, false, 0, 0);
+	
+	// Tell the shader to get the texture from texture unit 0
+	gl.uniform1i(gl.getUniformLocation(shaderProgram, "u_texture"), 0);
 
-	gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+	// draw the quad (2 triangles, 6 vertices)
+	gl.drawArrays(gl.TRIANGLES, 0, 6);
 
 	window.requestAnimationFrame(function(currentTime) {
-		let deltaAngle = ((currentTime - previousTime) / 1000.0)
-			* degreesPerSecond;
-
-		currentAngle = 0; //(currentAngle + deltaAngle) % 360;
-		previousTime = currentTime;
 		animateScene();
 	});
 }
 
-function loadTexture(gl, url) {
-	const texture = gl.createTexture();
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	const level = 0;
-	const internalFormat = gl.RGBA;
-	const width = 1;
-	const height = 1;
-	const border = 0;
-	const srcFormat = gl.RGBA;
-	const srcType = gl.UNSIGNED_BYTE;
-	const pixel = new Uint8Array([0, 0, 255, 255]);
-	gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-		width, height, border, srcFormat, srcType, pixel);
-	const image = new Image();
-	image.onload = function() {
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-			srcFormat, srcType, image);
-
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+function loadImageAndCreateTextureInfo(url) {
+	var tex = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, tex);
+   
+	// let's assume all images are not a power of 2
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+   
+	var textureInfo = {
+		width: 1, // we don't know the size until it loads
+		height: 1,
+		texture: tex,
 	};
-	image.src = url;
-	return texture;
+	var img = new Image();
+	img.addEventListener('load', function() {
+		textureInfo.width = img.width;
+		textureInfo.height = img.height;
+
+		gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+	});
+	img.src = url
+	return textureInfo;
 }
