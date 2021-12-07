@@ -6,19 +6,15 @@
 
 # Game of Words! (Oct 11, 2021)
 
-Wouldn't it be nice to be able to practice English while having fun?
-Probably. Would it be possible to finish a complex game with a tight
-deadline and still have room to write about it? If so, how?
+Wouldn't it be nice to be able to practice English while having fun? Probably. Would it be possible to finish a complex game with a tight deadline and still have room to write about it? If so, how?
 
 ~ Organization. I won't be able to finish anything without setting goals and splitting those goals into smaller goals.
 ~ Perseverance. I can't stop working on a problem just because it seems difficult. This is going to be a recurring theme, but this might be an issue.
 ~ Schedule. If there's no schedule for the different features of the game, there's going to be no game.
 
-So that's the plan for these 12 weeks! It shouldn't be too much of
-a stretch, it just needs to fall on small, consistent deadlines until
-everything falls together cohesively.
+So that's the plan for these 8 weeks! It shouldn't be too much of a stretch, it just needs to fall on small, consistent deadlines until everything falls together cohesively.
 
-((c1))
+%(Images/c1.png)%
 
 # Getting the website to work (Oct 14, 2021)
 
@@ -39,7 +35,7 @@ And a few extra things I ended up doing:
 [x] Removed a few game IDs from occurring. These include every instance of the number `69`, and the (hex) numbers `420` `666`, `A55`, and `BAD`. These add up to 36, leaving us with a total of 4060 IDs instead of 4096.
 [x] Styling for the host page
 
-((c2))
+%(Images/c2.png)%
 
 # Basic networking (Oct 21, 2021)
 
@@ -59,7 +55,7 @@ Things for this week:
 [x] Settings menu for profanity (and other settings, eventually)
 [x] Improved website design and animations
 
-((g1))
+%(Images/g1.png)%
 
 # Art and gameplay (Oct 31, 201)
 
@@ -81,6 +77,7 @@ Here's a checklist, from most to least important:
 [!] Sending questions between the host and the guests
 [!] Player animation (very unlikely)
 
+
 # Linking the game to the guest/host system (Nov 10, 2021)
 
 Basic movement and physics are working, but no way to interact with the outside world. I'll work something out to make some collectible powerups translate to picking an option on the screen. 
@@ -91,8 +88,21 @@ Another feature that would be nice to get working on could be a way for the stud
 
 Here's the checklist for this week:
 
-[ ] Actually starting the game from the host (which I haven't done since there is no game yet lmao)
-[ ] Putting the player down on a game when a question is asked
-[ ] Answering the question from inside the game (in a simple way at first)
+[!] Starting the game from the host (which I haven't done since there is no game yet lol)
+[!] Putting the player down on a game when asking a question
+[!] Answering the question from inside the game (in a simple way at first)
 
-((g2))
+%(Images/g2.png)%
+
+
+# Falling, giving up, and getting up. (Dec 6, 2021)
+
+How do you normally instruct your computer to draw a line? With JavaScript, the language I'm using for this project, you open a canvas and use the `ctx.moveTo` and `ctx.lineTo` commands to draw an image from a starting position (x1, y1) to an ending position (x2, y2).
+
+The line is then automatically drawn by your computer. The only things you get to change are the width and color of the line. In this day and age, lines are meant to be seen from a distance. It makes sense, as we often see them in massive 4k screens. Because of this, they are often blurred, so the user can't see the individual pixels at the edge of a line, making it look higher resolution.
+
+***HOWEVER***, this is a _pixel art game_, meaning these pixels are _upscaled_. This is an absolutely _massive_ issue because the lines are blurred by the computer, which doesn't really care. This results in crappy, blurry, un-defined lines that look like this: %(Images/line.png)%
+
+Instead of this: %(Images/goodline.png)%
+
+As you might be able to see, one of these looks good, while the other looks like it came straight from the 8th circle of hell, where satan stares through your soul without his reading glasses.

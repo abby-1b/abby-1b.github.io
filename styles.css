@@ -32,6 +32,7 @@ html {
 	width: 100vw;
 	height: 40vh;
 	object-fit: cover;
+	border-radius: 0;
 }
 
 #content {
@@ -107,7 +108,7 @@ li {
 /* Checklist */
 .unchecked:before { content: '\00a0'; }
 .checked:before   { content: '×'; }
-.important:before { content: '!'; }
+.important:before { content: '!'; color: darkred; }
 .question:before  { content: '?'; }
 
 /* Added / Removed */
@@ -163,4 +164,8 @@ li {
 .darkModeButton:active::after {
 	top: 5px;
 	box-shadow: 9px 9px 0px 0px rgba(var(--fg),0.6), 9px 9px 0px 0px #0000;
+}
+
+img {
+	border-radius: 7px;
 }

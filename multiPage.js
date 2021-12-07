@@ -9,7 +9,7 @@ function openPage(pageLocation) {
 		let normalPageLocation = pageLocation + ""
 		pageLocation += "/site.mdc"
 		fetch(pageLocation).then(r => r.text().then(text => {
-			text = mdToHtml(text)
+			text = mdToHtml(text, normalPageLocation)
 			document.getElementById("content").innerHTML = text.text
 			document.title = text.meta.title || "Code (I Guess)"
 			// document.getElementById("bannerImage").style.backgroundImage = "url('" + text.meta.banner + "')"

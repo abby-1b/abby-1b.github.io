@@ -5,7 +5,7 @@
 // Here are the extra features:
 //   - Checkmark boxes
 
-function mdToHtml(t) {
+function mdToHtml(t, currentPath) {
 	let cmIconToClass = {
 		" ": "unchecked",
 		"x": "checked",
@@ -56,7 +56,8 @@ function mdToHtml(t) {
 		.replace(/>\n/g, ">")
 	
 	// Images
-		.replace(/\(\(/g, "<img src='GameOfWords/images/")
-		.replace(/\)\)/g, ".png' style='width: 100%'>")
+		// .replace(/\(\(/g, "<img src='GameOfWords/images/")
+		// .replace(/\)\)/g, ".png' style='width: 100%'>")
+		.replace(/%\(.*?\)%/gm, e => "<img src='" + currentPath + "/" + e.slice(2, -2) + "' style='width: 100%'>")
 	return {text: t, meta: m}
 }
