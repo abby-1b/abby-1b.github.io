@@ -12,7 +12,7 @@ Wouldn't it be nice to be able to practice English while having fun? Probably. W
 ~ Perseverance. I can't stop working on a problem just because it seems difficult. This is going to be a recurring theme, but this might be an issue.
 ~ Schedule. If there's no schedule for the different features of the game, there's going to be no game.
 
-So that's the plan for these 8 weeks! It shouldn't be too much of a stretch, it just needs to fall on small, consistent deadlines until everything falls together cohesively.
+So that's the plan for these eight weeks! It shouldn't be too much of a stretch, it just needs to fall on small, consistent deadlines until everything falls together cohesively.
 
 %(Images/c1.png)%
 
@@ -24,7 +24,7 @@ I finally started getting the website itself (http://codeiguess.github.io/GameOf
 ~ Ease of use: If it's hard to set up, takes too long, or is too slow to use, it's going to fail. This goes for both the host making the quiz and the students using it. Codes used for connecting can't be 20 characters long, and since this is a small platform, it could be two to three characters long.
 ~ Small details, _game juice_: Game juice refers to all the things that make a game fun to play, regardless of the characteristics of the game or the things the player has to do. If the player is doing _anything_ in the game, it should be fun. Again, this applies to the host (when making the quiz) and the guest (when playing the quiz). Make it fun to make quizzes!
 
-Great, I have something to aim for!
+Great, I now have something to aim for!
 
 Now, the things I want to get done this week:
 
@@ -59,7 +59,9 @@ Things for this week:
 
 # Art and gameplay (Oct 31, 201)
 
-Great! It took a while to do, but all the things I wanted to do got done. Getting network interactions working was a pain, but in the end, it all worked out. Guests can connect to hosts seamlessly and without being in the same network with ease.
+Great! It took a while to do, but all the things I wanted to do got done. 
+
+Getting network interactions working was a pain, but in the end, it all worked out. Guests can connect to hosts seamlessly and without being in the same network with ease.
 
 I also made some art for the game, as you can see in the website's banner. The idea is to develop a forest/nature-themed platformer with snappy controls and tons of animations. 
 
@@ -88,21 +90,54 @@ Another feature that would be nice to get working on could be a way for the stud
 
 Here's the checklist for this week:
 
-[!] Starting the game from the host (which I haven't done since there is no game yet lol)
+[!] Starting the game from the host (which I haven't done since there is no game yet)
 [!] Putting the player down on a game when asking a question
 [!] Answering the question from inside the game (in a simple way at first)
 
 %(Images/g2.png)%
 
 
-# Falling, giving up, and getting up. (Dec 6, 2021)
+# Lines are difficult. (Nov 16, 2021)
 
-How do you normally instruct your computer to draw a line? With JavaScript, the language I'm using for this project, you open a canvas and use the `ctx.moveTo` and `ctx.lineTo` commands to draw an image from a starting position (x1, y1) to an ending position (x2, y2).
+How do you usually instruct your computer to draw a line? With JavaScript, the language I'm using for this project, you open a canvas and use the `ctx.moveTo` and `ctx.lineTo` commands to draw an image from a starting position (x1, y1) to an ending position (x2, y2).
 
-The line is then automatically drawn by your computer. The only things you get to change are the width and color of the line. In this day and age, lines are meant to be seen from a distance. It makes sense, as we often see them in massive 4k screens. Because of this, they are often blurred, so the user can't see the individual pixels at the edge of a line, making it look higher resolution.
+The line is then automatically drawn by your computer. The only things you get to change are the width and color of the line. In this day and age, lines are meant to be seen from a distance. It makes sense, as we often see them in massive 4k screens.
 
-***HOWEVER***, this is a _pixel art game_, meaning these pixels are _upscaled_. This is an absolutely _massive_ issue because the lines are blurred by the computer, which doesn't really care. This results in crappy, blurry, un-defined lines that look like this: %(Images/line.png)%
+Because of this, the computer often blurs them so the user can't see the individual pixels at the edge of a line, making it look higher resolution.
+
+***HOWEVER***, this is a _pixel art game_, meaning these pixels are _upscaled_. The result is an absolutely _massive_ issue because the lines are blurred by the computer. This results in blurry, poorly-defined lines that look like this: %(Images/line.png)%
 
 Instead of this: %(Images/goodline.png)%
 
 As you might be able to see, one of these looks good, while the other looks like it came straight from the 8th circle of hell, where satan stares through your soul without his reading glasses.
+
+I'll try to fix that this week, most likely using a custom line-drawing algorithm.
+
+
+# Why less control is better sometimes (Nov 22, 2021)
+
+I could not use a custom line-drawing algorithm.
+
+I'm currently using JS Canvas to draw everything. Canvas is wonderful for nearly everything, but inherently, it's not made to give the programmer much control.
+
+At first, I thought it would be possible to use a custom line-drawing algorithm because it works in theory. The idea was to draw a line pixel-by-pixel to the screen using simple algebra. I tested this in multiple implementations and found that it was extremely slow.
+
+As it turns out, Canvas doesn't like it when you try drawing more than about 100 pixels. When I tried to draw lines more than 100 pixels in length (keeping in mind this is for _every_ line, so I can't even draw two 50 pixel lines), everything was extremely slow.
+
+Trust me, I looked around the internet for a solution and saw that a few people tried and failed to do what I did. In the end, nobody has a real solution to my problem.
+
+I don't know what to do about this, as drawing lines were going to be a big part of the game.
+
+And yet, after all of this, in most cases, it's simpler to leave everything to JS Canvas. It makes everything easier, and up to this point things _have_ been easy. This is just a problem that needs to be fixed in some other way.
+
+
+# Why more control is better sometimes (Dec 3, 2021)
+
+Yes, I know what I said.
+
+# Falling, giving up, and getting up. (Dec 6, 2021)
+
+(write about giving up.)
+
+# 
+_Small side-note: Grammarly™® is currently yelling at me about passive voice misuse. I do not feel like using "the computer draws a line to the screen" instead of "a line is drawn to the screen" in every instance of the phrase. I am aware of the overwhelming abundance of passive voice in this blog._
