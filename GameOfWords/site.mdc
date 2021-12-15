@@ -128,7 +128,7 @@ Trust me, I looked around the internet for a solution and saw that a few people 
 
 I don't know what to do about this, as drawing lines were going to be a big part of the game.
 
-And yet, after all of this, in most cases, it's simpler to leave everything to JS Canvas. It makes everything easier, and up to this point things _have_ been easy. This is just a problem that needs to be fixed in some other way.
+And yet, after all of this, in most cases, it's simpler to leave everything to JS Canvas. It makes everything easier, and up to this point, things _have_ been easy. This is just a problem that needs to be fixed in some other way.
 
 
 # Why more control is better sometimes (Dec 3, 2021)
