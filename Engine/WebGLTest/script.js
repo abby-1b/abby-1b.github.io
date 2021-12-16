@@ -3,89 +3,163 @@
 let gl = null
 let glCanvas = null
 
-let shaderProgram = null
-
-// Aspect ratio and coordinate system details
-let aspectRatio = 1
-let currentScale = [1.0, 1.0]
-
-// Vertex information
-let vertexArray = null
-let vertexBuffer = null
-let vertexNumComponents = null
-
-// Rendering data shared with the scalers
-let uScalingFactor = null
-let uGlobalColor = null
+// Material used for everything
+let material = null
 
 // Texture
-let texture = null
+let texture = [-1, -1]
+
+// Frames
+let frameCount = 0
+
+// Shader parameters (user changeable)
+let vOffs, tOffs, colorParam;
+
+// Auto shader parameters
+let tSize;
 
 window.addEventListener("load", startup, false)
 
 function startup() {
 	glCanvas = document.getElementById("glcanvas")
-	gl = glCanvas.getContext("webgl2", {antialias: false})
+	gl = glCanvas.getContext("webgl2", {antialias: false, alpha: true})
 
-	const shaderSet = [
-		{
-			type: gl.VERTEX_SHADER,
-			id: "vertex-shader"
-		},
-		{
-			type: gl.FRAGMENT_SHADER,
-			id: "fragment-shader"
-		}
-	]
+	// Initialized the material
+	material = buildShaderProgram(`
+		attribute vec2 vPos;
+		uniform vec2 vOffs;
+		uniform vec2 screenScale;
+		varying vec2 tPos;
+		uniform vec2 tOffs;
 
-	shaderProgram = buildShaderProgram(shaderSet)
+		void main() {
+			tPos = vPos + vOffs + tOffs;
+			gl_Position = vec4((vPos + vOffs) * screenScale - vec2(1.0, -1.0), 0.0, 1.0);
+		}`, `
+		varying vec2 tPos;
+		uniform vec2 tSize;
+		uniform vec4 colorParam;
+		uniform sampler2D sTexture;
 
-	aspectRatio = glCanvas.width / glCanvas.height
-	// currentScale = [1.0, aspectRatio]
-	currentScale = [2 / glCanvas.width, -2 / glCanvas.height]
+		void main() {
+			if (colorParam.w == 0.0) { // Change this to LESS THAN when deployed! < <=
+				gl_FragColor = texture2D(sTexture, tPos / tSize);
+			} else {
+				gl_FragColor = colorParam;
+			}
+		}`)
 
-	let x1 = 3
-	let y1 = 32
-	let x2 = 57
-	let y2 = 36
-	let a = Math.atan2(x2 - x1, y2 - y1)
-	let sin = Math.sin(a - Math.PI / 2) * 0.5 // 0.5
-	let cos = Math.cos(a - Math.PI / 2) * 0.5
-	vertexArray = new Float32Array([
-		x1 - sin, y1 - cos, x1 + sin, y1 + cos, x2 + sin, y2 + cos,
-		x1 - sin, y1 - cos, x2 - sin, y2 - cos, x2 + sin, y2 + cos,
+	// Create vertex buffer for later use
+	gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
 
-		1, 1, 11, 1, 11, 11
-	])
+	// Set 'vPos' as the shader-side vertex buffer
+	let vPos = gl.getAttribLocation(material, "vPos")
+	gl.enableVertexAttribArray(vPos)
+	gl.vertexAttribPointer(vPos, 2, gl.FLOAT, false, 0, 0)
 
-	// vertexArray = new Float32Array([
-	// 	0, 0, glCanvas.width, 0, glCanvas.width, glCanvas.height,
-	// 	0, 0, 0, glCanvas.height, glCanvas.width, glCanvas.height
-	// ])
+	// Images
+	texture[0] = loadImageAndCreateTextureInfo("../Sprites/Player.png")
+	texture[1] = loadImageAndCreateTextureInfo("../Tiles/SmallBrick.png")
 
-	vertexBuffer = gl.createBuffer()
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-	gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW)
+	// Use shader
+	gl.useProgram(material)
 
-	vertexNumComponents = 2
-
-	// Image
-	texture = loadImageAndCreateTextureInfo("../Tiles/BouncePad.png")
+	// Set screen scaling (pass screen size, basically)
+	let screenScale = gl.getUniformLocation(material, "screenScale")
+	gl.uniform2fv(screenScale, [2 / glCanvas.width, -2 / glCanvas.height])
 
 	// Start animation
 	animateScene()
 }
 
-function buildShaderProgram(shaderInfo) {
+function color(r, g, b, a) {
+	// Set the current color
+	colorParam = gl.getUniformLocation(material, "colorParam")
+	gl.uniform4fv(colorParam, [r, g, b, a])
+}
+
+function rect(x, y, w, h) {
+	// Set vertex data
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+		x, y, x + w, y,
+		x, y + h, x + h, y + h,
+	]), gl.DYNAMIC_DRAW)
+
+	// draw the quad
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4) // LAST NUMBER IS MAGIC, IT'S JUST HALF THE VERTEX BUFFER LENGTH
+}
+
+function animateScene() {
+
+	// Tell the shader to get the texture from texture unit 0 (???)
+	// gl.uniform1i(gl.getUniformLocation(shaderProgram, "sTexture"), 0)
+
+	// Clear the screen
+	gl.clearColor(0.8, 0.9, 1.0, 1.0)
+	gl.clear(gl.COLOR_BUFFER_BIT)
+
+	// Setup 3D (depth testing)
+	gl.enable(gl.DEPTH_TEST)
+	gl.depthFunc(gl.LEQUAL)
+	gl.enable(gl.BLEND)
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	// let currTexture = texture[0]//texture[+(frameCount % 60 < 30)]
+
+	// // Bind texture
+	// gl.bindTexture(gl.TEXTURE_2D, currTexture.texture)
+
+	// // Set the current texture size
+	// tSize = gl.getUniformLocation(material, "tSize")
+	// gl.uniform2fv(tSize, [currTexture.width, currTexture.height])
+
+	// // Set texture offset
+	// tOffs = gl.getUniformLocation(material, "tOffs")
+	// gl.uniform2fv(tOffs, [0, 0])
+
+	// // Set vertex data
+	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+	// 	0, 0, 16 + Math.sin(frameCount / 50) * 6, 0,
+	// 	0, 16, 16, 16,
+	// ]), gl.DYNAMIC_DRAW)
+
+	// // Set vertex offset
+	// vOffs = gl.getUniformLocation(material, "vOffs")
+	// gl.uniform2fv(vOffs, [10, 10])
+
+	// // Set the current color
+	// color = gl.getUniformLocation(material, "color")
+	// gl.uniform4fv(color, [0.6, 0.1, 0.9, 1.0])
+
+	// // draw the quad
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4) // LAST NUMBER IS MAGIC, IT'S JUST HALF THE VERTEX BUFFER LENGTH
+
+	color(1, 0, 0, 1)
+	rect(0, 0, 16, 16)
+
+	// Setup for next frame
+	frameCount++
+	window.requestAnimationFrame(animateScene)
+}
+
+function buildShaderProgram(vert, frag) {
 	let program = gl.createProgram()
 
-	shaderInfo.forEach(function(desc) {
-		let shader = compileShader(desc.id, desc.type)
+	// Compile vertex shader
+	let vShader = gl.createShader(gl.VERTEX_SHADER)
+	gl.shaderSource(vShader, vert)
+	gl.compileShader(vShader)
+	if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS))
+		console.log("Error compiling vertex shader:\n" + gl.getShaderInfoLog(vShader))
+	gl.attachShader(program, vShader)
 
-		if (shader) {
-			gl.attachShader(program, shader)
-		}
-	})
+	// Compile fragment shader
+	let fShader = gl.createShader(gl.FRAGMENT_SHADER)
+	gl.shaderSource(fShader, "#ifdef GL_ES\nprecision highp float;\n#endif" + frag)
+	gl.compileShader(fShader)
+	if (!gl.getShaderParameter(fShader, gl.COMPILE_STATUS))
+		console.log("Error compiling fragment shader:\n" + gl.getShaderInfoLog(fShader))
+	gl.attachShader(program, fShader)
 
 	gl.linkProgram(program)
 
@@ -97,55 +171,6 @@ function buildShaderProgram(shaderInfo) {
 	return program
 }
 
-function compileShader(id, type) {
-	let code = document.getElementById(id).firstChild.nodeValue
-	let shader = gl.createShader(type)
-
-	gl.shaderSource(shader, code)
-	gl.compileShader(shader)
-
-	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		console.log(`Error compiling ${type === gl.VERTEX_SHADER ? "vertex" : "fragment"} shader:`)
-		console.log(gl.getShaderInfoLog(shader))
-	}
-	return shader
-}
-
-function animateScene() {
-	gl.viewport(0, 0, glCanvas.width, glCanvas.height)
-	gl.clearColor(0.8, 0.9, 1.0, 1.0)
-	gl.clear(gl.COLOR_BUFFER_BIT)
-
-	gl.bindTexture(gl.TEXTURE_2D, texture.texture)
-
-	gl.useProgram(shaderProgram)
-
-	uScalingFactor = gl.getUniformLocation(shaderProgram, "uScalingFactor")
-	uGlobalColor = gl.getUniformLocation(shaderProgram, "uGlobalColor")
-
-	gl.uniform2fv(uScalingFactor, currentScale)
-	gl.uniform4fv(uGlobalColor, [0.0, 0.2, 0.8, 1.0])
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-
-	let aVertexPosition =
-		gl.getAttribLocation(shaderProgram, "aVertexPosition")
-
-	gl.enableVertexAttribArray(aVertexPosition)
-	gl.vertexAttribPointer(aVertexPosition, vertexNumComponents,
-		gl.FLOAT, false, 0, 0)
-	
-	// Tell the shader to get the texture from texture unit 0
-	gl.uniform1i(gl.getUniformLocation(shaderProgram, "u_texture"), 0)
-
-	// draw the quad (2 triangles, 6 vertices)
-	gl.drawArrays(gl.TRIANGLES, 0, 6)
-
-	window.requestAnimationFrame(function(currentTime) {
-		animateScene()
-	})
-}
-
 function loadImageAndCreateTextureInfo(url) {
 	var tex = gl.createTexture()
 	gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -155,16 +180,11 @@ function loadImageAndCreateTextureInfo(url) {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 
-	var textureInfo = {
-		width: 1,
-		height: 1,
-		texture: tex,
-	}
+	var textureInfo = { width: 1, height: 1, texture: tex }
 	var img = new Image()
 	img.addEventListener('load', function() {
 		textureInfo.width = img.width
 		textureInfo.height = img.height
-
 		gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture)
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
 	})

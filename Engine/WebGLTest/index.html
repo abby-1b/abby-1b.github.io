@@ -9,30 +9,6 @@
 		<link rel="stylesheet" href="../styles.css">
 	</head>
 	<body>
-		<script id="vertex-shader" type="x-shader/x-vertex">
-			attribute vec2 aVertexPosition;
-			uniform vec2 uScalingFactor;
-
-			varying vec2 texCoord;
-		  
-			void main() {
-				texCoord = aVertexPosition / vec2(96.0, 32.0);
-				gl_Position = vec4(aVertexPosition * uScalingFactor - vec2(1.0, -1.0), 0.0, 1.0);
-			}
-		</script>
-		<script id="fragment-shader" type="x-shader/x-fragment">
-			#ifdef GL_ES
-				precision highp float;
-			#endif
-			
-			varying vec2 texCoord;
-			uniform sampler2D u_texture;
-		  
-			void main() {
-				//gl_FragColor = vec4(texCoord.x * 0.5 + 0.5, 0.0, texCoord.y, 1.0);
-				gl_FragColor = texture2D(u_texture, texCoord) * vec4(1.0, 1.0, 1.0, 1.0);
-			}
-		</script>
 		<script src="script.js"></script>
 		<canvas id="glcanvas" width="60" height="46" style="width: 100%">
 			Oh no! Your browser doesn't support canvas!
