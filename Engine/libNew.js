@@ -821,6 +821,24 @@ class TileMap {
 		return tm
 	}
 
+	/**
+	 * Finds a specific tile in this tilemap
+	 * @param {Array} tiles List of tiles
+	 * @param {string} type Type of tile to find
+	 * @param {Vec2} [fallBack] Fallback when there's no tile found
+	 * @returns {Vec2} The position found
+	 */
+	 findTilePos(tiles, type, fallBack) {
+		let offs = fallBack ? fallBack : new Vec2(0, 0)
+		for (let b = 0; b < tiles.length; b++) {
+			if (tiles[b].type == type) {
+				offs.set(tiles[b].x, tiles[b].y)
+				break
+			}
+		}
+		return offs
+	}
+
 	constructor(tileSets, w, h, mapData) {
 		this.type = "TileMap"
 		this.tileSets = tileSets
@@ -919,28 +937,9 @@ class TileMap {
 		this.loaded = true
 	}
 
-
-	/**
-	 * Finds a specific tile in this tilemap
-	 * @param {Array} tiles List of tiles
-	 * @param {string} type Type of tile to find
-	 * @param {Vec2} [fallBack] Fallback when there's no tile found
-	 * @returns {Vec2} The position found
-	 */
-	findTilePos(tiles, type, fallBack) {
-		let offs = fallBack ? fallBack : new Vec2(0, 0)
-		for (let b = 0; b < tiles.length; b++) {
-			if (tiles[b].type == type) {
-				offs.set(tiles[b].x, tiles[b].y)
-				break
-			}
-		}
-		return offs
-	}
-
 	draw() {
 		if (!this.loaded) return
-		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.texture)
+		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.tex)
 		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tSize, [
 			this.glTex.width * (this.flipped ? -1 : 1),
 			this.glTex.height])
