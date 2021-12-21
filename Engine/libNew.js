@@ -1,3 +1,10 @@
+"use strict";
+
+// These are tags to look for in this file so I can find the things I need.
+// BOTT: bottleneck
+// ERR: potential error
+// ADD: a feature that needs to be added
+
 /**
  * @fileOverview A JS library for making games.
  * @author Code (I Guess)
@@ -15,6 +22,7 @@ class Console {
 	 * @param {String} backgroundColor Background color for when something is transparent.
 	 */
 	constructor(height, backgroundColor) {
+		// Setup HTML stuff
 		let metaTags = {
 			"viewport": "width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0",
 			"apple-mobile-web-app-capable": "yes"
@@ -27,22 +35,30 @@ class Console {
 		}
 		document.body.style.margin = document.body.style.padding = "0"
 		document.body.style.backgroundColor = backgroundColor | "white"
+
 		this.el = document.createElement("canvas")
 		this.el.style.width = "100vw"
 		this.el.style.height = "100vh"
+
 		window.onresize = () => {
 			this.width = Math.ceil((window.innerWidth / window.innerHeight) * height)
 			this.height = Math.ceil(height)
 			this.el.width = this.width
 			this.el.height = this.height
+			if (this.material) {
+				this.gl.viewport(0, 0, this.el.width, this.el.height)
+				this.gl.uniform2fv(this.gl.getUniformLocation(this.material, "screenScale"), [2 / this.el.width, -2 / this.el.height])
+			}
 		}
 		window.onorientationchange = window.onresize
 		window.ondeviceorientation = window.onresize
-		window.onresize()
+
 		this.el.style.objectFit = "contain"
 		this.el.style.position = "fixed"
 		this.el.style.transform = "translate(-50%,-50%)"
 		this.el.style.left = this.el.style.top = "50%"
+
+		// Setup WebGL
 		this.gl = this.el.getContext("webgl2", {antialias: false, alpha: true})
 		this.material = CTool.buildShaderProgram(this.gl, `
 			attribute vec2 vPos;
@@ -62,7 +78,7 @@ class Console {
 
 			void main() {
 				if (colorParam.w < 0.0) {
-					gl_FragColor = texture2D(sTexture, tPos / tSize);
+					gl_FragColor = texture2D(sTexture, (floor(tPos) + 0.5) / tSize);
 				} else {
 					gl_FragColor = colorParam;
 				}
@@ -72,12 +88,11 @@ class Console {
 		this.gl.enableVertexAttribArray(vPos)
 		this.gl.vertexAttribPointer(vPos, 2, this.gl.FLOAT, false, 0, 0)
 		this.gl.useProgram(this.material)
-		let screenScale = this.gl.getUniformLocation(this.material, "screenScale")
-		this.gl.uniform2fv(screenScale, [2 / this.el.width, -2 / this.el.height])
 		this.gl.enable(this.gl.DEPTH_TEST)
 		this.gl.depthFunc(this.gl.LEQUAL)
 		this.gl.enable(this.gl.BLEND)
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
+		window.onresize()
 		this.glParams = {
 			vOffs: this.gl.getUniformLocation(this.material, "vOffs"),
 			tSize: this.gl.getUniformLocation(this.material, "tSize"),
@@ -85,33 +100,52 @@ class Console {
 			colorParam: this.gl.getUniformLocation(this.material, "colorParam"),
 		}
 		this.glTranslation = [0, 0]
-		// this.gl.imageSmoothingEnabled = false
+
+		// Image loading for sprites
+		// This ensures if two sprites use the same image it doesn't have to be loaded again.
 		this.imageIndexes = {}
 		this.imageElements = []
+		
+		// Colors state machine
 		this.backgroundColor = backgroundColor
+		this.currentColor = [0, 0, 0, 0]
+
+		// Holds everything that is rendered.
 		this.objects = []
 		this.camPos = new Vec2(0, 0)
 		this.followInterval = 0
+
+		// Physics variables, all modifiable
 		this.physics = {
 			gravity: new Vec2(0.0, 0.015),
-			// friction: new Vec2(0.9, 0.995)
 			friction: new Vec2(0.9, 0.997),
 			groundFriction: new Vec2(0.9, 0.997),
 
 			cZeroThresh: 0.001 // The speed at witch the engine can consider the object stationary.
 		}
 		this.frameTotalCollisions = 0
+
+		// Font
 		this.fonts = {"": "20px Arial"}
 		this.nFont("std", new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U`, 4))
 		this.font("std")
+
+		// Events
 		this.events = {}
+
+		// Different loops.
 		this.initFn    = () => {}
-		this.preLoopFn = () => {}
+
+		// this.preLoopFn = () => {}
 		// this.drawFn    = () => {}
 		// this.loopFn    = () => {}
+
+		this.frameFn   = () => {}
+		this.pFrameFn  = () => {}
 		this.frameCount = 0
+
+		// Finally, the canvas gets appended.
 		document.body.appendChild(this.el)
-		document.body.style.overflow = "hidden"
 		this.keys = {}
 		window.addEventListener('keydown', e => {
 			if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now()
@@ -241,33 +275,8 @@ class Console {
 	 * Init, runs when everything is ready; in this case, instantly.
 	 * @param {Function} fn Function to be ran when everything is ready
 	 */
-	init(fn) { fn() }
-
-	/**
-	 * Runs before the main loop, before the frame elements are moved.
-	 * @param {Function} fn Function to be ran before the loop executes
-	 */
-	preLoop(fn) {
-		this.preLoopFn = fn
-	}
-
-	/**
-	 * 
-	 * @param {*} fn Function to be ran
-	 */
-	draw(fn) {
-		this.drawFn = fn
-	}
-	
-	/**
-	 * 
-	 * @param {Function} fn Function to be ran
-	 */
-	loop(fn) {
-		if (!this.drawFn)
-			CTool.error("No draw function defined.")
-		
-		this.loopFn = fn
+	init(fn) {
+		fn()
 
 		// Framerate calculation setup
 		this.lastTime = window.performance.now()
@@ -282,6 +291,22 @@ class Console {
 		setInterval(() => {
 			this.doPhysics.call(this)
 		}, 4)
+	}
+
+	/**
+	 * 
+	 * @param {Function} fn Function to be ran
+	 */
+	frame(fn) {
+		this.frameFn = fn
+	}
+	
+	/**
+	 * 
+	 * @param {Function} fn Function to be ran
+	 */
+	pFrame(fn) {
+		this.pFrameFn = fn
 	}
 
 	/**
@@ -301,8 +326,8 @@ class Console {
 		// this.backgroundColor
 
 		// Draw all objects
-		// this.ctx.translate(-Math.round(this.camPos.x), -Math.round(this.camPos.y))
-		this.glTranslation = [-Math.round(this.camPos.x), -Math.round(this.camPos.y)]
+		this.glTranslation[0] = -Math.round(this.camPos.x)
+		this.glTranslation[1] = -Math.round(this.camPos.y)
 		this.gl.uniform2fv(this.glParams.vOffs, this.glTranslation)
 
 		for (let o = 0; o < this.objects.length; o++)
@@ -310,9 +335,10 @@ class Console {
 
 		this.glTranslation = [0, 0]
 
-		this.preLoopFn() // Call the user preLoop function
+		this.glTranslation = [0, 0]
+		this.gl.uniform2fv(this.glParams.vOffs, this.glTranslation)
 		
-		this.drawFn() // Call user loop function
+		this.frameFn() // Call user loop function
 		this.frameCount++ // Increment frame count
 	}
 
@@ -335,7 +361,7 @@ class Console {
 			}
 		}
 
-		this.loopFn()
+		this.pFrameFn()
 	}
 
 	/**
@@ -366,7 +392,7 @@ class Console {
 
 	/**
 	 * Removes an object by its index in the `this.objects` list.
-	 * @param {*} idx Index to remove
+	 * @param {number} idx Index to remove
 	 * @returns The removed object
 	 */
 	rObjIdx(idx) {
@@ -375,7 +401,7 @@ class Console {
 
 	/**
 	 * Adds any image thing from a sprite
-	 * @param {*} spr Sprite class to load as an image thing
+	 * @param {Sprite} spr Sprite class to load as an image thing
 	 * @returns The given sprite
 	 * @private
 	 */
@@ -396,11 +422,6 @@ class Console {
 				let tex = this.gl.createTexture()
 				this.gl.bindTexture(this.gl.TEXTURE_2D, tex)
 			
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT)
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT)
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST)
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST)
-			
 				let textureInfo = { width: 1, height: 1, texture: tex }
 				let img = new Image()
 				img.addEventListener('load', function() {
@@ -408,6 +429,10 @@ class Console {
 					textureInfo.height = img.height
 					textureInfo.complete = true
 					spr.parentCon.gl.bindTexture(spr.parentCon.gl.TEXTURE_2D, textureInfo.texture)
+
+					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_S, spr.parentCon.gl.REPEAT)
+					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_T, spr.parentCon.gl.REPEAT)
+					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.LINEAR)
 					spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
 					spr.imageLoaded()
 				})
@@ -429,6 +454,17 @@ class Console {
 	}
 
 	/**
+	 * Sets the current color.
+	 * @param {*} r Red
+	 * @param {*} g Green
+	 * @param {*} b Blue
+	 * @param {*} a Alpha
+	 */
+	color(r, g, b, a) {
+		this.currentColor = CTool.glColor(r, g, b, a)
+	}
+
+	/**
 	 * Creates a new font from a CImage.
 	 * @param {*} name Font name
 	 * @param {CImage} image Image to use as font
@@ -446,29 +482,31 @@ class Console {
 	}
 
 	/**
-	 * Draws text to the screen. Drawing starts at the upper left corner.
+	 * Draws text to the screen. Drawing starts at the upper left corner. Currently not working due to WebGL implementation.
 	 * @param {*} text Text to draw (can be any type, as it gets converted)
 	 * @param {*} x X Position to draw at
 	 * @param {*} y Y Position to draw at
 	 */
 	text(text, x, y) {
-		let f = this.fonts[this.currentFont].canvas
-		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
-		text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
-		for (let c = 0; c < text.length; c++) {
-			this.ctx.drawImage(f, text[c] * 4, 0, f.height, f.height, x + c * (f.height + 1), y, f.height, f.height)
-		}
+		// let f = this.fonts[this.currentFont].canvas
+		// let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
+		// text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
+		// for (let c = 0; c < text.length; c++) {
+		// 	this.ctx.drawImage(f, text[c] * 4, 0, f.height, f.height, x + c * (f.height + 1), y, f.height, f.height)
+		// }
 	}
 
 	/**
 	 * Draws a single pixel at a given position.
 	 * @param {number} x X Position to draw at
 	 * @param {number} y Y Position to draw at
-	 * @param {String} color Color to draw with
 	 */
-	point(x, y, color) {
-		this.ctx.fillStyle = color
-		this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1)
+	point(x, y) {
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+			Math.floor(x + 1), Math.floor(y)
+		]), this.gl.DYNAMIC_DRAW)
+		this.gl.uniform4fv(this.glParams.colorParam, this.currentColor)
+		this.gl.drawArrays(this.gl.POINTS, 0, 1)
 	}
 
 	/**
@@ -477,16 +515,13 @@ class Console {
 	 * @param {number} y Y Position to draw at
 	 * @param {number} w Width of the rectangle
 	 * @param {number} h Height of the rectangle
-	 * @param {String} color Color to draw with
 	 */
-	line(x1, y1, x2, y2, color) {
-		this.ctx.fillStyle = color
-		this.ctx.beginPath()
-		this.ctx.moveTo(x1, y1)
-		this.ctx.lineTo(x2, y2)
-		this.ctx.stroke()
-		// this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
-		this.ctx.strokeRect(Math.floor(x1) + 0.5, Math.floor(y1) + 0.5, Math.floor(x2 - x1), Math.floor(y2 - y1))
+	line(x1, y1, x2, y2) {
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+			Math.floor(x1), Math.floor(y1), Math.floor(x2 + 1), Math.floor(y2 + 1)
+		]), this.gl.DYNAMIC_DRAW)
+		this.gl.uniform4fv(this.glParams.colorParam, this.currentColor)
+		this.gl.drawArrays(this.gl.LINES, 0, 2)
 	}
 
 	/**
@@ -495,11 +530,36 @@ class Console {
 	 * @param {number} y Y Position to draw at
 	 * @param {number} w Width of the rectangle
 	 * @param {number} h Height of the rectangle
-	 * @param {String} color Color to draw with
 	 */
-	rect(x, y, w, h, color) {
-		this.ctx.fillStyle = color
-		this.ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h))
+	rect(x, y, w, h) {
+		x = Math.floor(x + 1)
+		y = Math.floor(y)
+		w = Math.floor(w - 1)
+		h = Math.floor(h - 1)
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+			x, y, x + w, y,
+			x, y, x, y + h + 1,
+			x + w, y, x + w, y + h,
+			x, y + h, x + w, y + h
+		]), this.gl.DYNAMIC_DRAW)
+		this.gl.uniform4fv(this.glParams.colorParam, this.currentColor)
+		this.gl.drawArrays(this.gl.LINES, 0, 8)
+	}
+
+	/**
+	 * Draws a filled rectangle to the screen. Drawing starts at the upper left corner.
+	 * @param {number} x X Position to draw at
+	 * @param {number} y Y Position to draw at
+	 * @param {number} w Width of the rectangle
+	 * @param {number} h Height of the rectangle
+	 */
+	fillRect(x, y, w, h) {
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+			x, y, x + w, y,
+			x, y + h, x + w, y + h
+		]), this.gl.DYNAMIC_DRAW)
+		this.gl.uniform4fv(this.glParams.colorParam, this.currentColor)
+		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4)
 	}
 }
 
@@ -531,6 +591,8 @@ class Sprite {
 		this.collided = false
 		this.collisionEvents = []
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
+
+		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
 	}
 
 	hbOffsets(hb) {
@@ -588,6 +650,7 @@ class Sprite {
 	}
 
 	animate(nam) {
+		// return
 		if (this.animationState == nam) return
 		this.animationState = nam
 		this.animation[1] = this.animationStates[this.animationState][2]
@@ -637,10 +700,19 @@ class Sprite {
 		let _yOffs = Math.floor(this.pos.y - (this.c ? this.h / 2 : 0))
 		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.s, -_yOffs])
 		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [0,0,0,-1])
-		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
-			_xOffs, _yOffs, _xOffs + this.w, _yOffs,
-			_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
-		]), this.parentCon.gl.DYNAMIC_DRAW)
+		this._vertexArr[0] = _xOffs
+		this._vertexArr[1] = _yOffs
+		this._vertexArr[2] = _xOffs + this.w
+		this._vertexArr[3] = _yOffs
+		this._vertexArr[4] = _xOffs
+		this._vertexArr[5] = _yOffs + this.h
+		this._vertexArr[6] = this._vertexArr[2]
+		this._vertexArr[7] = this._vertexArr[5]
+		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
+		// this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
+		// 	_xOffs, _yOffs, _xOffs + this.w, _yOffs,
+		// 	_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
+		// ]), this.parentCon.gl.DYNAMIC_DRAW)
 		// Four is the number of vertices, which for images is always four.
 		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
 
@@ -862,6 +934,8 @@ class TileMap {
 		this.colliders = []
 
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
+
+		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
 	}
 
 	init() {
@@ -926,11 +1000,9 @@ class TileMap {
 			}
 		}
 		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.tex)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_S, this.parentCon.gl.REPEAT)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_T, this.parentCon.gl.REPEAT)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MIN_FILTER, this.parentCon.gl.NEAREST)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MAG_FILTER, this.parentCon.gl.NEAREST)
-		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.tex)
+		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_S, this.parentCon.gl.CLAMP_TO_EDGE)
+		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_T, this.parentCon.gl.CLAMP_TO_EDGE)
+		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MIN_FILTER, this.parentCon.gl.LINEAR)
 		this.parentCon.gl.texImage2D(this.parentCon.gl.TEXTURE_2D, 0, this.parentCon.gl.RGBA, this.parentCon.gl.RGBA, this.parentCon.gl.UNSIGNED_BYTE, this.cnv)
 		this.nbToIdx = []
 		// this.map = []
@@ -947,14 +1019,21 @@ class TileMap {
 		let _yOffs = Math.floor(this.y)
 		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs, -_yOffs])
 		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [0,0,0,-1])
-		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
-			_xOffs, _yOffs, _xOffs + this.w, _yOffs,
-			_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
-		]), this.parentCon.gl.DYNAMIC_DRAW)
+		this._vertexArr[0] = _xOffs
+		this._vertexArr[1] = _yOffs
+		this._vertexArr[2] = _xOffs + this.w
+		this._vertexArr[3] = _yOffs
+		this._vertexArr[4] = _xOffs
+		this._vertexArr[5] = _yOffs + this.h
+		this._vertexArr[6] = this._vertexArr[2]
+		this._vertexArr[7] = this._vertexArr[5]
+		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
+		// this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
+		// 	_xOffs, _yOffs, _xOffs + this.w, _yOffs,
+		// 	_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
+		// ]), this.parentCon.gl.DYNAMIC_DRAW)
 		// Four is the number of vertices, which for images is always four.
 		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
-
-		// this.parentCon.ctx.drawImage(this.cnv, this.x, this.y)
 	}
 
 	hbOffsets(hb) {
@@ -1076,6 +1155,24 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
+	static noise(x, y) {
+		return (this._noise(x, y) + this._noise((x + 2) * 2, y * 2) / 2 + this._noise(x * 3, y * 3) / 3) * (6 / 11)
+	}
+
+	static _noise(x, y) {
+		let _o = (x, y) => ((Math.sin(43 * Math.floor(x)) + Math.cos(51 * Math.floor(y))) * 40) % 2 - 1
+		let _i = (a, b, c) => (1 - (1 - Math.cos(c * Math.PI)) / 2) * a + ((1 - Math.cos(c * Math.PI)) / 2) * b
+		return _i(_i(_o(x, y), _o(x + 1, y), x % 1), _i(_o(x, y + 1), _o(x + 1, y + 1), x % 1), y % 1)
+	}
+
+	/**
+	 * Converts a color from any representation into a 4-value array for use in WebGL.
+	 * @param {Number} p1 Parameter 1 (light value, light value, red, red)
+	 * @param {Number} p2 Parameter 2 (alpha, green, green)
+	 * @param {Number} p3 Parameter 3 (blue, blue)
+	 * @param {Number} p4 Parameter 4 (alpha)
+	 * @returns 
+	 */
 	static glColor(p1, p2, p3, p4) {
 		if (p1 == undefined) return [0,0,0,0]
 		if (p2 == undefined) return [p1/255,p1/255,p1/255,1]
@@ -1086,8 +1183,8 @@ class CTool {
 
 	/**
 	 * Builds a WebGL shader.
-	 * @param {*} vert Vertex shader code
-	 * @param {*} frag Fragment shader code
+	 * @param {String} vert Vertex shader code
+	 * @param {String} frag Fragment shader code
 	 * @returns The compiled program
 	 */
 	static buildShaderProgram(gl, vert, frag) {
@@ -1356,7 +1453,7 @@ class Controllers {
 				]]
 			}
 		}
-		for (let evt in this.types[type]) {
+		for (let evt in types[type]) {
 			if (evt == "_touch") {
 				element.parentCon.touchArea(...types[type][evt])
 			} else {
@@ -1365,6 +1462,3 @@ class Controllers {
 		}
 	}
 }
-
-// Setting up font
-let _font = `>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_N[B:SKU^K_#0")P ^0"? 1$09@#P!O]F9F%H"&$ $ !I )8-V?P, ,  , `
