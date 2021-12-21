@@ -82,7 +82,7 @@ player.onCollision(function(el, d, i) {
 let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	PLAYER: [78, 205, 196],
 	PLANT: [31, 255, 40],
-	BRICK: [168, 168, 168, new TileSet("../GameOfWords/game/Art/TestSetNew.png", 8, 8)], // Tiles/SmallBrick.png
+	BRICK: [168, 168, 168, new TileSet("Tiles/SmallBrick.png", 8, 8)],
 	BOUNCE: [26, 83, 92, new TileSet("Tiles/BouncePad.png", 8, 8)],
 	TRASH: [255, 230, 109]
 }))

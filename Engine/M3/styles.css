@@ -10,6 +10,7 @@
 }
 body {
     background-color: black;
+	overflow: hidden;
 }
 canvas {
     image-rendering: optimizeSpeed;
@@ -20,5 +21,5 @@ canvas {
     image-rendering: optimize-contrast;
     -ms-interpolation-mode: nearest-neighbor;
     font-smooth: never;
-    -webkit-font-smoothing : none;
+    -webkit-font-smoothing: none;
 }

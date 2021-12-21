@@ -38,6 +38,7 @@ function minify(d) {
         console.log("No simple optimizations.")
     } else if (simpleOptimization == 'readable') {
         console.log("Readable simple optimizations...")
+		d = d.replace(/\/\*(.|\n)*?\*\//g, "")
         d = d
             .split("\n")
             .map(e => e.replace(/\/\/.*/g, ""))
@@ -45,9 +46,10 @@ function minify(d) {
             .join("\n")
     } else if (simpleOptimization == 'full') {
         console.log("Full simple optimizations...")
-        let cs = "+-*/{}()=:,<>;|&?[]!"
+        let cs = "+-*/{}()=:,<>;|&?[]!%"
         let nls = "*/{(=:,<>;|&?[!"
         let nle = "+-})]"
+		d = d.replace(/\/\*(.|\n)*?\*\//g, "")
         d = d
             .split("\n")
             .map(e => e.replace(/\/\/.*/g, ""))
@@ -66,6 +68,7 @@ function minify(d) {
         }
         for (let c = 0; c < nle.length; c++)
             d = d.replace(new RegExp("\n\\" + nle[c], 'g'), nle[c])
+		d = d.trim()
     }
 
     // Repeats

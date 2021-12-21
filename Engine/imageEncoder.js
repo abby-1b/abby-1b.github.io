@@ -1,9 +1,6 @@
 
-// I would've continued this, but it's way less efficient compared to PNG compression.
-// Maybe worth it in the future (to encode images in text format), but as of right now it's useless.
-
-// Edit: Nevermind! It works wonders on 1-bit images (like fonts), which apparently
-// PNG doesn't compress very well. I'll hard-code the font into `lib.js` now.
+// This works wonders on 1-bit images (like bitmap fonts), which apparently
+// PNG doesn't compress very well, so I'll hard-code the font into `lib.js` for now.
 
 const fs  = require('fs')
 try {
