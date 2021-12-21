@@ -1,7 +1,9 @@
+"use strict";
 
-let con = new Console(200, "#ebe3c5")
+let con = new Console(200, [235, 227, 197])
 
-con.physics.gravity = new Vec2(0, 0.018)
+// Set up physics
+con.physics.gravity = new Vec2(0, 0.017)
 con.physics.friction = new Vec2(0.92, 0.9985)
 
 // Controls
@@ -29,7 +31,7 @@ con.touchArea(2, 2, [
 ])
 
 // Background
-con.backgroundColor = "#f0eddf"
+// con.backgroundColor = "#f0eddf" // (why in god's green earth is this here and not in the constructor?)
 let background = [0, 1, 2]
 background = background.map(e => con.nObj(new Sprite("Tiles/Sky" + e + ".png", -16, -16, con.width + 32, 512, 1, true)))
 
@@ -44,17 +46,18 @@ plant.addAnimation("default", {
 
 // Player
 let player = con.nObj(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16))
-player.addAnimation("idle", { start: 0 , end: 5 , timer: 6 , loop: true , pause: -1 }, true)
-player.addAnimation("run" , { start: 6 , end: 11, timer: 3 , loop: true , pause: -1 })
+player.addAnimation("idle", { start: 0 , end: 5 , timer: 7 , loop: true , pause: -1 }, true)
+player.addAnimation("run" , { start: 6 , end: 11, timer: 4 , loop: true , pause: -1 })
 player.addAnimation("jump", { start: 12, end: 13, timer: 12, loop: false, pause: -1 })
 player.addAnimation("fall", { start: 14, end: 16, timer: 8 , loop: false, pause: -1 })
 player.addAnimation("down", { start: 17, end: 18, timer: 3 , loop: false, pause: -1 })
 player.addAnimation("cmov", { start: 18, end: 19, timer: 5 , loop: true , pause: -1 })
 
-player.extraJumps = 999
+player.extraJumps = 1
 player.groundFriction = false
 // player.showHitbox = true
 // player.pos = new Vec2(615, 357)
+// player.pos.y -= 16
 
 player.isCrouched = false
 player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
@@ -76,17 +79,6 @@ player.onCollision(function(el, d, i) {
 // 	con.nObj(new PhysicsActor("Sprites/Trash.png", 32 + t * 4, 0, 4, 4))
 // }
 
-// // Triggers
-// let ts = [
-//     [1e+10, ""],
-//     [1283 + 50, "M3 interested."],
-//     [1283, "Trash not in web."],
-//     [1183 + 50, "Trash not in archive."],
-//     [1183, "Trash not in memory."],
-//     [655, "Trash found. Compressing..."],
-//     [287, "M3 should jump. [space]"]
-// ]
-
 let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	PLAYER: [78, 205, 196],
 	PLANT: [31, 255, 40],
@@ -95,68 +87,19 @@ let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	TRASH: [255, 230, 109]
 }))
 
+
 con.init(() => {
     con.follow(player, 0.1, new Vec2(10, 0))
 })
 
-// let tos = [] // Timeouts
-// function doDialog(txt) {
-//     player.canMove = false
-//     let dMap = {
-//         'a': '4', 'b': '8',
-//         'c': '2', 'd': '9',
-//         'e': '3', 'h': '6',
-//         'l': '1', 'q': '4',
-//         's': '5', 't': '7',
-//         'p': '9', 'i': '1',
-//         '!': '1', '.': ',',
-//         ',': '.', ':': ';',
-//         ';': ':', '[': '{',
-//         ']': '}'
-//     }
-//     let tms = 0
-//     for (let a = 0; Math.floor(a) < txt.length; a += Math.random() * 2 + 3) {
-//         if (txt[Math.floor(a)].toLowerCase() in dMap)
-//             txt = txt.slice(0, Math.floor(a)) + dMap[txt[Math.floor(a)].toLowerCase()] + "*" + txt.slice(Math.floor(a))
-//     }
-//     for (let a = 0; a < txt.length; a++) {
-//         if (txt[a] == "*") {
-//             tos.push(setTimeout(eval(`()=>{player.dialogBar.innerHTML=player.dialogBar.innerText.slice(0,player.dialogBar.innerText.length-1);player.dialogBar.innerHTML += '${(txt[++a] == ' ' ? '&nbsp' : txt[a])}'}`), tms += (Math.random() * 80 + 20)))
-//         } else {
-//             tos.push(setTimeout(eval(`()=>{player.dialogBar.innerHTML += \`${(txt[a] == ' ' ? '&nbsp' : (txt[a] == '\n' ? "<br>" : txt[a]))}\`}`), tms += (Math.random() * 40 + 20)))
-//         }
-//     }
-// }
-
-con.preLoop(() => {
-	// let bf = CTool.map(con.camPos.y, 156, -1204, 0, 1)
-
-	for (let p = 0; p < background.length; p++) {
-		background[p].w = con.width + 32
-		background[p].pos.x =  -con.camPos.x + con.width / 2
-		background[p].pos.y = (-con.camPos.y + con.height / 2) / (p / 300 + 1)
-		background[p].animation[0] = CTool.lerp(background[p].animation[0], (-con.camPos.x / 1000) * (p / 10 + 1), 0.4)
-	}
-})
-
-con.draw(() => {
-    con.text(CTool.round(con.frameRate, 2), 1, 1)
+con.frame(() => {
+    // con.text(CTool.round(con.frameRate, 2), 1, 1)
 	// con.text(player.speed.rounded(), 1, 1)
 	// con.text(player.pos.multiplied(1 / 8).rounded(), 1, 6)
-})
-    
-con.loop(() => {
-    if ('s' in con.keys && player.onGround) {
-        player.isCrouched = true
-        player.speed.x *= 0.6
-    } else {
-        // if (player.canUnCrouch) {
-        player.isCrouched = false
-        // }
-        // if (!player.canUnCrouch) player.speed.x *= 0.7
-        // else player.speed.x *= 0.87
-    }
-    if (player.onGround) {
+
+	let p = player.finalPos(true)
+
+	if (player.onGround) {
         if (player.isCrouched) {
             if (Math.abs(player.speed.x) > 0.1)
                 player.animate("cmov")
@@ -178,9 +121,25 @@ con.loop(() => {
             player.animate("fall")
         player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
     }
+})
+
+con.pFrame(() => {
+	for (let p = 0; p < background.length; p++) {
+		background[p].w = con.width + 32
+		background[p].pos.x =  con.camPos.x + con.width / 2
+		background[p].pos.y = (con.camPos.y + con.height / 2) / (p / 300 + 1)
+		background[p].animation[0] = CTool.lerp(background[p].animation[0], (con.camPos.x / 10000) * (p / 10 + 1), 0.4)
+	}
+
+    if ('s' in con.keys && player.onGround) {
+        player.isCrouched = true
+        player.speed.x *= 0.6
+    } else {
+        player.isCrouched = false
+    }
     if (player.speed.x != 0) player.flipped = player.speed.x < 0
 
     if (!player.locked)
         player.speed.addVec(new Vec2(
-            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().divideRet(10))
+            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().divideRet(15))
 })

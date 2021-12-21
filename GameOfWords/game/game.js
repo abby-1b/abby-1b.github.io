@@ -1,5 +1,5 @@
 
-let con = new Console(200, "white")
+let con = new Console(200, [255])
 
 con.physics.friction.y = 1
 
@@ -38,17 +38,26 @@ con.init(() => {
 	con.follow(player, 0.1, new Vec2(0, 0))
 })
 
-con.draw(() => {
-	con.text(CTool.round(con.frameRate, 2), 1, 1)
+con.frame(() => {
+	// con.text(CTool.round(con.frameRate, 2), 1, 1)
 	// con.text(player.speed.y, 1, 1)
 
 	// con.rect(-con.camPos.x, -con.camPos.y, 10, 10, "red")
 	// con.rect(con.width / 2, con.height / 2, 10, 10, "#0F0")
-	let p = player.finalPos(true)
-	con.line(-con.camPos.x, -con.camPos.y, p.x, p.y, "black")
+	// let p = player.finalPos(true)
+	// con.color(0)
+	// con.line(-con.camPos.x, -con.camPos.y, p.x, p.y)
+
+	// let s = con.height
+	// for (let x = 0; x < con.width; x++) {
+	// 	for (let y = 0; y < con.height; y++) {
+	// 		con.color((CTool.noise((x + con.frameCount) / 8, y / 8) + 1) * 127)
+	// 		con.point(x, y)
+	// 	}
+	// }
 })
 
-con.loop(() => {
+con.pFrame(() => {
 	if (!player.locked)
         player.speed.addVec(new Vec2(
             (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0), 0).normalized().divideRet(10))
