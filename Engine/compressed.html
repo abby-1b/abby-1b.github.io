@@ -1,0 +1,487 @@
+<!DOCTYPE html><html><head><link rel="stylesheet"href="styles.css"></head><body></body><script defer>class Console{constructor(height,backgroundColor){let metaTags={"viewport":"width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0","apple-mobile-web-app-capable":"yes"}
+for(let mt in metaTags){let meta=document.createElement('meta')
+meta.name=mt
+meta.content=metaTags[mt]
+document.head.appendChild(meta)}
+document.body.style.margin=document.body.style.padding="0"
+document.body.style.backgroundColor=backgroundColor|"white"
+this.el=document.createElement("canvas")
+this.el.style.width="100vw"
+this.el.style.height="100vh"
+window.onresize=()=>{this.width=Math.ceil((window.innerWidth/window.innerHeight)*height)
+this.height=Math.ceil(height)
+this.el.width=this.width
+this.el.height=this.height}
+window.onorientationchange=window.onresize
+window.ondeviceorientation=window.onresize
+window.onresize()
+this.el.style.objectFit="contain"
+this.el.style.position="fixed"
+this.el.style.transform="translate(-50%,-50%)"
+this.el.style.left=this.el.style.top="50%"
+this.ctx=this.el.getContext('2d',{alpha:false})
+this.ctx.imageSmoothingEnabled=false
+this.imageIndexes={}
+this.imageElements=[]
+this.backgroundColor=backgroundColor
+this.objects=[]
+this.camPos=new Vec2(0,0)
+this.followInterval=0
+this.physics={gravity:new Vec2(.0,.015),friction:new Vec2(.9,.997),groundFriction:new Vec2(.9,.997),cZeroThresh:.001}
+this.frameTotalCollisions=0
+this.fonts={"":"20px Arial"}
+this.nFont("std",new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P,,,G57("6U`,4))
+this.font("std")
+this.events={}
+this.initFn=()=>{}
+this.preLoopFn=()=>{}
+this.frameCount=0
+document.body.appendChild(this.el)
+document.body.style.overflow="hidden"
+this.keys={}
+window.addEventListener('keydown',e=>{if(!(e.key.toLowerCase()in this.keys))this.keys[e.key.toLowerCase()]=Date.now()
+if(e.key==' ')e.preventDefault()})
+window.addEventListener('keyup',e=>{if(e.key.toLowerCase()in this.keys)delete this.keys[e.key.toLowerCase()]})}
+nEvent(name,funct){this.events[name]=[funct||(()=>{}),false]}
+onKeyPressed(keyName,eventName){if(typeof keyName==="string"){window.addEventListener('keydown',e=>{if(e.key==keyName&&!e.repeat){this.events[eventName][1]=true
+this.events[eventName][0]()}})
+window.addEventListener('keyup',e=>{if(e.key==keyName)
+this.events[eventName][1]=false})}else{window.addEventListener('keydown',e=>{if(keyName.includes(e.key)&&!e.repeat){this.events[eventName][1]=true
+this.events[eventName][0]()}})
+window.addEventListener('keyup',e=>{if(keyName.includes(e.key))
+this.events[eventName][1]=false})}}
+eventOngoing(eventName){if(!(eventName in this.events))CTool.error("Event '"+eventName+"' does not exist.")
+return this.events[eventName][1]}
+isKeyDown(keyName){return keyName in this.keys}
+touchArea(height,width,events){this.currentTouches={}
+var ths=this
+window.addEventListener("touchstart",function(e){for(let ct=0;ct<e.changedTouches.length;ct++){let i=Math.floor(Math.round(e.changedTouches[ct].clientX)*height/(window.innerWidth+1))+height*Math.floor(Math.round(e.changedTouches[ct].clientY)*width/(window.innerHeight+1))
+ths.currentTouches[e.changedTouches[ct].identifier]=i
+try{ths.events[events[i]][1]=true
+ths.events[events[i]][0]()}catch(e){console.error("Event `"+events[i]+"` doesn't exist.")}}})
+window.addEventListener("touchmove",function(e){for(let ct=0;ct<e.changedTouches.length;ct++){let i=Math.floor(Math.round(e.changedTouches[ct].clientX)*height/(window.innerWidth+1))+height*Math.floor(Math.round(e.changedTouches[ct].clientY)*width/(window.innerHeight+1))
+if(i!=ths.currentTouches[e.changedTouches[ct].identifier]){ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1]=false
+ths.currentTouches[e.changedTouches[ct].identifier]=i
+ths.events[events[i]][1]=true
+ths.events[events[i]][0]()}}})
+window.addEventListener("touchend",function(e){for(let ct=0;ct<e.changedTouches.length;ct++){ths.events[events[ths.currentTouches[e.changedTouches[ct].identifier]]][1]=false
+delete ths.currentTouches[e.changedTouches[ct].identifier]}})}
+follow(el,interval,speedPos){this.following=el
+this.followInterval=[interval,speedPos]}
+init(fn){fn()}
+preLoop(fn){this.preLoopFn=fn}
+draw(fn){this.drawFn=fn}
+loop(fn){if(!this.drawFn)
+CTool.error("No draw function defined.")
+this.loopFn=fn
+this.lastTime=window.performance.now()
+this.frameRate=120
+setInterval(()=>{this.doGraphics.call(this)},1000/200)
+setInterval(()=>{this.doPhysics.call(this)},4)}
+doGraphics(){this.deltaTime=(window.performance.now()-this.lastTime)
+if(this.deltaTime!=0)
+this.frameRate=CTool.lerp(this.frameRate,1000/this.deltaTime,.05)
+this.lastTime=window.performance.now()
+this.ctx.fillStyle=this.backgroundColor
+this.ctx.fillRect(0,0,this.width,this.height)
+this.ctx.translate(-Math.round(this.camPos.x),-Math.round(this.camPos.y))
+for(let o=0;o<this.objects.length;o++)
+this.objects[o].draw()
+this.ctx.translate(Math.round(this.camPos.x),Math.round(this.camPos.y))
+this.preLoopFn()
+this.drawFn()
+this.frameCount++}
+doPhysics(){if(this.following)
+this.camPos.lerp((this.following.pos.x-this.width/2)+this.following.speed.x*this.followInterval[1].x+this.following.w*this.following.s*.5,(this.following.pos.y-this.height/2)+this.following.speed.y*this.followInterval[1].y+this.following.h*this.following.s*.5,this.followInterval[0])
+this.frameTotalCollisions=0
+for(let o=0;o<this.objects.length;o++){if(this.objects[o].constructor.name=="PhysicsActor"){this.objects[o].collided=false
+this.objects[o].onGround=false
+this.objects[o].physics()}}
+this.loopFn()}
+nObj(obj){obj.parentCon=this
+if(["TileMap"].includes(obj.type))
+return this.objects[this.objects.push(obj)-1]
+else
+return this.objects[this.objects.push(this.imageThing(obj))-1]}
+rObj(obj){return this.rObjIdx(this.objects.indexOf(obj))}
+rObjIdx(idx){return this.objects.splice(idx,1)}
+imageThing(spr){if(spr.src.isText){this.imageIndexes[spr.src]=this.imageElements.push(spr.src.canvas)-1
+spr.imageLoaded()}else{if(spr.src in this.imageIndexes){if(this.imageElements[this.imageIndexes[spr.src]].complete){spr.imageLoaded()}else{this.imageElements[this.imageIndexes[spr.src]].addEventListener('load',()=>{spr.imageLoaded()})}}else{let i=document.createElement("img")
+i.className+="noSmooth"
+i.addEventListener('load',()=>{spr.imageLoaded()})
+i.src=spr.src
+this.imageIndexes[spr.src]=this.imageElements.push(i)-1}}
+spr.srcStr=spr.src
+spr.src=this.imageIndexes[spr.src]
+return spr}
+background(color){this.backgroundColor=color}
+nFont(name,image){this.fonts[name]=image}
+font(name){this.currentFont=name}
+text(text,x,y){let f=this.fonts[this.currentFont].canvas
+let charMap="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
+text=(text+'').toUpperCase().split('').map(e=>charMap.indexOf(e))
+for(let c=0;c<text.length;c++){this.ctx.drawImage(f,text[c]*4,0,f.height,f.height,x+c*(f.height+1),y,f.height,f.height)}}
+point(x,y,color){this.ctx.fillStyle=color
+this.ctx.fillRect(Math.floor(x),Math.floor(y),1,1)}
+line(x1,y1,x2,y2,color){this.ctx.fillStyle=color
+this.ctx.beginPath()
+this.ctx.moveTo(x1,y1)
+this.ctx.lineTo(x2,y2)
+this.ctx.stroke()
+this.ctx.strokeRect(Math.floor(x1)+.5,Math.floor(y1)+.5,Math.floor(x2-x1),Math.floor(y2-y1))}
+rect(x,y,w,h,color){this.ctx.fillStyle=color
+this.ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(w),Math.ceil(h))}}
+class CImage{constructor(text,h){this.isText=true
+this.canvas=CTool.canvasFromString(text,h)
+this.canvas.className+="noSmooth"}}
+class Sprite{constructor(src,x,y,w,h,scale,centered){this.type="Sprite"
+this.src=src
+this.pos=new Vec2(x,y)
+this.w=w
+this.h=h
+this.s=scale|1
+this.c=centered
+this.animation=[0,0,true]
+this.animationOffset=0
+this.animationStates={}
+this.animationState=""
+this.showHitbox=false
+this.flipped=false
+this.collided=false
+this.collisionEvents=[]
+this.hb={top:0,bottom:0,left:0,right:0,slr:0,stb:0}}
+hbOffsets(hb){this.hb=hb
+this.hb.slr=hb.left+hb.right
+this.hb.stb=hb.top+hb.bottom}
+getHb(){if(this.flipped){return[this.pos.x-(this.c?this.w*.5:0)+this.hb.right*this.s,this.pos.y-(this.c?this.h*.5:0)+this.hb.top*this.s,this.w*this.s-(this.hb.right*this.s+this.hb.left*this.s),this.h*this.s-(this.hb.top*this.s+this.hb.bottom*this.s)]}
+return[this.pos.x-(this.c?this.w*.5:0)+this.hb.left*this.s,this.pos.y-(this.c?this.h*.5:0)+this.hb.top*this.s,this.w*this.s-(this.hb.left*this.s+this.hb.right*this.s),this.h*this.s-(this.hb.top*this.s+this.hb.bottom*this.s)]}
+drawHb(){if(this.flipped){this.parentCon.ctx.strokeRect(Math.floor(this.pos.x-(this.c?this.w/2:0))+.5+this.hb.right*this.s,Math.floor(this.pos.y-(this.c?this.h/2:0))+.5+this.hb.top*this.s,this.w*this.s-(1+this.hb.right*this.s+this.hb.left*this.s),this.h*this.s-(1+this.hb.top*this.s+this.hb.bottom*this.s))}else{this.parentCon.ctx.strokeRect(Math.floor(this.pos.x-(this.c?this.w/2:0))+.5+this.hb.left*this.s,Math.floor(this.pos.y-(this.c?this.h/2:0))+.5+this.hb.top*this.s,this.w*this.s-(1+this.hb.left*this.s+this.hb.right*this.s),this.h*this.s-(1+this.hb.top*this.s+this.hb.bottom*this.s))}}
+imageLoaded(){}
+addAnimation(nam,dict,play){this.animationStates[nam]=[dict.start,dict.end,dict.timer,dict.loop,dict.pause]
+if(play){this.animationState=nam
+this.animation[2]=false
+this.animation[0]=this.animationStates[this.animationState][0]}}
+animate(nam){if(this.animationState==nam)return
+this.animationState=nam
+this.animation[1]=this.animationStates[this.animationState][2]
+this.animation[2]=false
+this.animation[0]=this.animationStates[this.animationState][0]}
+paused(){return this.animation[2]}
+pause(){this.animation[2]=true}
+play(n){this.animation[2]=false;if(n!=undefined){this.animation[0]=n}}
+frame(n){this.animation[0]=n}
+collidedWith(el,d,i){for(let e=0;e<this.collisionEvents.length;e++)
+this.collisionEvents[e](el,d,i)}
+onCollision(fn){this.collisionEvents.push(fn)}
+draw(){if(!this.animation[2]){if((this.animation[1]-=60/this.parentCon.frameRate)<=0){this.animation[1]=this.animationStates[this.animationState][2]
+if(this.animation[0]==this.animationStates[this.animationState][4])
+this.animation[2]=true
+if(this.animation[0]++>=this.animationStates[this.animationState][1]){if(this.animationStates[this.animationState][3]){this.animation[0]=this.animationStates[this.animationState][0]}else{this.animation[2]=true
+this.animation[0]--}}}}
+if(typeof this.src=='string'||!this.parentCon.imageElements[this.src].complete)return
+let repeatedPattern=this.parentCon.ctx.createPattern(this.parentCon.imageElements[this.src],'repeat')
+this.parentCon.ctx.fillStyle=repeatedPattern
+repeatedPattern.setTransform(new DOMMatrix([(this.flipped?-this.s:this.s),0,0,this.s,Math.floor(this.pos.x-(this.c?this.w/2:0))-(this.flipped?(-(this.animation[0]+1+this.animationOffset)*this.w):((this.animation[0]+this.animationOffset)*this.w))*this.s,Math.floor(this.pos.y-(this.c?this.h/2:0))]))
+this.parentCon.ctx.fillRect(Math.floor(this.pos.x-(this.c?this.w/2:0)),Math.floor(this.pos.y-(this.c?this.h/2:0)),this.w*this.s,this.h*this.s)
+if(this.showHitbox){this.parentCon.ctx.strokeStyle=(this.collided?"#f0f9":"#f009")
+this.drawHb()}}
+finalPos(centered){return new Vec2((this.pos.x-this.parentCon.camPos.x)+(centered?this.w/2:0),this.pos.y-this.parentCon.camPos.y+(centered?this.h/2:0))}}
+class Tile extends Sprite{constructor(src,x,y,w,h,s,centered){super(src,x,y,w,h,s,centered)
+this.type="Tile"
+this.hasPhysics=true}}
+class TileSet{constructor(src,tw,th){this.type="TileSet"
+this.src=src
+this.tw=tw
+this.th=th
+this.tiles=[]
+this.loaded=false
+this.loadCb=()=>{}
+CTool.getImagePixels(src,(data,dw,dh)=>{for(let ty=0;ty<dh;ty+=th){for(let tx=0;tx<dw;tx+=tw){let ct=[]
+for(let y=0;y<th;y++){for(let x=0;x<tw;x++){let i=((x+tx)+(y+ty)*dw)*4
+ct.push(data[i])
+ct.push(data[i+1])
+ct.push(data[i+2])
+ct.push(data[i+3])}}
+this.tiles.push(CTool.canvasFromPixels(ct,tw,th))}}
+this.loaded=true
+this.loadCb()})}
+onDone(callback){if(this.loaded)callback()
+else this.loadCb=callback}}
+class TileMap{static tileMapFromPixels(px,w,types){function getType(p1,p2,p3){for(let t in types)
+if(types[t][0]==p1&&types[t][1]==p2&&types[t][2]==p3)
+return t
+return `${p1},${p2},${p3}`}
+let bars=[]
+let did=[]
+for(let p=0;p<px.length;p+=4){if(did.includes(p))continue
+did.push(p)
+let x=((p/4)%w)
+let y=(Math.floor((p/4)/w))
+if(px[p+3]!=0){let tp=getType(px[p],px[p+1],px[p+2])
+let ch=1
+while(getType(px[p+w*ch*4],px[p+1+w*ch*4],px[p+2+w*ch*4])==tp)
+did.push(p+w*(ch++)*4)
+bars.push([x,y,1,ch,tp])}}
+for(let b=0;b<bars.length;b++){for(let a=0;a<bars.length;a++){if(a==b)continue
+if(bars[a][4]==bars[b][4]&&bars[a][1]==bars[b][1]&&bars[a][3]==bars[b][3]&&bars[a][0]-1==(bars[b][0]+bars[b][2]-1)){bars.splice(a,1)
+if(a<b){b--}
+a--
+bars[b][2]++}}}
+for(let b=0;b<bars.length;b++){if(types[bars[b][4]]===undefined)CTool.error("Color",bars[b][4],"not in table.")
+bars[b]={type:bars[b][4],x:bars[b][0],y:bars[b][1],w:bars[b][2],h:bars[b][3]}}
+return bars}
+static tileMapFrom(src,types,callback){this.getImagePixels(src,(px,w,h)=>{this.tileMapFromPixels(px,w,types,callback)})}
+static from(src,types){let tileSets=[]
+for(let t in types)
+tileSets.push(types[t][3])
+let tm=new TileMap(tileSets,-1)
+CTool.getImagePixels(src,(data,dw,dh)=>{tm.wt=dw
+tm.ht=dh
+tm.map=new Array(dw*dh).fill(0)
+let bars=this.tileMapFromPixels(data,dw,types)
+for(let b=0;b<bars.length;b++){let n=Object.keys(types).indexOf(bars[b].type)+1
+for(let y=0;y<bars[b].h;y++){for(let x=0;x<bars[b].w;x++){tm.map[(x+bars[b].x)+(y+bars[b].y)*tm.wt]=n}}}
+tm.colliders=[]
+for(let b=0;b<bars.length;b++)
+if(types[bars[b].type][3])
+tm.colliders.push(bars[b])
+tm.init()})
+return tm}
+constructor(tileSets,w,h,mapData){this.type="TileMap"
+this.tileSets=tileSets
+this.loadableSets=0
+for(let t in this.tileSets)
+if(this.tileSets[t]){this.tileSet=this.tileSets[t]
+break}
+for(let t in this.tileSets)
+if(this.tileSets[t])this.loadableSets++
+this.wt=w
+this.ht=h
+this.map=mapData
+this.x=0
+this.y=0
+if(this.wt!=-1)this.init()
+this.colliders=[]
+this.hb={top:0,bottom:0,left:0,right:0,slr:0,stb:0}}
+init(){this.cnv=document.createElement('canvas')
+this.cnv.width=this.tileSet.tw*this.wt
+this.cnv.height=this.tileSet.th*this.ht
+this.ctx=this.cnv.getContext('2d')
+this.nbToIdx=[36,24,0,12,39,27,3,15,37,25,1,13,38,26,2,14,36,24,0,12,39,47,3,31,37,25,1,13,38,42,-1,4,36,24,0,12,39,27,3,-1,37,44,1,28,38,41,-1,7,36,24,0,12,39,47,3,31,37,44,-1,28,38,45,2,46,36,24,0,12,39,-1,11,19,37,25,1,-1,38,26,6,40,36,24,0,12,39,47,11,35,37,25,1,13,38,42,6,23,36,24,0,12,39,27,11,19,-1,44,1,28,38,41,6,34,36,24,0,12,39,47,11,35,-1,44,1,28,38,45,6,30,36,-1,0,12,39,27,-1,-1,37,25,8,16,38,26,5,43,36,24,0,12,39,47,3,31,37,25,-1,16,-1,42,5,21,36,24,0,12,39,27,3,15,37,44,8,20,38,41,5,32,36,24,0,12,-1,47,3,31,37,44,8,20,38,45,5,29,36,24,0,12,39,27,11,19,37,25,8,16,38,26,10,9,36,24,0,24,39,47,11,35,37,25,8,16,38,42,10,18,36,24,0,12,-1,-1,11,19,-1,44,8,20,38,41,10,17,-1,24,0,12,39,47,11,35,-1,44,8,20,38,45,10,33]
+const UP=1
+const DOWN=2
+const LEFT=4
+const RIGHT=8
+const ULEFT=16
+const URIGHT=32
+const DLEFT=64
+const DRIGHT=128
+console.log(JSON.stringify(this.nbToIdx))
+this.loadedSets=0
+for(let t=0;t<this.tileSets.length;t++)
+if(this.tileSets[t])
+this.tileSets[t].onDone(()=>{this.loadedSets++
+if(this.loadedSets==this.loadableSets)
+this.allTilesetsLoaded()})}
+allTilesetsLoaded(){for(let i=0;i<this.ht*this.wt;i++){let ti=this.map[i]
+if(ti!=0&&ti!=undefined&&this.tileSets[ti-1]!=undefined){let mv=0
+if(this.map[i-this.wt]==ti)mv|=1
+if(this.map[i+this.wt]==ti)mv|=2
+if(i%this.wt!=0&&this.map[i-1]==ti)mv|=4
+if(i%this.wt!=this.wt-1&&this.map[i+1]==ti)mv|=8
+if(i%this.wt!=0&&this.map[i-this.wt-1]==ti)mv|=16
+if(i%this.wt!=this.wt-1&&this.map[i-this.wt+1]==ti)mv|=32
+if(i%this.wt!=0&&this.map[i+this.wt-1]==ti)mv|=64
+if(i%this.wt!=this.wt-1&&this.map[i+this.wt+1]==ti)mv|=128
+ti--
+mv=this.nbToIdx[mv]
+if(mv==undefined||mv==-1)mv=22
+this.ctx.drawImage(this.tileSets[ti].tiles[mv],(i%this.wt)*this.tileSets[ti].tw,Math.floor(i/this.wt)*this.tileSets[ti].th)}}
+this.nbToIdx=[]
+this.loaded=true}
+findTilePos(tiles,type,fallBack){let offs=fallBack?fallBack:new Vec2(0,0)
+for(let b=0;b<tiles.length;b++){if(tiles[b].type==type){offs.set(tiles[b].x,tiles[b].y)
+break}}
+return offs}
+draw(){if(!this.loaded)return
+this.parentCon.ctx.drawImage(this.cnv,this.x,this.y)}
+hbOffsets(hb){this.hb=hb
+this.hb.slr=hb.left+hb.right
+this.hb.stb=hb.top+hb.bottom}
+getHb(cn){return[this.colliders[cn].x*this.tileSet.tw+this.hb.left,this.colliders[cn].y*this.tileSet.th+this.hb.top,this.colliders[cn].w*this.tileSet.tw-(this.hb.left+this.hb.right),this.colliders[cn].h*this.tileSet.th-(this.hb.top+this.hb.bottom)]}}
+class PhysicsActor extends Sprite{constructor(src,x,y,w,h,s,centered){super(src,x,y,w,h,s,centered)
+this.type="PhysicsActor"
+this.hasPhysics=true
+this.speed=new Vec2(0,0)
+this.locked=false
+this.hb={top:0,bottom:0,left:0,right:0}
+this.bounce=0
+this.groundFriction=true}
+setFriction(x,y){return(this.friction=new Vec2(x,y))}
+intersects(hbe,cn){let b1=this.getHb()
+let b2=hbe.getHb(cn)
+if(b1[1]+b1[3]>b2[1]&&b1[0]+b1[2]>b2[0]&&(b1[1]+b1[3])-b1[3]<(b2[1]+b2[3])&&(b1[0]+b1[2])-b1[2]<(b2[0]+b2[2]))
+return true
+return false}
+physics(el){this.pos.x+=(this.speed.x=(this.speed.x+this.parentCon.physics.gravity.x)*this.parentCon.physics.friction.x)
+this.pos.y+=(this.speed.y=(this.speed.y+this.parentCon.physics.gravity.y)*this.parentCon.physics.friction.y)
+for(let t=0;t<this.parentCon.objects.length;t++){if(this.parentCon.objects[t].type=="TileMap"){for(let c=0;c<this.parentCon.objects[t].colliders.length;c++){this.avoidCollision(this.parentCon.objects[t],c)}}else{if(this.parentCon.objects[t]==this||(!this.parentCon.objects[t].hasPhysics)||this.parentCon.objects[t].pos.cartesianDist(this.pos)>(this.w+this.h+this.parentCon.objects[t].w+this.parentCon.objects[t].h)*(this.s+this.parentCon.objects[t].s))continue
+this.avoidCollision(this.parentCon.objects[t])}}}
+avoidCollision(el,cn){if(this.intersects(el,cn)){this.parentCon.frameTotalCollisions++
+let b1=this.getHb()
+let b2=el.getHb(cn)
+el.collided=true
+this.collided=true
+let rd=((b1[0]+b1[2])-b2[0])
+let ld=((b2[0]+b2[2])-b1[0])
+let td=((b1[1]+b1[3])-b2[1])
+let bd=((b2[1]+b2[3])-b1[1])
+if(td<rd&&td<ld&&td<bd){this.pos.y-=td
+if(this.bounce!=0){if(this.speed.y<.1&&this.speed.y!=0){this.pos.y+=td/2
+this.speed.y=0}else{this.speed.y=Math.min(-this.speed.y*this.bounce,0)}}else
+this.speed.y=Math.min(this.speed.y,0)
+this.onGround=true
+this.collidedWith(el,"top",cn)}else if(bd<rd&&bd<ld){this.pos.y+=bd
+if(this.bounce!=0)
+this.speed.y=Math.max(-this.speed.y*this.bounce,0)
+else
+this.speed.y=Math.max(this.speed.y,0)
+this.collidedWith(el,"bottom",cn)}else if(ld<=rd){this.pos.x+=ld
+this.speed.x=-this.speed.x*this.bounce
+this.collidedWith(el,"left",cn)}else{this.pos.x-=rd
+this.speed.x=-this.speed.x*this.bounce
+this.collidedWith(el,"right",cn)}}else{el.collided=false}}}
+class CTool{static bin(n,l){let r=n.toString(2)
+if(l===undefined)return r
+while(r.length<l)
+r="0"+r
+return r}
+static round(n,d){d=10**(d||0)
+return Math.round(n*d)/d}
+static lerp(a,b,v){return a*(1-v)+b*v}
+static map(v,ir1,ir2,or1,or2){return or1+(or2-or1)*(v-ir1)/(ir2-ir1)}
+static getImagePixels(src,callback){var img=document.createElement("img")
+img.onload=function(){var canvas=document.createElement('canvas')
+canvas.width=img.width
+canvas.height=img.height
+canvas.getContext('2d').drawImage(img,0,0,img.width,img.height)
+callback(canvas.getContext('2d').getImageData(0,0,img.width,img.height).data,img.width,img.height)}
+img.src=src}
+static canvasFromString(str,h){str=str.split('').map(e=>CTool.bin(e.charCodeAt(0)-32,6)).join('').split('')
+let canvas=document.createElement("canvas")
+canvas.height=h
+canvas.width=Math.ceil(str.length/h)
+let ctx=canvas.getContext('2d')
+let dat=ctx.getImageData(0,0,canvas.width,canvas.height)
+for(let i=0;i<str.length;i++)
+dat.data[(Math.floor(i/canvas.height)+(i%canvas.height)*canvas.width)*4+3]=str[i]=="0"?0:255
+ctx.putImageData(dat,0,0)
+return canvas}
+static canvasFromPixels(data,w,h){let canvas=document.createElement("canvas")
+canvas.width=w
+canvas.height=h
+let ctx=canvas.getContext('2d')
+let dat=ctx.getImageData(0,0,w,h)
+for(let i=0;i<data.length;i++)dat.data[i]=data[i]
+ctx.putImageData(dat,0,0)
+return canvas}
+static error(...things){throw("error:"+things.join(" ")+"\n"+(()=>{return "("+new Error().stack.split('\n')[3].trim().split("/").reverse()[0]})())}}
+class Vec2{constructor(x,y){this.x=x
+this.y=y}
+rounded(){return new Vec2(Math.round(this.x),Math.round(this.y))}
+log(){console.log(this+'')
+return this}
+lerp(x,y,a){this.x=CTool.lerp(this.x,x,a)
+this.y=CTool.lerp(this.y,y,a)}
+set(x,y){this.x=x
+this.y=y}
+multiply(v){this.x*=v
+this.y*=v}
+multiplyVec(v){this.x*=v.x
+this.y*=v.y}
+multiplyRet(v){this.x*=v
+this.y*=v
+return this}
+multiplied(v){return new Vec2(this.x*v,this.y*v)}
+divideRet(v){this.x/=v
+this.y/=v
+return this}
+addVec(v){this.x+=v.x
+this.y+=v.y}
+added(v){return new Vec2(this.x+v.x,this.y+v.y)}
+normalize(){let d=Math.sqrt(this.x*this.x+this.y*this.y)
+if(d==0)return
+this.x/=d
+this.y/=d}
+normalized(){let d=Math.sqrt(this.x*this.x+this.y*this.y)
+if(d==0)return new Vec2(0,0)
+return new Vec2(this.x/d,this.y/d)}
+length(){return Math.sqrt(this.x*this.x+this.y*this.y)}
+angle(){return Math.atan2(this.x,this.y)}
+toString(){return `(${this.x},${this.y})`}
+pointInRect(x1,y1,x2,y2,x,y){return x>x1&&x<x2&&y>y1&&y<y2}
+distSquared(v){return(this.x-v.x)**2+(this.y-v.y)**2}
+cartesianDist(v){return Math.abs(this.x-v.x)+Math.abs(this.y-v.y)}}
+class Controllers{static new(element,type){let types={"platformer":{"left":['a','A',"ArrowLeft"],"right":['d','D',"ArrowRight"],"jump":[' ','w','W',"ArrowUp"],"_touch":[2,2,["jump","jump","left","right"]]}}
+for(let evt in this.types[type]){if(evt=="_touch"){element.parentCon.touchArea(...types[type][evt])}else{element.parentCon.onKeyPressed(types[type][evt],evt)}}}}
+let _font=`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_N[B:SKU^K_#0")P ^0"?1$09@#P!O]F9F%H"&$ $!I)8-V?P,,,`
+let con=new Console(200,"#ebe3c5")
+con.physics.gravity=new Vec2(0,.018)
+con.physics.friction=new Vec2(.92,.9985)
+con.nEvent("jump",()=>{if(!player.onGround&&player.extraJumps<=0)return
+if(player.extraJumps>0&&!player.onGround){player.extraJumps--
+player.speed.y=-1.1
+return}
+if(player.isCrouched)player.speed.x*=1.1
+player.speed.y=-1})
+con.onKeyPressed([' ','w','W',"ArrowUp"],"jump")
+con.nEvent("left",()=>{})
+con.onKeyPressed(['a','A',"ArrowLeft"],"left")
+con.nEvent("right",()=>{})
+con.onKeyPressed(['d','D',"ArrowRight"],"right")
+con.touchArea(2,2,["jump","jump","left","right"])
+con.backgroundColor="#f0eddf"
+let background=[0,1,2]
+background=background.map(e=>con.nObj(new Sprite("Tiles/Sky"+e+".png",-16,-16,con.width+32,512,1,true)))
+let plant=con.nObj(new Sprite("Sprites/Plant.png",0,0,8,8,false))
+plant.addAnimation("default",{start:0,end:40,timer:8,loop:true,pause:-1},true)
+let player=con.nObj(new PhysicsActor("Sprites/Player.png",0,0,16,16))
+player.addAnimation("idle",{start:0,end:5,timer:6,loop:true,pause:-1},true)
+player.addAnimation("run",{start:6,end:11,timer:3,loop:true,pause:-1})
+player.addAnimation("jump",{start:12,end:13,timer:12,loop:false,pause:-1})
+player.addAnimation("fall",{start:14,end:16,timer:8,loop:false,pause:-1})
+player.addAnimation("down",{start:17,end:18,timer:3,loop:false,pause:-1})
+player.addAnimation("cmov",{start:18,end:19,timer:5,loop:true,pause:-1})
+player.extraJumps=999
+player.groundFriction=false
+player.isCrouched=false
+player.hbOffsets({top:3,bottom:0,left:5,right:6})
+player.onCollision(function(el,d,i){if(i!=undefined){if(el.colliders[i].type=="BOUNCE"&&d=="top"){player.speed.y=-2.3
+player.animate("jump")}}
+if(el.srcStr=="Sprites/Trash.png"){con.rObj(el)
+player.extraJumps++}})
+let tileMap=con.nObj(TileMap.from("Maps/Map1.png",{PLAYER:[78,205,196],PLANT:[31,255,40],BRICK:[168,168,168,new TileSet("../GameOfWords/game/Art/TestSetNew.png",8,8)],BOUNCE:[26,83,92,new TileSet("Tiles/BouncePad.png",8,8)],TRASH:[255,230,109]}))
+con.init(()=>{con.follow(player,.1,new Vec2(10,0))})
+con.preLoop(()=>{for(let p=0;p<background.length;p++){background[p].w=con.width+32
+background[p].pos.x=-con.camPos.x+con.width/2
+background[p].pos.y=(-con.camPos.y+con.height/2)/(p/300+1)
+background[p].animation[0]=CTool.lerp(background[p].animation[0],(-con.camPos.x/1000)*(p/10+1),.4)}})
+con.draw(()=>{con.text(CTool.round(con.frameRate,2),1,1)})
+con.loop(()=>{if('s' in con.keys&&player.onGround){player.isCrouched=true
+player.speed.x*=.6}else{player.isCrouched=false}
+if(player.onGround){if(player.isCrouched){if(Math.abs(player.speed.x)>.1)
+player.animate("cmov")
+else
+player.animate("down")
+player.hbOffsets({top:10,bottom:0,left:3,right:5})}else{if(Math.abs(player.speed.x)>.1)
+player.animate("run")
+else
+player.animate("idle")
+player.hbOffsets({top:3,bottom:0,left:5,right:6})}}else{if(player.speed.y<-.5)
+player.animate("jump")
+else
+player.animate("fall")
+player.hbOffsets({top:3,bottom:0,left:5,right:6})}
+if(player.speed.x!=0)player.flipped=player.speed.x<0
+if(!player.locked)
+player.speed.addVec(new Vec2((con.eventOngoing("right")?1:0)-(con.eventOngoing("left")?1:0),0).normalized().divideRet(10))})</script></html>
