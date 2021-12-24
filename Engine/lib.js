@@ -37,12 +37,14 @@ class Console {
 		document.body.style.backgroundColor = backgroundColor | "white"
 
 		this.el = document.createElement("canvas")
-		this.el.style.width = "100vw"
-		this.el.style.height = "100vh"
 
 		window.onresize = () => {
 			this.width = Math.ceil((window.innerWidth / window.innerHeight) * height)
 			this.height = Math.ceil(height)
+			if (this.usesSecondStepBlur) {
+				this.secondOutputCanvas.width = this.width
+				this.secondOutputCanvas.height = this.height
+			}
 			this.el.width = this.width
 			this.el.height = this.height
 			if (this.material) {
@@ -52,11 +54,6 @@ class Console {
 		}
 		window.onorientationchange = window.onresize
 		window.ondeviceorientation = window.onresize
-
-		this.el.style.objectFit = "contain"
-		this.el.style.position = "fixed"
-		this.el.style.transform = "translate(-50%,-50%)"
-		this.el.style.left = this.el.style.top = "50%"
 
 		// Setup WebGL
 		this.gl = this.el.getContext("webgl2", {antialias: false, alpha: true})
@@ -68,7 +65,7 @@ class Console {
 			uniform vec2 tOffs;
 
 			void main() {
-				tPos = vPos + tOffs;
+				tPos = vPos.xy + tOffs;
 				gl_Position = vec4((vPos + vOffs) * screenScale - vec2(1.0, -1.0), 0.0, 1.0);
 			}`, `
 			varying vec2 tPos;
@@ -78,7 +75,9 @@ class Console {
 
 			void main() {
 				if (colorParam.w < 0.0) {
-					gl_FragColor = texture2D(sTexture, (floor(tPos) + 0.5) / tSize);
+					vec4 t = texture2D(sTexture, (floor(tPos) + 0.5) / tSize) * vec4(colorParam.x, colorParam.y, colorParam.z, -colorParam.w);
+					if (t.w <= 0.0) discard;
+					gl_FragColor = t;
 				} else {
 					gl_FragColor = colorParam;
 				}
@@ -88,10 +87,12 @@ class Console {
 		this.gl.enableVertexAttribArray(vPos)
 		this.gl.vertexAttribPointer(vPos, 2, this.gl.FLOAT, false, 0, 0)
 		this.gl.useProgram(this.material)
-		this.gl.enable(this.gl.DEPTH_TEST)
-		this.gl.depthFunc(this.gl.LEQUAL)
+		// this.gl.enable(this.gl.DEPTH_TEST)
+		this.gl.disable(this.gl.DEPTH_TEST)
+		// this.gl.depthFunc(this.gl.LEQUAL)
 		this.gl.enable(this.gl.BLEND)
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
+
 		window.onresize()
 		this.glParams = {
 			vOffs: this.gl.getUniformLocation(this.material, "vOffs"),
@@ -112,6 +113,8 @@ class Console {
 
 		// Holds everything that is rendered.
 		this.objects = []
+		this.maxSortPerFrame = 1
+		this.sortIdx = 0
 		this.camPos = new Vec2(0, 0)
 		this.followInterval = 0
 
@@ -133,25 +136,46 @@ class Console {
 		// Events
 		this.events = {}
 
-		// Different loops.
-		this.initFn    = () => {}
-
-		// this.preLoopFn = () => {}
-		// this.drawFn    = () => {}
-		// this.loopFn    = () => {}
-
-		this.frameFn   = () => {}
-		this.pFrameFn  = () => {}
-		this.frameCount = 0
-
-		// Finally, the canvas gets appended.
-		document.body.appendChild(this.el)
+		// Deals with key events
 		this.keys = {}
 		window.addEventListener('keydown', e => {
 			if (!(e.key.toLowerCase() in this.keys)) this.keys[e.key.toLowerCase()] = Date.now()
 			if (e.key == ' ') e.preventDefault()
 		})
-		window.addEventListener('keyup'  , e => { if (e.key.toLowerCase() in this.keys) delete this.keys[e.key.toLowerCase()] })
+		window.addEventListener('keyup'  , e => {
+			if (e.key.toLowerCase() in this.keys) delete this.keys[e.key.toLowerCase()]
+		})
+
+		// Different functions.
+		this.initFn    = () => {}
+		this.preFrameFn = () => {}
+		this.frameFn    = () => {}
+		this.pFrameFn   = () => {}
+		this.frameCount = 0
+
+		// Finally, the canvas gets appended.
+		// Second step to make things not blurry on some devices.
+		this.usesSecondStepBlur = false
+		if (Device.outputIsBlurry()) {
+			this.usesSecondStepBlur = true
+			this.secondOutputCanvas = document.createElement("canvas")
+			
+			this.secondOutputCanvas.width = this.width
+			this.secondOutputCanvas.height = this.height
+
+			this.secondOutputCtx = this.secondOutputCanvas.getContext("2d")
+			this.secondOutputCanvas.style.width = "100vw"
+			this.secondOutputCanvas.style.height = "100vh"
+			document.body.appendChild(this.secondOutputCanvas)
+		} else {
+			this.el.style.width = "100vw"
+			this.el.style.height = "100vh"
+			// this.el.style.objectFit = "contain"
+			// this.el.style.position = "fixed"
+			// this.el.style.transform = "translate(-50%,-50%)"
+			// this.el.style.left = this.el.style.top = "50%"
+			document.body.appendChild(this.el)
+		}
 	}
 
 	// Controls
@@ -171,6 +195,9 @@ class Console {
 	 * @param {String} eventName Name of the event to run
 	 */
 	onKeyPressed(keyName, eventName) {
+		if (!(eventName in this.events)) {
+			CTool.warning("Event", eventName, "doesn't exist.")
+		}
 		if (typeof keyName === "string") {
 			window.addEventListener('keydown', e => {
 				if (e.key == keyName && !e.repeat) {
@@ -267,6 +294,9 @@ class Console {
 	 * @param {Vec2} speedPos How much the element's speed affects the position of the camera
 	 */
 	follow(el, interval, speedPos) {
+		if (!(el instanceof Sprite)) CTool.error("Can't follow given element.")
+		if (!interval) CTool.error("No interval supplied!")
+		if (!speedPos) CTool.error("No speed position supplied!")
 		this.following = el
 		this.followInterval = [interval, speedPos]
 	}
@@ -280,12 +310,12 @@ class Console {
 
 		// Framerate calculation setup
 		this.lastTime = window.performance.now()
-		this.frameRate = 120
+		this.frameRate = 80
 
 		// Graphics interval
 		setInterval(() => {
 			this.doGraphics.call(this)
-		}, 1000 / 200)
+		}, 1000 / 80)
 
 		// Physics interval
 		setInterval(() => {
@@ -294,7 +324,15 @@ class Console {
 	}
 
 	/**
-	 * 
+	 * Runs this function before every frame, when sprites are about to be rendered
+	 * @param {Function} fn Function to be ram
+	 */
+	preFrame(fn) {
+		this.preFrameFn = fn
+	}
+
+	/**
+	 * Runs this function at the end of every frame
 	 * @param {Function} fn Function to be ran
 	 */
 	frame(fn) {
@@ -302,7 +340,7 @@ class Console {
 	}
 	
 	/**
-	 * 
+	 * Runs this function every physics frame
 	 * @param {Function} fn Function to be ran
 	 */
 	pFrame(fn) {
@@ -323,7 +361,25 @@ class Console {
 		// Clear screen
 		this.gl.clearColor(...CTool.glColor(...this.backgroundColor))
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT)
-		// this.backgroundColor
+
+		// l - Math.abs(x % (2 * l) - l)
+
+		if (this.objects.length > 1) {
+			if (this.maxSortPerFrame < 0) {
+				this.objects.sort((a, b) => a._layer - b._layer)
+			} else {
+				for (let cso = 0; cso < this.maxSortPerFrame; cso++) {
+					if (++this.sortIdx == this.objects.length - 1) this.sortIdx = 0
+					if (this.objects[this.sortIdx]._layer > this.objects[this.sortIdx + 1]._layer) {
+						let tmp = this.objects[this.sortIdx]
+						this.objects[this.sortIdx] = this.objects[this.sortIdx + 1]
+						this.objects[this.sortIdx + 1] = tmp
+					}
+				}
+			}
+		}
+
+		this.preFrameFn()
 
 		// Draw all objects
 		this.glTranslation[0] = -Math.round(this.camPos.x)
@@ -334,12 +390,15 @@ class Console {
 			this.objects[o].draw()
 
 		this.glTranslation = [0, 0]
-
-		this.glTranslation = [0, 0]
 		this.gl.uniform2fv(this.glParams.vOffs, this.glTranslation)
 		
 		this.frameFn() // Call user loop function
 		this.frameCount++ // Increment frame count
+
+		// Draw to second canvas if still blurry
+		if (this.usesSecondStepBlur) {
+			this.secondOutputCtx.drawImage(this.gl.canvas, 0, 0, this.width, this.height)
+		}
 	}
 
 	/** */
@@ -411,13 +470,14 @@ class Console {
 			spr.imageLoaded()
 		} else {
 			if (spr.src in this.imageIndexes) {
-				if (this.imageElements[this.imageIndexes[spr.src]].complete) {
-					spr.imageLoaded()
-				} else {
-					this.imageElements[this.imageIndexes[spr.src]].addEventListener('load', () => {
-						spr.imageLoaded()
-					})
-				}
+				// TODO
+				// if (this.imageElements[this.imageIndexes[spr.src]].texture.complete) {
+				// 	spr.imageLoaded()
+				// } else {
+				// 	this.imageElements[this.imageIndexes[spr.src]].texture.addEventListener('load', () => {
+				// 		spr.imageLoaded()
+				// 	})
+				// }
 			} else {
 				let tex = this.gl.createTexture()
 				this.gl.bindTexture(this.gl.TEXTURE_2D, tex)
@@ -443,6 +503,15 @@ class Console {
 		spr.srcStr = spr.src
 		spr.src = this.imageIndexes[spr.src]
 		return spr
+	}
+	
+	shiftObjects(x, y) {
+		this.camPos.x += x
+		this.camPos.y += y
+		for (let o = 0; o < this.objects.length; o++) {
+			this.objects[o].pos.x += x
+			this.objects[o].pos.y += y
+		}
 	}
 
 	/**
@@ -537,7 +606,7 @@ class Console {
 		w = Math.floor(w - 1)
 		h = Math.floor(h - 1)
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
-			x, y, x + w, y,
+			x, y, x + (w - 1), y,
 			x, y, x, y + h + 1,
 			x + w, y, x + w, y + h,
 			x, y + h, x + w, y + h
@@ -574,14 +643,16 @@ class CImage {
 
 // Draws a sprite or any type of image to the screen
 class Sprite {
-	constructor(src, x, y, w, h, scale, centered) {
+	constructor(src, x, y, width, height, scale, centered) {
 		this.type = "Sprite"
 		this.src = src
 		this.pos = new Vec2(x, y)
-		this.w = w
-		this.h = h
+		this.w = width
+		this.h = height
 		this.s = scale | 1
 		this.c = centered
+		this._layer = 0
+		this.drawFn = null
 		this.animation = [0, 0, true] // frame, timer, paused
 		this.animationOffset = 0
 		this.animationStates = {} // start, end, timer, loop, pause frame
@@ -595,39 +666,65 @@ class Sprite {
 		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
 	}
 
+	setSrc(src) {
+		if (src in this.parentCon.imageIndexes) {
+			this.src = this.parentCon.imageIndexes[src]
+		} else {
+			let tex = this.parentCon.gl.createTexture()
+			this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, tex)
+
+			let textureInfo = { width: 1, height: 1, texture: tex }
+			let img = new Image()
+
+			let spr = this
+			img.addEventListener('load', function() {
+				textureInfo.width = img.width
+				textureInfo.height = img.height
+				textureInfo.complete = true
+				spr.parentCon.gl.bindTexture(spr.parentCon.gl.TEXTURE_2D, textureInfo.texture)
+
+				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_S, spr.parentCon.gl.REPEAT)
+				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_T, spr.parentCon.gl.REPEAT)
+				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.LINEAR)
+				spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
+				spr.imageLoaded()
+			})
+			img.src = src
+			this.parentCon.imageIndexes[src] = this.parentCon.imageElements.push(textureInfo) - 1
+			this.src = this.parentCon.imageElements.length - 1
+		}
+	}
+
+	layer(l) {
+		this._layer = l
+	}
+
 	hbOffsets(hb) {
 		this.hb = hb
 		this.hb.slr = hb.left + hb.right
 		this.hb.stb = hb.top + hb.bottom
 	}
 
+	// ISSUE WITH MINIFY
 	getHb() {
 		if (this.flipped) {
 			return [
 				this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.right * this.s,
 				this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
-				this.w * this.s - (this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+				this.w * this.s - (this.hb.right * this.s + this.hb.left * this.s),
+				this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
 			]
 		}
 		return [
 			this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.left * this.s,
 			this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
-			this.w * this.s - (this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+			this.w * this.s - (this.hb.left * this.s + this.hb.right * this.s),
+			this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
 		]
 	}
 
 	drawHb() {
-		if (this.flipped) {
-			this.parentCon.ctx.strokeRect(
-				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.right * this.s,
-				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top * this.s,
-				this.w * this.s - (1 + this.hb.right * this.s + this.hb.left * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
-		} else {
-			this.parentCon.ctx.strokeRect(
-				Math.floor(this.pos.x - (this.c ? this.w / 2 : 0)) + 0.5 + this.hb.left * this.s,
-				Math.floor(this.pos.y - (this.c ? this.h / 2 : 0)) + 0.5 + this.hb.top * this.s,
-				this.w * this.s - (1 + this.hb.left * this.s + this.hb.right * this.s), this.h * this.s - (1 + this.hb.top * this.s + this.hb.bottom * this.s))
-		}
+		this.parentCon.rect(...this.getHb())
 	}
 
 	imageLoaded() {
@@ -663,16 +760,34 @@ class Sprite {
 	play(n) { this.animation[2] = false; if (n != undefined) { this.animation[0] = n } }
 	frame(n) { this.animation[0] = n }
 
+	/**
+	 * Called when the sprite collides with anything.
+	 * @param {*} el 
+	 * @param {*} d 
+	 * @param {*} i 
+	 * 
+	 * @private
+	 */
 	collidedWith(el, d, i) {
 		for (let e = 0; e < this.collisionEvents.length; e++)
 			this.collisionEvents[e](el, d, i)
 	}
 
+	/**
+	 * Adds a collision event, which runs whenever the sprite collides with something.
+	 * @param {Function} fn 
+	 */
 	onCollision(fn) {
 		this.collisionEvents.push(fn)
 	}
 
+	/**
+	 * Draws the sprite to the screen. Used by the library, not the user.
+	 * @returns 
+	 * @private
+	 */
 	draw() {
+		if (this.drawFn) this.drawFn.call(this)
 		// Animation
 		if (!this.animation[2]) { // if not paused
 			if ((this.animation[1] -= 60 / this.parentCon.frameRate) <= 0) {
@@ -699,7 +814,12 @@ class Sprite {
 		let _xOffs = Math.floor(this.pos.x - (this.c ? this.w / 2 : 0))
 		let _yOffs = Math.floor(this.pos.y - (this.c ? this.h / 2 : 0))
 		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.s, -_yOffs])
-		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [0,0,0,-1])
+		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [
+			this.parentCon.currentColor[0],
+			this.parentCon.currentColor[1],
+			this.parentCon.currentColor[2],
+			-this.parentCon.currentColor[3]
+		])
 		this._vertexArr[0] = _xOffs
 		this._vertexArr[1] = _yOffs
 		this._vertexArr[2] = _xOffs + this.w
@@ -708,17 +828,15 @@ class Sprite {
 		this._vertexArr[5] = _yOffs + this.h
 		this._vertexArr[6] = this._vertexArr[2]
 		this._vertexArr[7] = this._vertexArr[5]
+
 		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
-		// this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
-		// 	_xOffs, _yOffs, _xOffs + this.w, _yOffs,
-		// 	_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
-		// ]), this.parentCon.gl.DYNAMIC_DRAW)
 		// Four is the number of vertices, which for images is always four.
 		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
 
 		// Hitbox
 		if (this.showHitbox) {
-			this.parentCon.ctx.strokeStyle = (this.collided ? "#f0f9" : "#f009")
+			// this.parentCon.ctx.strokeStyle = (this.collided ? "#f0f9" : "#f009")
+			this.parentCon.color(...(this.collided ? [255, 0, 255, 143] : [255, 0, 0, 143]))
 			this.drawHb()
 		}
 	}
@@ -900,7 +1018,7 @@ class TileMap {
 	 * @param {Vec2} [fallBack] Fallback when there's no tile found
 	 * @returns {Vec2} The position found
 	 */
-	 findTilePos(tiles, type, fallBack) {
+	findTilePos(tiles, type, fallBack) {
 		let offs = fallBack ? fallBack : new Vec2(0, 0)
 		for (let b = 0; b < tiles.length; b++) {
 			if (tiles[b].type == type) {
@@ -928,6 +1046,7 @@ class TileMap {
 		this.map = mapData
 		this.x = 0
 		this.y = 0
+		this._layer = 0
 		if (this.wt != -1) this.init()
 
 		// {type, x, y, w, h}
@@ -936,6 +1055,10 @@ class TileMap {
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
 
 		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
+	}
+
+	layer(l) {
+		this._layer = l
 	}
 
 	init() {
@@ -1028,12 +1151,14 @@ class TileMap {
 		this._vertexArr[6] = this._vertexArr[2]
 		this._vertexArr[7] = this._vertexArr[5]
 		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
-		// this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, new Float32Array([
-		// 	_xOffs, _yOffs, _xOffs + this.w, _yOffs,
-		// 	_xOffs, _yOffs + this.h, _xOffs + this.w, _yOffs + this.h,
-		// ]), this.parentCon.gl.DYNAMIC_DRAW)
 		// Four is the number of vertices, which for images is always four.
 		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
+
+		// this.parentCon.color(255)
+		// for (let c = 0; c < this.colliders.length; c++) {
+		// 	this.parentCon.rect(...this.getHb(c))
+		// 	// this.parentCon.rect(0, 0, 10, 10)
+		// }
 	}
 
 	hbOffsets(hb) {
@@ -1058,8 +1183,8 @@ class TileMap {
 }
 
 class PhysicsActor extends Sprite {
-	constructor(src, x, y, w, h, s, centered) {
-		super(src, x, y, w, h, s, centered)
+	constructor(src, x, y, width, height, scale, centered) {
+		super(src, x, y, width, height, scale, centered)
 		this.type = "PhysicsActor"
 		this.hasPhysics = true
 		this.speed = new Vec2(0, 0)
@@ -1178,7 +1303,7 @@ class CTool {
 		if (p2 == undefined) return [p1/255,p1/255,p1/255,1]
 		if (p3 == undefined) return [p1/255,p1/255,p1/255,p2/255]
 		if (p4 == undefined) return [p1/255,p2/255,p3/255,1]
-		return [p1,p2,p3,p4]
+		return [p1/255,p2/255,p3/255,p4/255]
 	}
 
 	/**
@@ -1195,7 +1320,7 @@ class CTool {
 		gl.shaderSource(vShader, vert)
 		gl.compileShader(vShader)
 		if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS))
-			console.log("Error compiling vertex shader:\n" + gl.getShaderInfoLog(vShader))
+			console.log("Error compiling vertex shader:\n" + gl.getShaderInfoLog(vShader).replace(/ERROR:/g, "\nERROR:"))
 		gl.attachShader(program, vShader)
 	
 		// Compile fragment shader
@@ -1328,6 +1453,16 @@ class CTool {
 			return "(" + new Error().stack.split('\n')[3].trim().split("/").reverse()[0]
 		})())
 	}
+
+	/**
+	 * Logs a warning to the console.
+	 * @param  {...any} things The arguments for this warning
+	 */
+	static warning(...things) {
+		console.warn("warning: " + things.join(" ") + "\n" + (()=>{
+			return "(" + new Error().stack.split('\n')[3].trim().split("/").reverse()[0]
+		})())
+	}
 }
 
 class Vec2 {
@@ -1451,6 +1586,18 @@ class Controllers {
 					"jump", "jump",
 					"left", "right"
 				]]
+			},
+			"topDown": {
+				"left": ['a', 'A', "ArrowLeft"],
+				"right": ['d', 'D', "ArrowRight"],
+				"up": ['w', 'W', "ArrowUp"],
+				"down": ['s', 'S', "ArrowDown"],
+
+				"_touch": [3, 3, [
+					" ", "up", " ",
+					"left", "switch", "right",
+					" ", "down", " "
+				]]
 			}
 		}
 		for (let evt in types[type]) {
@@ -1460,5 +1607,23 @@ class Controllers {
 				element.parentCon.onKeyPressed(types[type][evt], evt)
 			}
 		}
+	}
+}
+
+class Device {
+	static touch() {
+		return "ontouchend" in document
+	}
+
+	static isSafari() {
+		return "WebKitNamespace" in window
+	}
+
+	/**
+	 * Checks if the result is blurry and needs a second step to make it crisp.
+	 * @returns
+	 */
+	static outputIsBlurry() {
+		return this.isSafari()
 	}
 }

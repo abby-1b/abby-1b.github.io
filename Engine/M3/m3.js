@@ -46,6 +46,7 @@ plant.addAnimation("default", {
 
 // Player
 let player = con.nObj(new PhysicsActor("Sprites/Player.png", 0, 0, 16, 16))
+// player.layer(1)
 player.addAnimation("idle", { start: 0 , end: 5 , timer: 7 , loop: true , pause: -1 }, true)
 player.addAnimation("run" , { start: 6 , end: 11, timer: 4 , loop: true , pause: -1 })
 player.addAnimation("jump", { start: 12, end: 13, timer: 12, loop: false, pause: -1 })
@@ -53,7 +54,7 @@ player.addAnimation("fall", { start: 14, end: 16, timer: 8 , loop: false, pause:
 player.addAnimation("down", { start: 17, end: 18, timer: 3 , loop: false, pause: -1 })
 player.addAnimation("cmov", { start: 18, end: 19, timer: 5 , loop: true , pause: -1 })
 
-player.extraJumps = 1
+player.extraJumps = 999
 player.groundFriction = false
 // player.showHitbox = true
 // player.pos = new Vec2(615, 357)
@@ -86,7 +87,8 @@ let tileMap = con.nObj(TileMap.from("Maps/Map1.png", {
 	BOUNCE: [26, 83, 92, new TileSet("Tiles/BouncePad.png", 8, 8)],
 	TRASH: [255, 230, 109]
 }))
-
+tileMap.hbOffsets({top: 4, bottom: 0, left: 0, right: 0})
+// tileMap.layer(0)
 
 con.init(() => {
     con.follow(player, 0.1, new Vec2(10, 0))
@@ -121,6 +123,9 @@ con.frame(() => {
             player.animate("fall")
         player.hbOffsets({top: 3, bottom: 0, left: 5, right: 6})
     }
+
+	// con.color(255, 0, 0)
+	// con.rect(10, 10, 32, 32)
 })
 
 con.pFrame(() => {

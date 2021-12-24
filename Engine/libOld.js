@@ -206,7 +206,7 @@ class Console {
 	 * Runs before the main loop, before the frame elements are moved.
 	 * @param {Function} fn Function to be ran before the loop executes
 	 */
-	preLoop(fn) {
+	preFrame(fn) {
 		this.preLoopFn = fn
 	}
 
@@ -214,7 +214,7 @@ class Console {
 	 * 
 	 * @param {*} fn Function to be ran
 	 */
-	draw(fn) {
+	frame(fn) {
 		this.drawFn = fn
 	}
 	
@@ -222,7 +222,7 @@ class Console {
 	 * 
 	 * @param {Function} fn Function to be ran
 	 */
-	loop(fn) {
+	pFrame(fn) {
 		if (!this.drawFn)
 			CTool.error("No draw function defined.")
 		
@@ -255,7 +255,7 @@ class Console {
 		this.lastTime = window.performance.now()
 
 		// Clear screen
-		this.ctx.fillStyle = this.backgroundColor
+		this.ctx.fillStyle = `rgb(${this.backgroundColor})`
 		this.ctx.fillRect(0, 0, this.width, this.height)
 
 		this.ctx.translate(-Math.round(this.camPos.x), -Math.round(this.camPos.y))
