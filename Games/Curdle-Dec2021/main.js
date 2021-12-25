@@ -84,12 +84,14 @@ for (let w = 0; w < 50; w++) {
 }
 for (let t = 0; t < groundThings.length; t++) groundThings[t].layer(-1e9)
 
+
 let elevatedThings = []
+
 // Instantiate lampposts
 for (let l = 0; l < 5; l++) {
 	elevatedThings.push(con.nObj(new Sprite("Assets/lamppost.png", 0, 0, 21, 59)))
 	elevatedThings[elevatedThings.length - 1].drawFn = (function(){
-		con.color(255)
+		con.color(280 - Math.sqrt(enemies[0].pos.distSquared(this.pos)) * 0.7)
 	})
 	elevatedThings[elevatedThings.length - 1].pos = new Vec2(Math.random() * con.width, Math.random() * con.height)
 }
@@ -105,7 +107,7 @@ con.init(() => {
 // 	con.fillRect(ppos.x, ppos.y + 1, 32, 14)
 // })
 
-function keepOnScreen(el) {
+function keepOnScreen(el, mult=1) {
 	let fp = el.finalPos()
 	if (fp.x < -el.w) {
 		el.pos.x += con.width + el.w
@@ -127,6 +129,9 @@ con.frame(() => {
 	for (let e = 0; e < elevatedThings.length; e++) {
 		elevatedThings[e].layer(elevatedThings[e].pos.y + 33)
 		keepOnScreen(elevatedThings[e])
+	}
+	for (let e = 1; e < groundThings.length; e++) {
+		keepOnScreen(groundThings[e], 2)
 	}
 	for (let e = 0; e < enemies.length; e++) {
 		enemies[e].flipped = enemies[e].speed.x > 0
