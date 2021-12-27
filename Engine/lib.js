@@ -89,7 +89,6 @@ class Console {
 		this.gl.enableVertexAttribArray(vPos)
 		this.gl.vertexAttribPointer(vPos, 2, this.gl.FLOAT, false, 0, 0)
 		this.gl.useProgram(this.material)
-		// this.gl.enable(this.gl.DEPTH_TEST)
 		this.gl.disable(this.gl.DEPTH_TEST)
 		// this.gl.depthFunc(this.gl.LEQUAL)
 		this.gl.enable(this.gl.BLEND)
@@ -209,6 +208,7 @@ class Console {
 	 * @param {Function} funct Function to be ran when the event is triggered
 	 */
 	nEvent(name, funct) {
+		if (name in this.events) CTool.warning("Event '" + name + "' already exists. Its function was replaced.")
 		this.events[name] = [funct || (() => {}), false]
 	}
 
@@ -249,10 +249,14 @@ class Console {
 	/**
 	 * Checks if an event is currently ongoing.
 	 * @param {String} eventName Name of the event to check
-	 * @returns Wether or not the event is ongoing
+	 * @returns {boolean} Wether or not the event is ongoing
 	 */
 	eventOngoing(eventName) {
-		if (!(eventName in this.events)) CTool.error("Event '" + eventName + "' does not exist.")
+		if (!(eventName in this.events)) {
+			CTool.warning("Event '" + eventName + "' does not exist. Creating...")
+			this.events[eventName] = [() => {}, false]
+			return false
+		}
 		return this.events[eventName][1]
 	}
 
@@ -329,7 +333,25 @@ class Console {
 	 * @param {Function} fn Function to be ran when everything is ready
 	 */
 	init(fn) {
-		fn()
+		this.initFn = fn
+		this._init()
+	}
+
+	_init() {
+		this.initFn()
+
+		let unloaded = 0
+		for (let i = 0; i < this.imageElements.length; i++) {
+			if (!this.imageElements[i].complete) unloaded++
+		}
+
+		console.log("Missing", unloaded, "images.")
+		if (unloaded > 0) {
+			setTimeout(() => {
+				this._init.call(this)
+			}, 10)
+			return
+		}
 
 		// Framerate calculation setup
 		this.lastTime = window.performance.now()
@@ -378,8 +400,8 @@ class Console {
 		// Move camera towards targeted object
 		if (this.camera.following) {
 			this.camera.pos.lerp(
-				Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.speed.x * this.camera.followFract[1].x + this.camera.following.w * this.camera.following.s * 0.5)),
-				Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.speed.y * this.camera.followFract[1].y + this.camera.following.h * this.camera.following.s * 0.5)),
+				Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.speed.x * this.camera.followFract[1].x + this.camera.following.w * this.camera.following.scale * 0.5)),
+				Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.speed.y * this.camera.followFract[1].y + this.camera.following.h * this.camera.following.scale * 0.5)),
 				this.camera.followFract[0])
 		}
 
@@ -516,7 +538,8 @@ class Console {
 
 					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_S, spr.parentCon.gl.REPEAT)
 					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_T, spr.parentCon.gl.REPEAT)
-					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.LINEAR)
+					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.NEAREST)
+					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MAG_FILTER, spr.parentCon.gl.NEAREST)
 					spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
 					spr.imageLoaded()
 				})
@@ -714,7 +737,7 @@ class Sprite {
 		this.pos = new Vec2(x, y)
 		this.w = width
 		this.h = height
-		this.s = scale | 1
+		this.scale = scale | 1
 		this.c = centered
 		this._layer = 0
 		this.drawFn = null
@@ -750,7 +773,8 @@ class Sprite {
 
 				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_S, spr.parentCon.gl.REPEAT)
 				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_T, spr.parentCon.gl.REPEAT)
-				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.LINEAR)
+				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.NEAREST)
+				spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MAG_FILTER, spr.parentCon.gl.NEAREST)
 				spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
 				spr.imageLoaded()
 			})
@@ -774,17 +798,17 @@ class Sprite {
 	getHb() {
 		if (this.flipped) {
 			return [
-				this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.right * this.s,
-				this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
-				this.w * this.s - (this.hb.right * this.s + this.hb.left * this.s),
-				this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+				this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.right * this.scale,
+				this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.scale,
+				this.w * this.scale - (this.hb.right * this.scale + this.hb.left * this.scale),
+				this.h * this.scale - (this.hb.top * this.scale + this.hb.bottom * this.scale)
 			]
 		}
 		return [
-			this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.left * this.s,
-			this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.s,
-			this.w * this.s - (this.hb.left * this.s + this.hb.right * this.s),
-			this.h * this.s - (this.hb.top * this.s + this.hb.bottom * this.s)
+			this.pos.x - (this.c ? this.w * 0.5 : 0) + this.hb.left * this.scale,
+			this.pos.y - (this.c ? this.h * 0.5 : 0) + this.hb.top * this.scale,
+			this.w * this.scale - (this.hb.left * this.scale + this.hb.right * this.scale),
+			this.h * this.scale - (this.hb.top * this.scale + this.hb.bottom * this.scale)
 		]
 	}
 
@@ -877,12 +901,14 @@ class Sprite {
 		if (typeof this.src == 'string' || !this.parentCon.imageElements[this.src].complete) return
 
 		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.parentCon.imageElements[this.src].texture)
+
 		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tSize, [
-			this.parentCon.imageElements[this.src].width * (this.flipped ? -1 : 1),
-			this.parentCon.imageElements[this.src].height])
+			this.parentCon.imageElements[this.src].width * (this.flipped ? -1 : 1) * this.scale,
+			this.parentCon.imageElements[this.src].height * this.scale
+		])
 		let _xOffs = Math.floor(this.pos.x - (this.c ? this.w / 2 : 0))
 		let _yOffs = Math.floor(this.pos.y - (this.c ? this.h / 2 : 0))
-		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.s, -_yOffs])
+		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.scale, -_yOffs])
 		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [
 			this.parentCon.currentColor[0],
 			this.parentCon.currentColor[1],
@@ -891,10 +917,10 @@ class Sprite {
 		])
 		this._vertexArr[0] = _xOffs
 		this._vertexArr[1] = _yOffs
-		this._vertexArr[2] = _xOffs + this.w
+		this._vertexArr[2] = _xOffs + this.w * this.scale
 		this._vertexArr[3] = _yOffs
 		this._vertexArr[4] = _xOffs
-		this._vertexArr[5] = _yOffs + this.h
+		this._vertexArr[5] = _yOffs + this.h * this.scale
 		this._vertexArr[6] = this._vertexArr[2]
 		this._vertexArr[7] = this._vertexArr[5]
 
@@ -918,12 +944,26 @@ class Sprite {
 	}
 }
 
-// Old tile class. Unused.
-class Tile extends Sprite {
-	constructor(src, x, y, w, h, s, centered) {
-		super(src, x, y, w, h, s, centered)
-		this.type = "Tile"
-		this.hasPhysics = true
+class Button extends Sprite {
+	constructor(src, x, y, width, height, scale, centered, doOnTouchStart) {
+		super(src, x, y, width, height, scale, centered)
+
+		var ths = this
+		// ERR: Both events can be triggered at the same time.
+		// ERR: Touch / mouse might be scaled differently in mobile viewport...
+		let _checkFn = (function(e){
+			if ((new Rect(...ths.getHb(), true)).coordInside(
+				(e.clientX / window.innerWidth) * con.width, 
+				(e.clientY / window.innerHeight) * con.height) && ths.clickFn) {
+				ths.clickFn()
+			}
+		})
+		window.addEventListener('mousedown', _checkFn)
+		window.addEventListener(doOnTouchStart ? 'touchstart' : 'touchend', _checkFn)
+	}
+
+	onClick(fn) {
+		this.clickFn = fn
 	}
 }
 
@@ -1113,6 +1153,7 @@ class TileMap {
 		this.wt = w
 		this.ht = h
 		this.map = mapData
+		this.showHitbox = false
 		this.x = 0
 		this.y = 0
 		this._layer = 0
@@ -1194,7 +1235,8 @@ class TileMap {
 		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.tex)
 		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_S, this.parentCon.gl.CLAMP_TO_EDGE)
 		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_T, this.parentCon.gl.CLAMP_TO_EDGE)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MIN_FILTER, this.parentCon.gl.LINEAR)
+		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MIN_FILTER, this.parentCon.gl.NEAREST)
+		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MAG_FILTER, this.parentCon.gl.NEAREST)
 		this.parentCon.gl.texImage2D(this.parentCon.gl.TEXTURE_2D, 0, this.parentCon.gl.RGBA, this.parentCon.gl.RGBA, this.parentCon.gl.UNSIGNED_BYTE, this.cnv)
 		this.nbToIdx = []
 		// this.map = []
@@ -1223,11 +1265,13 @@ class TileMap {
 		// Four is the number of vertices, which for images is always four.
 		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
 
-		// this.parentCon.color(255)
-		// for (let c = 0; c < this.colliders.length; c++) {
-		// 	this.parentCon.rect(...this.getHb(c))
-		// 	// this.parentCon.rect(0, 0, 10, 10)
-		// }
+		if (this.showHitbox) {
+			this.parentCon.color(255)
+			for (let c = 0; c < this.colliders.length; c++) {
+				this.parentCon.rect(...this.getHb(c))
+				// this.parentCon.rect(0, 0, 10, 10)
+			}
+		}
 	}
 
 	hbOffsets(hb) {
@@ -1294,7 +1338,7 @@ class PhysicsActor extends Sprite {
 					|| (!this.parentCon.objects[t].hasPhysics) // Doesn't have physics, skip
 					|| this.parentCon.objects[t].pos.cartesianDist(this.pos) > // Is too far away, skip
 					(this.w + this.h + this.parentCon.objects[t].w + this.parentCon.objects[t].h)
-					* (this.s + this.parentCon.objects[t].s)) continue
+					* (this.scale + this.parentCon.objects[t].s)) continue
 				this.avoidCollision(this.parentCon.objects[t])
 			}
 		}
@@ -1677,10 +1721,22 @@ class Rect {
 		this.x2 = this.x + this.width
 		this.y2 = this.y + this.height
 	}
+
+	coordInside(ix, iy) {
+		// ERR: Throw an error!
+		// if (!this.bottomRight) CTool.error("")
+		return (ix >= this.x && ix <= this.x2
+			&& iy >= this.y && iy <= this.y2) 
+	}
 }
 
 
 class Controllers {
+	/**
+	 * Sets up a controller for the Console class.
+	 * @param {*} element 
+	 * @param {*} type 
+	 */
 	static new(element, type) {
 		let types = {
 			"platformer": {
@@ -1710,8 +1766,17 @@ class Controllers {
 				element.parentCon.touchArea(...types[type][evt])
 			} else {
 				element.parentCon.onKeyPressed(types[type][evt], evt)
+				element.parentCon.nEvent(evt, () => {})
 			}
 		}
+	}
+
+	/**
+	 * Makes the controller have an effect over an element
+	 * @param {*} el Element to be acted upon
+	 */
+	static use(el) {
+		// TODO: this here
 	}
 }
 
