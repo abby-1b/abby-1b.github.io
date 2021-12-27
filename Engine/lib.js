@@ -21,7 +21,7 @@ class Console {
 	 * @param {number} height Height (in pixels) of the game. The width is dynamic.
 	 * @param {String} backgroundColor Background color for when something is transparent.
 	 */
-	constructor(height, backgroundColor) {
+	constructor(desiredHeight, backgroundColor) {
 		// Setup HTML stuff
 		let metaTags = {
 			"viewport": "width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0",
@@ -39,8 +39,10 @@ class Console {
 		this.el = document.createElement("canvas")
 
 		window.onresize = () => {
-			this.width = Math.ceil((window.innerWidth / window.innerHeight) * height)
-			this.height = Math.ceil(height)
+			// let fh = (window.innerHeight / window.innerWidth) / (16 / 9) * desiredHeight
+			this.width = Math.ceil((window.innerWidth / window.innerHeight) * desiredHeight)
+			this.height = Math.ceil(desiredHeight)
+			// console.log(fh)
 			if (this.usesSecondStepBlur) {
 				this.secondOutputCanvas.width = this.width
 				this.secondOutputCanvas.height = this.height
@@ -115,8 +117,24 @@ class Console {
 		this.objects = []
 		this.maxSortPerFrame = 1
 		this.sortIdx = 0
-		this.camPos = new Vec2(0, 0)
-		this.followInterval = 0
+
+		// The camera. Pretty self-explanatory.
+		this.camera = {
+			pos: new Vec2(0, 0),
+
+			set constrains(v) {
+				v.bottomRight = true
+				v.reload()
+				this._constrains = v
+			},
+			get constrains() {
+				return this._constrains
+			},
+			_constrains: new Rect(-1e9, -1e9, 2e9, 2e9, true),
+
+			following: false,
+			followFract: 0
+		}
 
 		// Physics variables, all modifiable
 		this.physics = {
@@ -124,7 +142,12 @@ class Console {
 			friction: new Vec2(0.9, 0.997),
 			groundFriction: new Vec2(0.9, 0.997),
 
-			cZeroThresh: 0.001 // The speed at witch the engine can consider the object stationary.
+			// TODO: Implement different collision types
+			// Bits:
+			//   0: Physics loop (Inertia and friction)
+			//   1: Hard (Normal physics)
+			//   2: Soft (Pushing things around)
+			enable: 3
 		}
 		this.frameTotalCollisions = 0
 
@@ -297,8 +320,8 @@ class Console {
 		if (!(el instanceof Sprite)) CTool.error("Can't follow given element.")
 		if (!interval) CTool.error("No interval supplied!")
 		if (!speedPos) CTool.error("No speed position supplied!")
-		this.following = el
-		this.followInterval = [interval, speedPos]
+		this.camera.following = el
+		this.camera.followFract = [interval, speedPos]
 	}
 
 	/**
@@ -352,6 +375,14 @@ class Console {
 	 * @private
 	 */
 	doGraphics() {
+		// Move camera towards targeted object
+		if (this.camera.following) {
+			this.camera.pos.lerp(
+				Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.speed.x * this.camera.followFract[1].x + this.camera.following.w * this.camera.following.s * 0.5)),
+				Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.speed.y * this.camera.followFract[1].y + this.camera.following.h * this.camera.following.s * 0.5)),
+				this.camera.followFract[0])
+		}
+
 		// Calculate frame rate
 		this.deltaTime = (window.performance.now() - this.lastTime)
 		if (this.deltaTime != 0)
@@ -382,8 +413,8 @@ class Console {
 		this.preFrameFn()
 
 		// Draw all objects
-		this.glTranslation[0] = -Math.round(this.camPos.x)
-		this.glTranslation[1] = -Math.round(this.camPos.y)
+		this.glTranslation[0] = -Math.round(this.camera.pos.x)
+		this.glTranslation[1] = -Math.round(this.camera.pos.y)
 		this.gl.uniform2fv(this.glParams.vOffs, this.glTranslation)
 
 		for (let o = 0; o < this.objects.length; o++)
@@ -403,13 +434,6 @@ class Console {
 
 	/** */
 	doPhysics() {
-		// Move camera towards targeted object
-		if (this.following)
-			this.camPos.lerp(
-				(this.following.pos.x - this.width  / 2) + this.following.speed.x * this.followInterval[1].x + this.following.w * this.following.s * 0.5,
-				(this.following.pos.y - this.height / 2) + this.following.speed.y * this.followInterval[1].y + this.following.h * this.following.s * 0.5,
-				this.followInterval[0])
-		
 		// Loop through all objects, and then again for PhysicsActors
 		this.frameTotalCollisions = 0
 		for (let o = 0; o < this.objects.length; o++) {
@@ -506,8 +530,8 @@ class Console {
 	}
 	
 	shiftObjects(x, y) {
-		this.camPos.x += x
-		this.camPos.y += y
+		this.camera.pos.x += x
+		this.camera.pos.y += y
 		for (let o = 0; o < this.objects.length; o++) {
 			this.objects[o].pos.x += x
 			this.objects[o].pos.y += y
@@ -531,6 +555,23 @@ class Console {
 	 */
 	color(r, g, b, a) {
 		this.currentColor = CTool.glColor(r, g, b, a)
+	}
+	
+	/**
+	 * 
+	 * @param {*} t 
+	 */
+	blend(t) {
+		this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA)
+		switch (t) {
+			case 0:
+				this.gl.blendEquation(this.gl.FUNC_ADD)
+				break
+			case 1:
+				this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE)
+				// this.gl.blendEquation(this.gl.ADD)
+				break
+		}
 	}
 
 	/**
@@ -629,6 +670,30 @@ class Console {
 		]), this.gl.DYNAMIC_DRAW)
 		this.gl.uniform4fv(this.glParams.colorParam, this.currentColor)
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4)
+	}
+
+	/**
+	 * Guess what this does. Just try to guess.
+	 */
+	fullScreen() {
+		let fn =
+			(this.el.requestFullscreen ? "requestFullscreen" :
+			this.el.webkitRequestFullscreen ? "webkitRequestFullscreen" :
+			this.el.msRequestFullscreen ? "msRequestFullscreen" : false)
+		if (!fn) {
+			CTool.warning("Fullscreen function not found.")
+			return
+		}
+		this.el[fn]()
+	}
+
+	exitFullscreen() {
+		if (!this.isFullscreen()) CTool.warning("Not in fullscreen.")
+		document.exitFullscreen()
+	}
+
+	isFullscreen() {
+		return document.fullscreenElement
 	}
 }
 
@@ -787,17 +852,21 @@ class Sprite {
 	 * @private
 	 */
 	draw() {
+		// Reset parentCon settings
+		this.parentCon.color(255)
+		this.parentCon.blend(0)
+
 		if (this.drawFn) this.drawFn.call(this)
-		// Animation
+		// Animation (I really need to comment this)
 		if (!this.animation[2]) { // if not paused
-			if ((this.animation[1] -= 60 / this.parentCon.frameRate) <= 0) {
-				this.animation[1] = this.animationStates[this.animationState][2]
-				if (this.animation[0] == this.animationStates[this.animationState][4])
-					this.animation[2] = true
-				if (this.animation[0]++ >= this.animationStates[this.animationState][1]) {
-					if (this.animationStates[this.animationState][3]) {
-						this.animation[0] = this.animationStates[this.animationState][0]
-					} else {
+			if ((this.animation[1] -= 60 / this.parentCon.frameRate) <= 0) { // if the next frame is supposed to go
+				this.animation[1] = this.animationStates[this.animationState][2] // reset animation frame timer
+				if (this.animation[0] == this.animationStates[this.animationState][4]) // if the frame is the pause frame
+					this.animation[2] = true // pause it
+				if (this.animation[0]++ >= this.animationStates[this.animationState][1]) { // if the frame is out of the animation range
+					if (this.animationStates[this.animationState][3]) { // if it loops
+						this.animation[0] = this.animationStates[this.animationState][0] // go back to start
+					} else { // if it doesn't loop
 						this.animation[2] = true
 						this.animation[0]--
 					}
@@ -843,8 +912,8 @@ class Sprite {
 
 	finalPos(centered) {
 		return new Vec2(
-			(this.pos.x - this.parentCon.camPos.x) + (centered ? this.w / 2 : 0),
-			this.pos.y - this.parentCon.camPos.y + (centered ? this.h / 2 : 0)
+			(this.pos.x - this.parentCon.camera.pos.x) + (centered ? this.w / 2 : 0),
+			this.pos.y - this.parentCon.camera.pos.y + (centered ? this.h / 2 : 0)
 		)
 	}
 }
@@ -1280,6 +1349,10 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
+	static spreadRandom() {
+		return (Math.random() * 100) % 1
+	}
+
 	static noise(x, y) {
 		return (this._noise(x, y) + this._noise((x + 2) * 2, y * 2) / 2 + this._noise(x * 3, y * 3) / 3) * (6 / 11)
 	}
@@ -1514,6 +1587,10 @@ class Vec2 {
 		return new Vec2(this.x * v, this.y * v)
 	}
 
+	multiplied2(mx, my) {
+		return new Vec2(this.x * mx, this.y * my)
+	}
+
 	// Divides, Returns
 	divideRet(v) {
 		this.x /= v
@@ -1529,6 +1606,10 @@ class Vec2 {
 	// Added, doesn't mutate
 	added(v) {
 		return new Vec2(this.x + v.x, this.y + v.y)
+	}
+
+	added2(ax, ay) {
+		return new Vec2(this.x + ax, this.y + ay)
 	}
 
 	// Normalizes, doesn't return
@@ -1568,9 +1649,33 @@ class Vec2 {
 		return (this.x - v.x) ** 2 + (this.y - v.y) ** 2
 	}
 
+	// Gets distance
+	dist(v) {
+		return Math.sqrt((this.x - v.x) ** 2 + (this.y - v.y) ** 2)
+	}
+
 	// Gets distance in x plus distance in y
 	cartesianDist(v) {
 		return Math.abs(this.x - v.x) + Math.abs(this.y - v.y)
+	}
+}
+
+class Rect {
+	constructor(x, y, width, height, bottomRight) {
+		this.x = x
+		this.y = y
+		this.width = width
+		this.height = height
+		this.bottomRight = bottomRight
+		if (bottomRight) this.reload()
+	}
+
+	/**
+	 * Constructs the bottom-right point of the triangle.
+	 */
+	reload() {
+		this.x2 = this.x + this.width
+		this.y2 = this.y + this.height
 	}
 }
 
@@ -1611,19 +1716,39 @@ class Controllers {
 }
 
 class Device {
+	/**
+	 * Checks if the device supports touch
+	 * @returns {boolean}
+	 */
 	static touch() {
 		return "ontouchend" in document
 	}
 
+	/**
+	 * Checks if the browser is Safari (very badly)
+	 * @returns {boolean}
+	 */
 	static isSafari() {
 		return "WebKitNamespace" in window
 	}
 
 	/**
 	 * Checks if the result is blurry and needs a second step to make it crisp.
-	 * @returns
+	 * @returns {boolean}
 	 */
 	static outputIsBlurry() {
 		return this.isSafari()
+	}
+
+	static getWindowSize() {
+		return [window.innerWidth, window.innerHeight]
+	}
+
+	/**
+	 * Calculates a good width and height based on the desired size
+	 * @param {Number} desiredSize
+	 */
+	static calculateSize(desiredSize) {
+
 	}
 }
