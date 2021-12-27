@@ -9,29 +9,11 @@ const repeatOptimization = 'none'
 
 const fs = require('fs')
 
-const html = `
-<!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet"href="styles.css">
-    </head>
-    <body></body>
-    <script defer>$0</script>
-</html>
-`
-    .split("\n")
-    .map(e => e.trim())
-    .filter(e => e.length != 0)
-    .join("")
-
-// Reads two files, puts them together, and minifies them.
 let data = fs.readFileSync("lib.js", "utf8")
-    + "\n" + fs.readFileSync("m3.js")
 let minified = minify(data)
 console.log("Size:", (minified.length / data.length) * 100)
-minified = html.replace(/\$0/, minified)
-console.log("Final length:", (new TextEncoder().encode(minified)).length)
-fs.writeFile("compressed.html", minified, "utf8", (e) => {})
+console.log("Final length:", minified.length)
+fs.writeFile("lib.min.js", "// minify.js (Old)\n" + minified, "utf8", (e) => {})
 
 function minify(d) {
     if (simpleOptimization == 'none') {
