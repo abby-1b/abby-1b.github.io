@@ -1,39 +1,63 @@
 
-const SCREEN_MARGIN = 10
-const SOCKET_POS = 800
+const PLAYER_SCREEN_MARGIN = 10
+const ENEMY_SCREEN_MARGIN = -10
+const SPAWN_MARGIN = 40
+const SOCKET_POS = 200
 
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
 
-let enemies = []
-for (let e = 0; e < 50; e++) {
-	enemies.push(con.nObj(new PhysicsActor("Assets/off.png", Math.random() * con.width, Math.random() * con.height, 16, 33)))
-	enemies[e].hbOffsets({top: 29, bottom: 2, left: 7, right: 7})
-	enemies[e].addAnimation("run" , { start: 8, end: 20, timer: 5, loop: true, pause: -1 }, true)
+// Button
+let button = con.nObj(new Button("Assets/playButton.png", 0, 0, 16, 16, 1, true))
+button.addAnimation("off", {start: 0, end: 0, timer: 1, loop: false, pause: -1}, true)
+button.addAnimation("on", {start: 1, end: 1, timer: 1, loop: false, pause: -1})
+button.state = 0
+button.layer(2e9)
 
-	enemies[e].animation[0] = Math.floor(Math.random() * 8)
-	enemies[e].animation[1] = Math.floor(Math.random() * 12)
+button.onClick(function(){
+	if (this.state++ % 2 == 0) this.animate("on")
+	else this.animate("off")
+})
+
+// Spotlight
+let spotlight = con.nObj(new Sprite("Assets/playerSpotlight.png", 0, 0, 69, 19))
+spotlight.drawFn = (function(){
+	con.color(255, player.energyLevel * (player.isOn ? 150 : 100))
+	con.blend(1)
+})
+
+// Bulbs
+let bulbs = []
+for (let e = 0; e < 1; e++) {
+	bulbs.push(con.nObj(new PhysicsActor("Assets/off.png", Math.random() * con.width, Math.random() * con.height, 16, 33)))
+	bulbs[e].hbOffsets({top: 29, bottom: 2, left: 7, right: 7})
+	bulbs[e].addAnimation("run" , { start: 8, end: 20, timer: 5, loop: true, pause: -1 }, true)
+
+	bulbs[e].animation[0] = Math.floor(Math.random() * 8)
+	bulbs[e].animation[1] = Math.floor(Math.random() * 12)
 
 	if (e > 0) {
-		enemies[e].drawFn = (function(){
+		bulbs[e].drawFn = (function(){
 			let md = 1e4
 			for (let h = 0; h < hovers.length; h++) {
 				let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
 				if (dsq < md) md = dsq
 			}
 			md = Math.max(0, 50 - (md / 10)) * 3
-			if (enemies[0].isOn) {
-				con.color(Math.max(300 - Math.sqrt(enemies[0].pos.distSquared(this.pos)) * 0.5) + md)
+			if (player.isOn) {
+				con.color(Math.max(300 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.5) + md)
 			} else {
-				con.color(Math.max(255 - Math.sqrt(enemies[0].pos.distSquared(this.pos)) * 0.3) + md)
+				con.color(Math.max(255 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.3) + md)
 			}
 		})
 	}
 }
 
 // Setup player
-enemies[0].addAnimation("idle", { start: 0, end: 7, timer: 12, loop: true , pause: -1 }, true)
-enemies[0].addAnimation("socket", { start: 21, end: 25, timer: 3, loop: false, pause: -1 })
-enemies[0].drawFn = (function(){
+let player = bulbs[0]
+
+player.addAnimation("idle", { start: 0, end: 7, timer: 12, loop: true , pause: -1 }, true)
+player.addAnimation("socket", { start: 21, end: 26, timer: 3, loop: false, pause: -1 })
+player.drawFn = (function(){
 	let md = 1e4
 	for (let h = 0; h < hovers.length; h++) {
 		let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
@@ -42,30 +66,34 @@ enemies[0].drawFn = (function(){
 	md = Math.max(0, 50 - (md / 10)) * 2
 	con.color(300 + md)
 })
-enemies[0].pos.x = 0
-enemies[0].pos.y = con.height / 2 - enemies[0].h / 2
+player.pos.x = 0
+player.pos.y = con.height / 2 - player.h / 2
 
-enemies[0].isOn = false
-enemies[0].setSrc("Assets/on.png")
-enemies[0].setSrc("Assets/off.png")
+// Player custom properties
+player.isOn = false
+player.setSrc("Assets/on.png")
+player.setSrc("Assets/off.png")
+
+player.energyLevel = 0 // 0 - 1
 
 // Controls
-con.nEvent("left", () => {})
-con.nEvent("right", () => {})
-con.nEvent("up", () => {})
-con.nEvent("down", () => {})
+Controllers.new(player, "topDown")
+con.onKeyPressed([' '], "switch")
 con.nEvent("switch", () => {
-	enemies[0].isOn = !enemies[0].isOn
-	if (enemies[0].isOn) {
-		enemies[0].setSrc("Assets/on.png")
-		enemies[0].animationStates.run[2] = 2
+	if (button.state % 2 != 1) {
+		button.state++
+		button.animate("on")
+		return
+	}
+	player.isOn = !player.isOn
+	if (player.isOn) {
+		player.setSrc("Assets/on.png")
+		player.animationStates.run[2] = 2
 	} else {
-		enemies[0].setSrc("Assets/off.png")
-		enemies[0].animationStates.run[2] = 6
+		player.setSrc("Assets/off.png")
+		player.animationStates.run[2] = 6
 	}
 })
-Controllers.new(enemies[0], "topDown")
-con.onKeyPressed([' '], "switch")
 
 // con.events.right[1] = true
 
@@ -75,12 +103,13 @@ let groundThings = []
 // Make socket
 let socket = con.nObj(new Sprite("Assets/socket.png", SOCKET_POS + con.width / 2, con.height / 2 - 16, 16, 16))
 socket.drawFn = (function(){
-	if (enemies[0].isOn) {
-		con.color(Math.max(100, 355 - Math.sqrt(enemies[0].pos.distSquared(this.pos))))
+	if (player.isOn) {
+		con.color(Math.max(100, 355 - Math.sqrt(player.pos.distSquared(this.pos))))
 	} else {
 		con.color(255, 100)
 	}
 })
+socket.layer(-1e8)
 groundThings.push(socket)
 
 // Instantiate ground things
@@ -105,7 +134,7 @@ let elevatedThings = []
 for (let l = 0; l < 5; l++) {
 	elevatedThings.push(con.nObj(new Sprite("Assets/lamppost.png", 0, 0, 21, 59)))
 	elevatedThings[elevatedThings.length - 1].drawFn = (function(){
-		con.color(Math.max(120, 280 - Math.sqrt(enemies[0].pos.distSquared(this.pos)) * 0.7))
+		con.color(Math.max(120, 280 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.7))
 	})
 	elevatedThings[elevatedThings.length - 1].pos = new Vec2(Math.random() * con.width, Math.random() * con.height)
 }
@@ -126,7 +155,7 @@ for (let h = 0; h < 1; h++) {
 }
 
 con.init(() => {
-	con.follow(enemies[0], 0.05, new Vec2(40, 40))
+	con.follow(player, 0.05, new Vec2(40, 40))
 
 	con.physics.gravity = new Vec2(0, 0)
 	con.physics.friction = new Vec2(0.95, 0.95)
@@ -138,84 +167,105 @@ con.init(() => {
 function keepOnScreen(el, mult=1) {
 	let fp = el.finalPos()
 	if (fp.x < -el.w) {
-		el.pos.x += con.width + el.w
+		el.pos.x += con.width + SPAWN_MARGIN + el.w
 		el.pos.y = CTool.spreadRandom() * (con.height - el.h)
-	} else if (fp.x > con.width + el.w) {
-		el.pos.x -= con.width + el.w * 2
+	} else if (fp.x > con.width + SPAWN_MARGIN + el.w) {
+		el.pos.x -= con.width + SPAWN_MARGIN + el.w * 2
 		el.pos.y = CTool.spreadRandom() * (con.height - el.h)
 	}
 	return fp
 }
 
 function useSocket(s) {
-	enemies[0].locked = true
-	enemies[0].pos.x -= (enemies[0].pos.x - s.pos.x) * 0.3
-	enemies[0].pos.y -= ((enemies[0].pos.y + 20) - s.pos.y) * 0.3
+	player.locked = true
+	player.pos.x -= (player.pos.x - s.pos.x) * 0.3
+	player.pos.y -= ((player.pos.y + 20.5) - s.pos.y) * 0.3
+
+	player.animate("socket")
 }
 
-con.frame(() => { // SOCKET_POS - con.width / 2
+con.frame(() => {
+	button.pos.x = con.width / 2
+	button.pos.y = con.height / 2
+
+	spotlight.pos = player.pos.added2(-26, 22)
+
+	// Temporary Hover animation
 	hovers[0][0].pos = new Vec2(SOCKET_POS - con.width / 2, Math.sin(con.frameCount / 80) * 30 + 50)
 	hovers[0][1].pos = hovers[0][0].pos.added2(13, 29)
 
-	if (enemies[0].isOn && enemies[0].pos.added2(0, 19).distSquared(socket.pos) < 161) useSocket(socket)
-	else enemies[0].locked = false
+	// Socket interaction
+	if (player.isOn && player.pos.added2(0, 19).distSquared(socket.pos) < 161) useSocket(socket)
+	else player.locked = false // Not necessary, only for testing
 
-	let ppy = enemies[0].finalPos().y + (Math.random() - 0.5) * 3
+	// Layering, animation (for bulbs), and keeping things on screen.
+	let ppy = player.finalPos().y + (Math.random() - 0.5) * 3
 	for (let e = 0; e < elevatedThings.length; e++) {
 		elevatedThings[e].layer(elevatedThings[e].pos.y + 33)
 		keepOnScreen(elevatedThings[e])
 	}
 	for (let e = 1; e < groundThings.length; e++) keepOnScreen(groundThings[e], 2)
 	for (let h = 0; h < hovers.length; h++) hovers[h][1].layer(hovers[h][1].pos.y + 14)
-	for (let e = 0; e < enemies.length; e++) {
-		enemies[e].flipped = enemies[e].speed.x > 0
-		enemies[e].layer(enemies[e].pos.y)
-		if (enemies[e].speed.length() > 0.1) {
-			enemies[e].animate("run")
-		} else if (e == 0) {
-			enemies[e].animate("idle")
+	for (let e = 0; e < bulbs.length; e++) {
+		bulbs[e].flipped = bulbs[e].speed.x > 0
+		bulbs[e].layer(bulbs[e].pos.y)
+		if (bulbs[e].animationState != "socket") {
+			if (bulbs[e].speed.length() > 0.1) {
+				bulbs[e].animate("run")
+			} else if (e == 0) {
+				bulbs[e].animate("idle")
+			}
 		}
 
 		if (e > 0) {
-			let fp = keepOnScreen(enemies[e])
+			let fp = keepOnScreen(bulbs[e])
 			// Go towards center
-			enemies[e].speed.y += (fp.y < ppy ? 1 : -1) * (fp.x < con.width / 2 ? -0.5 : 1) * (enemies[0].isOn ? 1 : -1) * 0.004
+			bulbs[e].speed.y += (fp.y < ppy ? 1 : -1) * (fp.x < con.width / 2 ? -0.5 : 1) * (player.isOn ? 1 : -1) * 0.004
 		}
 	}
-	enemies[0].layer(enemies[0].pos.y + 5)
+	player.layer(player.pos.y + 3)
 })
 
 con.pFrame(() => {
-	if (enemies[0].pos.x < SCREEN_MARGIN * 2) {
-		enemies[0].speed.x += (enemies[0].pos.x - SCREEN_MARGIN * 2) ** 2 / 2e4
+	if (player.pos.x < PLAYER_SCREEN_MARGIN * 2) {
+		player.speed.x += (player.pos.x - PLAYER_SCREEN_MARGIN * 2) ** 2 / 2e4
 	}
-	for (let e = 0; e < enemies.length; e++) {
-		for (let o = 0; o < enemies.length; o++) {
+	for (let e = 0; e < bulbs.length; e++) {
+		for (let o = 0; o < bulbs.length; o++) {
 			if (e == o) continue
-			let d = Math.sqrt((enemies[e].pos.x - enemies[o].pos.x) ** 2 + ((enemies[e].pos.y - enemies[o].pos.y) * 1.5) ** 2)
+			let d = Math.sqrt((bulbs[e].pos.x - bulbs[o].pos.x) ** 2 + ((bulbs[e].pos.y - bulbs[o].pos.y) * 1.5) ** 2)
 			if (d > 0) {
-				let a = Math.atan2(enemies[e].pos.x - enemies[o].pos.x, enemies[e].pos.y - enemies[o].pos.y)
+				let a = Math.atan2(bulbs[e].pos.x - bulbs[o].pos.x, bulbs[e].pos.y - bulbs[o].pos.y)
 				if (d < 16 || (d < 64 && e > 0)) {
-					enemies[e].speed.x += Math.sin(a) / (d * 40)
-					enemies[e].speed.y += Math.cos(a) / (d * 40)
+					bulbs[e].speed.x += Math.sin(a) / (d * 40)
+					bulbs[e].speed.y += Math.cos(a) / (d * 40)
 				}
 			}
 		}
 		if (e > 0)
-			enemies[e].speed.x -= (CTool.noise(e, con.frameCount / 200) + 4) / 400
+			bulbs[e].speed.x -= (CTool.noise(e, con.frameCount / 200) + 4) / 400
 		
-		if (enemies[e].pos.y < SCREEN_MARGIN) {
-			enemies[e].speed.y += (enemies[e].pos.y - SCREEN_MARGIN) ** 2 / 1e4
-		} else if (enemies[e].pos.y > con.height - enemies[e].h - SCREEN_MARGIN) {
-			enemies[e].speed.y -= (enemies[e].pos.y - (con.height - enemies[e].h - SCREEN_MARGIN)) ** 2 / 1e4
+		// Limit y position
+		if (e > 0) {
+			if (bulbs[e].pos.y < ENEMY_SCREEN_MARGIN) {
+				bulbs[e].speed.y += (bulbs[e].pos.y - ENEMY_SCREEN_MARGIN) ** 2 / 1e4
+			} else if (bulbs[e].pos.y > con.height - bulbs[e].h - ENEMY_SCREEN_MARGIN) {
+				bulbs[e].speed.y -= (bulbs[e].pos.y - (con.height - bulbs[e].h - ENEMY_SCREEN_MARGIN)) ** 2 / 1e4
+			}
+		} else {
+			if (bulbs[e].pos.y < PLAYER_SCREEN_MARGIN) {
+				bulbs[e].speed.y += (bulbs[e].pos.y - PLAYER_SCREEN_MARGIN) ** 2 / 1e4
+			} else if (bulbs[e].pos.y > con.height - bulbs[e].h - PLAYER_SCREEN_MARGIN) {
+				bulbs[e].speed.y -= (bulbs[e].pos.y - (con.height - bulbs[e].h - PLAYER_SCREEN_MARGIN)) ** 2 / 1e4
+			}
 		}
 	}
-	if (!enemies[0].locked)
-        enemies[0].speed.addVec(new Vec2(
+	if (button.state % 2 == 1 && !player.locked)
+        player.speed.addVec(new Vec2(
             (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0)
 			+ (con.eventOngoing("down") ? 0.01 : 0) - (con.eventOngoing("up") ? 0.01 : 0),
 			(con.eventOngoing("down") ? 1 : 0) - (con.eventOngoing("up") ? 1 : 0) * 0.5
 		).normalized().divideRet(
-			enemies[0].isOn ? 45 : 100
+			player.isOn ? 45 : 100
 		))
 })
