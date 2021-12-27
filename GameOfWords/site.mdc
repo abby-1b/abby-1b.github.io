@@ -131,13 +131,11 @@ I don't know what to do about this, as drawing lines were going to be a big part
 And yet, after all of this, in most cases, it's simpler to leave everything to JS Canvas. It makes everything easier, and up to this point, things _have_ been easy. This is just a problem that needs to be fixed in some other way.
 
 
-# Why more control is better sometimes (Dec 3, 2021)
+# It only took me 38 days to fix. (Dec 18, 2021)
 
-Yes, I know what I said.
+Everything works.
 
-# Falling, giving up, and getting up. (Dec 6, 2021)
-
-(write about giving up.)
+I tested out a link I found for drawing things using WebGL. Through this, I managed to draw a few simple lines with 
 
 # 
 _Small side-note: Grammarly™® is currently yelling at me about passive voice misuse. I do not feel like using "the computer draws a line to the screen" instead of "a line is drawn to the screen" in every instance of the phrase. I am aware of the overwhelming abundance of passive voice in this blog._
