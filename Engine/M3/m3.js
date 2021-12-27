@@ -131,9 +131,9 @@ con.frame(() => {
 con.pFrame(() => {
 	for (let p = 0; p < background.length; p++) {
 		background[p].w = con.width + 32
-		background[p].pos.x =  con.camPos.x + con.width / 2
-		background[p].pos.y = (con.camPos.y + con.height / 2) / (p / 300 + 1)
-		background[p].animation[0] = CTool.lerp(background[p].animation[0], (con.camPos.x / 10000) * (p / 10 + 1), 0.4)
+		background[p].pos.x =  con.camera.pos.x + con.width / 2
+		background[p].pos.y = (con.camera.pos.y + con.height / 2) / (p / 300 + 1)
+		background[p].animation[0] = CTool.lerp(background[p].animation[0], (con.camera.pos.x / 10000) * (p / 10 + 1), 0.4)
 	}
 
     if ('s' in con.keys && player.onGround) {
