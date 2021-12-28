@@ -222,7 +222,8 @@ class Console {
 	 */
 	onKeyPressed(keyName, eventName) {
 		if (!(eventName in this.events)) {
-			CTool.warning("Event", eventName, "doesn't exist.")
+			// ERR:
+			// CTool.warning("Event", eventName, "doesn't exist.")
 		}
 		if (typeof keyName === "string") {
 			window.addEventListener('keydown', e => {
@@ -348,7 +349,8 @@ class Console {
 			if (!this.imageElements[i].complete) unloaded++
 		}
 
-		console.log("Missing", unloaded, "images.")
+		// ERR:
+		// console.log("Missing", unloaded, "images.")
 		if (unloaded > 0) {
 			setTimeout(() => {
 				this._init.call(this)
@@ -737,6 +739,7 @@ class CImage {
 // Draws a sprite or any type of image to the screen
 class Sprite {
 	constructor(src, x, y, width, height, scale, centered) {
+		if ((!width) && (!height)) CTool.warning("No width / height provided!")
 		this.type = "Sprite"
 		this.src = src
 		this.pos = new Vec2(x, y)
@@ -1318,9 +1321,15 @@ class PhysicsActor extends Sprite {
 		return (this.friction = new Vec2(x, y))
 	}
 
-	intersects(hbe, cn) {
+	/**
+	 * Checks for two hitboxes intersecting
+	 * @param {*} hbe Hitbox Element
+	 * @param {*} colliderNum Collider number for TileMap collisions.
+	 * @returns 
+	 */
+	intersects(hbe, colliderNum) {
 		let b1 = this.getHb()
-		let b2 = hbe.getHb(cn)
+		let b2 = hbe.getHb(colliderNum)
 
 		if (b1[1] + b1[3] > b2[1]
 		&&  b1[0] + b1[2] > b2[0]
