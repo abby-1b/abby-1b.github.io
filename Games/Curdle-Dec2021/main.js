@@ -94,7 +94,7 @@ player.isOn = false
 player.setSrc("Assets/on.png")
 player.setSrc("Assets/off.png")
 
-player.energyLevel = 10 // 0 - 1
+player.energyLevel = 1 // 0 - 1
 
 // Controls
 Controllers.new(player, "topDown")
@@ -294,7 +294,7 @@ con.pFrame(() => {
 	}
 	
 	// Energy cap
-	// if (player.energyLevel > 1) player.energyLevel = 1
+	if (player.energyLevel > 1) player.energyLevel = 1
 
 	// Physics things
 	if (player.pos.x < PLAYER_SCREEN_MARGIN * 2) {
