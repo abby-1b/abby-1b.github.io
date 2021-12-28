@@ -1,4 +1,10 @@
 
+// Gameplay
+const ON_ENERGY_DRAIN = 0.002
+const LAMPPOST_CHARGE = 0.0016
+const HOVER_ENERGY_DRAIN = 0.008
+
+// Screen stuff
 const PLAYER_SCREEN_MARGIN = 10
 const ENEMY_SCREEN_MARGIN = -10
 const SPAWN_MARGIN = 40
@@ -6,14 +12,21 @@ const SOCKET_POS = 200
 
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
 
+// con.nObj(new Sprite("Assets/finalSocket.png"))
+
 // Button
 let button = con.nObj(new Button("Assets/playButton.png", 0, 0, 16, 16, 1, true))
 button.addAnimation("off", {start: 0, end: 0, timer: 1, loop: false, pause: -1}, true)
 button.addAnimation("on", {start: 1, end: 1, timer: 1, loop: false, pause: -1})
+button.opacity = 1
 button.state = 0
 button.layer(2e9)
-
+button.drawFn = (function() {
+	if (this.state % 2 == 1) this.opacity = Math.max(0, this.opacity - 0.1)
+	con.color(255, this.opacity * 255)
+})
 button.onClick(function(){
+	if (this.opacity != 1) return
 	if (this.state++ % 2 == 0) this.animate("on")
 	else this.animate("off")
 })
@@ -64,7 +77,14 @@ player.drawFn = (function(){
 		if (dsq < md) md = dsq
 	}
 	md = Math.max(0, 50 - (md / 10)) * 2
-	con.color(300 + md)
+	if (player.isOn) {
+		con.color(
+			CTool.lerp(229, 300, player.energyLevel) + md, 
+			CTool.lerp(180, 300, player.energyLevel) + md, 
+			CTool.lerp(366, 300, player.energyLevel) + md)
+	} else {
+		con.color(300 + md)
+	}
 })
 player.pos.x = 0
 player.pos.y = con.height / 2 - player.h / 2
@@ -74,7 +94,7 @@ player.isOn = false
 player.setSrc("Assets/on.png")
 player.setSrc("Assets/off.png")
 
-player.energyLevel = 0 // 0 - 1
+player.energyLevel = 10 // 0 - 1
 
 // Controls
 Controllers.new(player, "topDown")
@@ -85,7 +105,7 @@ con.nEvent("switch", () => {
 		button.animate("on")
 		return
 	}
-	player.isOn = !player.isOn
+	player.isOn = (!player.isOn) && player.energyLevel > 0
 	if (player.isOn) {
 		player.setSrc("Assets/on.png")
 		player.animationStates.run[2] = 2
@@ -101,7 +121,8 @@ con.nEvent("switch", () => {
 let groundThings = []
 
 // Make socket
-let socket = con.nObj(new Sprite("Assets/socket.png", SOCKET_POS + con.width / 2, con.height / 2 - 16, 16, 16))
+// let socket = con.nObj(new Sprite("Assets/socket.png", SOCKET_POS + con.width / 2, con.height / 2 - 16, 16, 16, 1, true))
+let socket = con.nObj(new Sprite("Assets/finalSocket.png", SOCKET_POS + con.width / 2, con.height / 2, 75, 25, 1, true))
 socket.drawFn = (function(){
 	if (player.isOn) {
 		con.color(Math.max(100, 355 - Math.sqrt(player.pos.distSquared(this.pos))))
@@ -130,13 +151,23 @@ for (let t = 0; t < groundThings.length; t++) groundThings[t].layer(-1e9)
 
 
 // Instantiate lampposts
-let elevatedThings = []
+let lampposts = []
 for (let l = 0; l < 5; l++) {
-	elevatedThings.push(con.nObj(new Sprite("Assets/lamppost.png", 0, 0, 21, 59)))
-	elevatedThings[elevatedThings.length - 1].drawFn = (function(){
+	// Instantiate lamppost
+	lampposts.push(con.nObj(new Sprite("Assets/lamppost.png", 0, 0, 21, 59)))
+	lampposts[lampposts.length - 1].drawFn = (function(){
 		con.color(Math.max(120, 280 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.7))
 	})
-	elevatedThings[elevatedThings.length - 1].pos = new Vec2(Math.random() * con.width, Math.random() * con.height)
+	// lampposts[lampposts.length - 1].showHitbox = true
+	lampposts[lampposts.length - 1].hbOffsets({top: 50, bottom: -4, left: -8, right: 3})
+	lampposts[lampposts.length - 1].pos = new Vec2(Math.random() * con.width, Math.random() * con.height)
+
+	// Instantiate shine
+	lampposts.push(con.nObj(new Sprite("Assets/lamppostShine.png", 0, 0, 27, 59)))
+	lampposts[lampposts.length - 1].drawFn = (function(){
+		con.color(255, 100)
+		con.blend(1)
+	})
 }
 
 // Instantiate hovers
@@ -146,11 +177,16 @@ for (let h = 0; h < 1; h++) {
 		con.nObj(new Sprite("Assets/lamp.png", h * 74, 0, 74, 31)),
 		con.nObj(new Sprite("Assets/lampLight.png", h * 74, 0, 48, 58))
 	]
+	// Hover
+	nh[0].addAnimation("h", { start: 0, end: 3, timer: 3, loop: true, pause: -1 }, true)
+	nh[0].layer(1e9)
+
+	// Shine
 	nh[1].drawFn = (function(){
 		con.blend(1)
 	})
-	nh[0].addAnimation("h", { start: 0, end: 3, timer: 3, loop: true, pause: -1 }, true)
-	nh[0].layer(1e9)
+	// nh[1].showHitbox = true
+	nh[1].hbOffsets({top: 43, bottom: 3, left: 3, right: 3})
 	hovers.push(nh)
 }
 
@@ -178,8 +214,9 @@ function keepOnScreen(el, mult=1) {
 
 function useSocket(s) {
 	player.locked = true
-	player.pos.x -= (player.pos.x - s.pos.x) * 0.3
-	player.pos.y -= ((player.pos.y + 20.5) - s.pos.y) * 0.3
+	player.pos.x -= ((player.pos.x + Math.ceil(player.w / 2)) - s.pos.x) * 0.3
+	// player.pos.y -= ((player.pos.y + 20.5) - s.pos.y) * 0.3
+	player.pos.y -= ((player.pos.y + 32.5) - s.pos.y) * 0.3
 
 	player.animate("socket")
 }
@@ -191,18 +228,25 @@ con.frame(() => {
 	spotlight.pos = player.pos.added2(-26, 22)
 
 	// Temporary Hover animation
-	hovers[0][0].pos = new Vec2(SOCKET_POS - con.width / 2, Math.sin(con.frameCount / 80) * 30 + 50)
-	hovers[0][1].pos = hovers[0][0].pos.added2(13, 29)
+	// hovers[0][0].pos = new Vec2(SOCKET_POS - con.width / 2, Math.sin(con.frameCount / 80) * 30 + 50)
+	for (let h = 0; h < hovers.length; h++) {
+		hovers[h][1].pos = hovers[h][0].pos.added2(13, 29)
+	}
 
 	// Socket interaction
-	if (player.isOn && player.pos.added2(0, 19).distSquared(socket.pos) < 161) useSocket(socket)
+	if (player.isOn && player.pos.added2(player.w / 2, 32).distSquared(socket.pos) < 161) useSocket(socket)
 	else player.locked = false // Not necessary, only for testing
 
 	// Layering, animation (for bulbs), and keeping things on screen.
 	let ppy = player.finalPos().y + (Math.random() - 0.5) * 3
-	for (let e = 0; e < elevatedThings.length; e++) {
-		elevatedThings[e].layer(elevatedThings[e].pos.y + 33)
-		keepOnScreen(elevatedThings[e])
+	for (let e = 0; e < lampposts.length; e++) {
+		if (e % 2 == 0) {
+			lampposts[e].layer(lampposts[e].pos.y + 33)
+			keepOnScreen(lampposts[e])
+		} else {
+			lampposts[e].pos = lampposts[e - 1].pos.added2(-9, 4)
+			lampposts[e].layer(lampposts[e].pos.y + 17)
+		}
 	}
 	for (let e = 1; e < groundThings.length; e++) keepOnScreen(groundThings[e], 2)
 	for (let h = 0; h < hovers.length; h++) hovers[h][1].layer(hovers[h][1].pos.y + 14)
@@ -227,6 +271,32 @@ con.frame(() => {
 })
 
 con.pFrame(() => {
+	// Energy drain
+	if (player.isOn && player.animationState != "socket") player.energyLevel -= ON_ENERGY_DRAIN
+	if (player.energyLevel <= 0) {
+		player.energyLevel = 0
+		player.isOn = false
+		player.setSrc("Assets/off.png")
+		player.animationStates.run[2] = 6
+	}
+	for (let h = 0; h < hovers.length; h++) {
+		if (player.intersects(hovers[h][1])) {
+			player.energyLevel -= HOVER_ENERGY_DRAIN
+		}
+	}
+
+	// Energy gain
+	for (let l = 0; l < lampposts.length; l += 2) {
+		if (player.intersects(lampposts[l])) {
+			player.energyLevel += LAMPPOST_CHARGE
+			break
+		}
+	}
+	
+	// Energy cap
+	// if (player.energyLevel > 1) player.energyLevel = 1
+
+	// Physics things
 	if (player.pos.x < PLAYER_SCREEN_MARGIN * 2) {
 		player.speed.x += (player.pos.x - PLAYER_SCREEN_MARGIN * 2) ** 2 / 2e4
 	}
