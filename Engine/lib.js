@@ -11,6 +11,9 @@
  */
 // Fully tryharding this.
 
+const CON_IMAGE_LOAD_TIMEOUT = 10
+let _ImageLoadTimeoutCount = CON_IMAGE_LOAD_TIMEOUT + 1
+
 /**
  * The main console class! This runs all the games and is
  * basically a wrapper around all the classes' functions.
@@ -355,12 +358,14 @@ class Console {
 
 		// Framerate calculation setup
 		this.lastTime = window.performance.now()
-		this.frameRate = 80
+		this.frameRate = 60
 
 		// Graphics interval
-		setInterval(() => {
+		let graphicsFn = () => {
 			this.doGraphics.call(this)
-		}, 1000 / 80)
+			window.requestAnimationFrame(graphicsFn)
+		}
+		window.requestAnimationFrame(graphicsFn)
 
 		// Physics interval
 		setInterval(() => {
@@ -543,7 +548,7 @@ class Console {
 					spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
 					spr.imageLoaded()
 				})
-				img.src = spr.src
+				setTimeout(() => { img.src = spr.srcStr }, _ImageLoadTimeoutCount += CON_IMAGE_LOAD_TIMEOUT)
 				this.imageIndexes[spr.src] = this.imageElements.push(textureInfo) - 1
 			}
 		}
@@ -880,8 +885,10 @@ class Sprite {
 		this.parentCon.color(255)
 		this.parentCon.blend(0)
 
+		// Use this sprite's draw function
 		if (this.drawFn) this.drawFn.call(this)
-		// Animation (I really need to comment this)
+
+		// Animation
 		if (!this.animation[2]) { // if not paused
 			if ((this.animation[1] -= 60 / this.parentCon.frameRate) <= 0) { // if the next frame is supposed to go
 				this.animation[1] = this.animationStates[this.animationState][2] // reset animation frame timer
