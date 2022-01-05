@@ -753,6 +753,8 @@ class Sprite {
 		this.animationOffset = 0
 		this.animationStates = {} // start, end, timer, loop, pause frame
 		this.animationState = ""
+		this._onAnimationDone = () => {}
+
 		this.showHitbox = false // false
 		this.flipped = false
 		this.collided = false
@@ -760,6 +762,10 @@ class Sprite {
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
 
 		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
+	}
+
+	onAnimationDone(fn) {
+		this._onAnimationDone = fn
 	}
 
 	setSrc(src) {
@@ -880,7 +886,6 @@ class Sprite {
 
 	/**
 	 * Draws the sprite to the screen. Used by the library, not the user.
-	 * @returns 
 	 * @private
 	 */
 	draw() {
@@ -901,6 +906,7 @@ class Sprite {
 					if (this.animationStates[this.animationState][3]) { // if it loops
 						this.animation[0] = this.animationStates[this.animationState][0] // go back to start
 					} else { // if it doesn't loop
+						this._onAnimationDone()
 						this.animation[2] = true
 						this.animation[0]--
 					}
@@ -1409,6 +1415,10 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
+	static mod(n, m) {
+		return ((n % m) + m) % m
+	}
+
 	static spreadRandom() {
 		return (Math.random() * 100) % 1
 	}
