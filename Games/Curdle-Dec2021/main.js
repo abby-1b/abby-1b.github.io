@@ -1,18 +1,20 @@
 
 // Gameplay
-const ON_ENERGY_DRAIN = 0.002
-const LAMPPOST_CHARGE = 0.0016
-const HOVER_ENERGY_DRAIN = 0.008
+const DASH_ENERGY = 0.25
+const LAMPPOST_CHARGE = 0.001
+const HOVER_ENERGY_DRAIN = 0.01
+const INIT_ENERGY = 0.8
 
 // Screen stuff
 const PLAYER_SCREEN_MARGIN = 10
 const ENEMY_SCREEN_MARGIN = -10
 const SPAWN_MARGIN = 40
-const SOCKET_POS = 200
+const FADE_SPEED = 0.02
+
+let fadeTo = 0
+let fadeMultiplier = 0
 
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
-
-// con.nObj(new Sprite("Assets/finalSocket.png"))
 
 // Button
 let button = con.nObj(new Button("Assets/playButton.png", 0, 0, 16, 16, 1, true))
@@ -32,7 +34,7 @@ button.onClick(function(){
 })
 
 // Spotlight
-let spotlight = con.nObj(new Sprite("Assets/playerSpotlight.png", 0, 0, 69, 19))
+let spotlight = con.nObj(new Sprite("Assets/playerSpotlight.png", 0, 0, 69, 26))
 spotlight.drawFn = (function(){
 	con.color(255, player.energyLevel * (player.isOn ? 150 : 100))
 	con.blend(1)
@@ -40,32 +42,32 @@ spotlight.drawFn = (function(){
 
 // Bulbs
 let bulbs = []
-for (let e = 0; e < 1; e++) {
+function newBulb() {
 	bulbs.push(con.nObj(new PhysicsActor("Assets/off.png", Math.random() * con.width, Math.random() * con.height, 16, 33)))
-	bulbs[e].hbOffsets({top: 29, bottom: 2, left: 7, right: 7})
-	bulbs[e].addAnimation("run" , { start: 8, end: 20, timer: 5, loop: true, pause: -1 }, true)
-
-	bulbs[e].animation[0] = Math.floor(Math.random() * 8)
-	bulbs[e].animation[1] = Math.floor(Math.random() * 12)
-
-	if (e > 0) {
-		bulbs[e].drawFn = (function(){
-			let md = 1e4
-			for (let h = 0; h < hovers.length; h++) {
-				let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
-				if (dsq < md) md = dsq
-			}
-			md = Math.max(0, 50 - (md / 10)) * 3
-			if (player.isOn) {
-				con.color(Math.max(300 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.5) + md)
-			} else {
-				con.color(Math.max(255 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.3) + md)
-			}
-		})
-	}
+	bulbs[bulbs.length - 1].hbOffsets({top: 29, bottom: 2, left: 7, right: 7})
+	bulbs[bulbs.length - 1].addAnimation("run", { start: 8, end: 20, timer: 5, loop: true, pause: -1 }, true)
+	bulbs[bulbs.length - 1].animation[0] = Math.floor(Math.random() * 8)
+	bulbs[bulbs.length - 1].animation[1] = Math.floor(Math.random() * 12)
+	bulbs[bulbs.length - 1].drawFn = (function(){
+		let md = 1e4
+		for (let h = 0; h < hovers.length; h++) {
+			let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
+			if (dsq < md) md = dsq
+		}
+		md = Math.max(0, 50 - (md / 10)) * 3
+		if (player.isOn)
+			con.color(Math.max(300 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.5) + md)
+		else
+			con.color(Math.max(255 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.3) + md)
+	})
+}
+function clearBulbs() {
+	while (bulbs.length > 1) con.rObj(bulbs.pop())
 }
 
+// PLAYER
 // Setup player
+newBulb()
 let player = bulbs[0]
 
 player.addAnimation("idle", { start: 0, end: 7, timer: 12, loop: true , pause: -1 }, true)
@@ -77,26 +79,23 @@ player.drawFn = (function(){
 		if (dsq < md) md = dsq
 	}
 	md = Math.max(0, 50 - (md / 10)) * 2
-	if (player.isOn) {
+	if (player.isOn)
 		con.color(
 			CTool.lerp(229, 300, player.energyLevel) + md, 
 			CTool.lerp(180, 300, player.energyLevel) + md, 
 			CTool.lerp(366, 300, player.energyLevel) + md)
-	} else {
+	else
 		con.color(300 + md)
-	}
 })
-player.pos.x = 0
-player.pos.y = con.height / 2 - player.h / 2
 
 // Player custom properties
 player.isOn = false
 player.setSrc("Assets/on.png")
 player.setSrc("Assets/off.png")
 
-player.energyLevel = 1 // 0 - 1
+player.energyLevel = INIT_ENERGY
 
-// Controls
+// Player Controls
 Controllers.new(player, "topDown")
 con.onKeyPressed([' '], "switch")
 con.nEvent("switch", () => {
@@ -105,32 +104,42 @@ con.nEvent("switch", () => {
 		button.animate("on")
 		return
 	}
-	player.isOn = (!player.isOn) && player.energyLevel > 0
-	if (player.isOn) {
-		player.setSrc("Assets/on.png")
-		player.animationStates.run[2] = 2
+	if (player.locked) return
+	if (levelInfo[level].dash) {
+		// Dashing mechanic
+		if (player.energyLevel > 0) {
+			player.speed.x *= 6.5
+			player.speed.y *= 6.5
+			player.energyLevel -= DASH_ENERGY
+		}
 	} else {
-		player.setSrc("Assets/off.png")
-		player.animationStates.run[2] = 6
+		// Switching mechanic
+		player.isOn = (!player.isOn) && player.energyLevel > 0
+		if (player.isOn) {
+			player.setSrc("Assets/on.png")
+			player.animationStates.run[2] = 2
+		} else {
+			player.setSrc("Assets/off.png")
+			player.animationStates.run[2] = 6
+		}
 	}
 })
 
-// con.events.right[1] = true
-
+// AMBIENT THINGS
 // Ground things
 let groundThings = []
 
 // Make socket
 // let socket = con.nObj(new Sprite("Assets/socket.png", SOCKET_POS + con.width / 2, con.height / 2 - 16, 16, 16, 1, true))
-let socket = con.nObj(new Sprite("Assets/finalSocket.png", SOCKET_POS + con.width / 2, con.height / 2, 75, 25, 1, true))
+let socket = con.nObj(new Sprite("Assets/finalSocket.png", 0, 0, 71, 23, 1, true))
 socket.drawFn = (function(){
 	if (player.isOn) {
 		con.color(Math.max(100, 355 - Math.sqrt(player.pos.distSquared(this.pos))))
 	} else {
-		con.color(255, 100)
+		con.color(255, 10)
 	}
 })
-socket.layer(-1e8)
+socket.layer(-1e2)
 groundThings.push(socket)
 
 // Instantiate ground things
@@ -148,7 +157,6 @@ for (let g = 0; g < 20; g++) {
 	groundThings[groundThings.length - 1].flipped = Math.random() < 0.5
 }
 for (let t = 0; t < groundThings.length; t++) groundThings[t].layer(-1e9)
-
 
 // Instantiate lampposts
 let lampposts = []
@@ -172,7 +180,7 @@ for (let l = 0; l < 5; l++) {
 
 // Instantiate hovers
 let hovers = []
-for (let h = 0; h < 1; h++) {
+for (let h = 0; h < 6; h++) {
 	let nh = [
 		con.nObj(new Sprite("Assets/lamp.png", h * 74, 0, 74, 31)),
 		con.nObj(new Sprite("Assets/lampLight.png", h * 74, 0, 48, 58))
@@ -196,11 +204,9 @@ con.init(() => {
 	con.physics.gravity = new Vec2(0, 0)
 	con.physics.friction = new Vec2(0.95, 0.95)
 	con.maxSortPerFrame = -1
-
-	con.camera.constrains = new Rect(0, 0, SOCKET_POS, 0)
 })
 
-function keepOnScreen(el, mult=1) {
+function keepOnScreen(el) {
 	let fp = el.finalPos()
 	if (fp.x < -el.w) {
 		el.pos.x += con.width + SPAWN_MARGIN + el.w
@@ -213,24 +219,41 @@ function keepOnScreen(el, mult=1) {
 }
 
 function useSocket(s) {
+	if (!player.locked) {
+		player.onAnimationDone(() => {
+			fadeTo = -1
+		})
+		levelDone = true
+		totalEnergy += player.energyLevel
+	}
 	player.locked = true
-	player.pos.x -= ((player.pos.x + Math.ceil(player.w / 2)) - s.pos.x) * 0.3
-	// player.pos.y -= ((player.pos.y + 20.5) - s.pos.y) * 0.3
-	player.pos.y -= ((player.pos.y + 32.5) - s.pos.y) * 0.3
+	player.pos.x -= ((player.pos.x + Math.ceil(player.w / 2)) - s.pos.x + 1.5) * 0.3
+	player.pos.y -= ((player.pos.y + 31.5) - s.pos.y) * 0.3
 
 	player.animate("socket")
 }
 
 con.frame(() => {
+	// Set button position
 	button.pos.x = con.width / 2
 	button.pos.y = con.height / 2
 
-	spotlight.pos = player.pos.added2(-26, 22)
+	// Move player's spotlight
+	spotlight.pos = player.pos.added2(-26, 18)
 
-	// Temporary Hover animation
-	// hovers[0][0].pos = new Vec2(SOCKET_POS - con.width / 2, Math.sin(con.frameCount / 80) * 30 + 50)
-	for (let h = 0; h < hovers.length; h++) {
-		hovers[h][1].pos = hovers[h][0].pos.added2(13, 29)
+	// Hover animation
+	if (levelInfo[level].finalSocket) {
+		for (let h = 0; h < hovers.length; h++) {
+			hovers[h][0].pos.x = -1e4
+			hovers[h][1].pos.x = -1e4
+		}
+	} else {
+		for (let h = 0; h < hovers.length; h++) {
+			let cd = Math.floor(con.camera.pos.x / (74 * levelInfo[level].hoverSpace))
+			hovers[h][0].pos.x = ((cd + h) * (74 * levelInfo[level].hoverSpace) + Math.sin(con.frameCount / 40 + (h + cd) * 7) * 5)
+			hovers[h][0].pos.y = (Math.sin(con.frameCount / 100 + (h + cd) * 10) * 0.5 + 0.5) * con.height - 78
+			hovers[h][1].pos = hovers[h][0].pos.added2(13, 29)
+		}
 	}
 
 	// Socket interaction
@@ -239,48 +262,79 @@ con.frame(() => {
 
 	// Layering, animation (for bulbs), and keeping things on screen.
 	let ppy = player.finalPos().y + (Math.random() - 0.5) * 3
-	for (let e = 0; e < lampposts.length; e++) {
-		if (e % 2 == 0) {
-			lampposts[e].layer(lampposts[e].pos.y + 33)
-			keepOnScreen(lampposts[e])
-		} else {
-			lampposts[e].pos = lampposts[e - 1].pos.added2(-9, 4)
-			lampposts[e].layer(lampposts[e].pos.y + 17)
+	if (levelInfo[level].finalSocket) {
+		for (let e = 0; e < lampposts.length; e++) lampposts[e].pos.x = -1e4
+		for (let h = 0; h < hovers.length; h++) { hovers[h][0].pos.x = -1e4; hovers[h][1].pos.x = -1e4 }
+		
+		player.flipped = player.speed.x > 0
+		player.layer(player.pos.y)
+		if (player.animationState != "socket") {
+			if (player.speed.length() > 0.1) player.animate("run")
+			else player.animate("idle")
+		}
+	} else {
+		for (let e = 0; e < lampposts.length; e++) {
+			if (e % 2 == 0) {
+				lampposts[e].layer(lampposts[e].pos.y + 33)
+				keepOnScreen(lampposts[e])
+			} else {
+				lampposts[e].pos = lampposts[e - 1].pos.added2(-9, 4)
+				lampposts[e].layer(lampposts[e].pos.y + 17)
+			}
+		}
+		for (let h = 0; h < hovers.length; h++) hovers[h][1].layer(hovers[h][1].pos.y + 14)
+		for (let e = 0; e < bulbs.length; e++) {
+			bulbs[e].flipped = bulbs[e].speed.x > 0
+			bulbs[e].layer(bulbs[e].pos.y)
+			if (bulbs[e].animationState != "socket") {
+				if (bulbs[e].speed.length() > 0.1) {
+					bulbs[e].animate("run")
+				} else if (e == 0) {
+					bulbs[e].animate("idle")
+				}
+			}
+	
+			if (e > 0) {
+				let fp = keepOnScreen(bulbs[e])
+				// Go towards player Y position
+				bulbs[e].speed.y += (fp.y < ppy ? 1 : -1) * (fp.x < con.width / 2 ? -0.5 : 1) * (player.isOn ? 1 : -1) * levelInfo[level].bulbFollow
+			}
 		}
 	}
 	for (let e = 1; e < groundThings.length; e++) keepOnScreen(groundThings[e], 2)
-	for (let h = 0; h < hovers.length; h++) hovers[h][1].layer(hovers[h][1].pos.y + 14)
-	for (let e = 0; e < bulbs.length; e++) {
-		bulbs[e].flipped = bulbs[e].speed.x > 0
-		bulbs[e].layer(bulbs[e].pos.y)
-		if (bulbs[e].animationState != "socket") {
-			if (bulbs[e].speed.length() > 0.1) {
-				bulbs[e].animate("run")
-			} else if (e == 0) {
-				bulbs[e].animate("idle")
-			}
-		}
-
-		if (e > 0) {
-			let fp = keepOnScreen(bulbs[e])
-			// Go towards center
-			bulbs[e].speed.y += (fp.y < ppy ? 1 : -1) * (fp.x < con.width / 2 ? -0.5 : 1) * (player.isOn ? 1 : -1) * 0.004
-		}
-	}
 	player.layer(player.pos.y + 3)
+
+	// Fade screen to black/white
+	if (fadeMultiplier < fadeTo) fadeMultiplier += FADE_SPEED
+	else fadeMultiplier -= FADE_SPEED
+	con.color(fadeMultiplier < 0 ? 0 : 255, Math.abs(fadeMultiplier) * 255)
+	con.fillRect(0, 0, con.width, con.height)
+	// if (Math.abs(fadeMultiplier) >= 1) {
+	// 	if (!isFadeScreenDone) {
+	// 		loadLevel()
+	// 	}
+	// 	isFadeScreenDone = true
+	// }
+	if (levelDone && Math.abs(fadeMultiplier) >= 1) {
+		loadLevel()
+	}
 })
 
 con.pFrame(() => {
 	// Energy drain
-	if (player.isOn && player.animationState != "socket") player.energyLevel -= ON_ENERGY_DRAIN
+	// if (player.isOn && player.animationState != "socket" && !levelInfo[level].dash) player.energyLevel -= ON_ENERGY_DRAIN
 	if (player.energyLevel <= 0) {
 		player.energyLevel = 0
-		player.isOn = false
-		player.setSrc("Assets/off.png")
-		player.animationStates.run[2] = 6
+		if (levelInfo[level].dash) {
+
+		} else {
+			player.isOn = false
+			player.setSrc("Assets/off.png")
+			player.animationStates.run[2] = 6
+		}
 	}
 	for (let h = 0; h < hovers.length; h++) {
-		if (player.intersects(hovers[h][1])) {
+		if (player.intersects(hovers[h][1]) && player.isOn) {
 			player.energyLevel -= HOVER_ENERGY_DRAIN
 		}
 	}
@@ -332,10 +386,73 @@ con.pFrame(() => {
 	}
 	if (button.state % 2 == 1 && !player.locked)
         player.speed.addVec(new Vec2(
-            (con.eventOngoing("right") ? 1 : 0) - (con.eventOngoing("left") ? 1 : 0)
-			+ (con.eventOngoing("down") ? 0.01 : 0) - (con.eventOngoing("up") ? 0.01 : 0),
-			(con.eventOngoing("down") ? 1 : 0) - (con.eventOngoing("up") ? 1 : 0) * 0.5
+              (con.eventOngoing("right") ? 1    : 0) - (con.eventOngoing("left") ? 1    : 0)
+			+ (con.eventOngoing("down")  ? 0.01 : 0) - (con.eventOngoing("up")   ? 0.01 : 0),
+			  (con.eventOngoing("down")  ? 1    : 0) - (con.eventOngoing("up")   ? 1    : 0) * 0.5
 		).normalized().divideRet(
-			player.isOn ? 45 : 100
+			player.isOn ? 50 : 110
 		))
 })
+
+// DEALING WITH LEVELS
+let totalEnergy = 0
+let level = -1//-1
+let levelDone = false
+let levelInfo = [
+	{width:  700, bulbs: 15, bulbFollow: 0.0020, hoverSpace: 2.5, dash: false, finalSocket: false},
+	{width: 1000, bulbs: 30, bulbFollow: 0.0025, hoverSpace: 2.0, dash: false, finalSocket: false},
+	{width: 1300, bulbs: 40, bulbFollow: 0.0030, hoverSpace: 1.5, dash: true , finalSocket: false},
+	{width: 1600, bulbs: 50, bulbFollow: 0.0035, hoverSpace: 1.0, dash: true , finalSocket: false},
+
+	{width:  100, bulbs:  0, bulbFollow: 0.0000, hoverSpace:  -1, dash: false, finalSocket: true}
+]
+
+function loadLevel() {
+	levelDone = false
+	level++
+	if (level >= levelInfo.length) {
+		console.log("No more levels.")
+		level = 0
+		return
+	}
+	console.log("Loading level", level)
+
+	player.pos.x = 0
+	player.pos.y = con.height / 2 - player.h / 2
+
+	socket.pos.x = levelInfo[level].width + con.width / 2
+	socket.pos.y = con.height / 2
+
+	player.animate("idle")
+	player.isOn = levelInfo[level].dash
+	if (player.isOn) player.setSrc("Assets/on.png")
+	else  player.setSrc("Assets/off.png")
+	player.energyLevel = INIT_ENERGY
+	con.camera.constrains = new Rect(0, 0, levelInfo[level].width, 0)
+	con.camera.pos.x = 0
+
+	clearBulbs()
+	for (let _ = 0; _ < levelInfo[level].bulbs; _++) newBulb()
+
+	console.log(levelInfo[level])
+	socket.animation[0] = levelInfo[level].finalSocket + 0
+
+	// fadeScreenStep *= -1
+	// fadeStopAtZero = true
+	fadeTo = 0
+}
+
+loadLevel()
+
+// Final Scenes
+let sceneID = -1
+function runFinal() {
+	sceneID = totalEnergy / 4
+	if (sceneID < 0.33) {
+		sceneID = 0
+	} else if (sceneID < 0.66) {
+		sceneID = 1
+	} else {
+		sceneID = 2
+	}
+}
