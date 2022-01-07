@@ -155,7 +155,7 @@ class Console {
 
 		// Font
 		this.fonts = {"": "20px Arial"}
-		this.nFont("std", new CImage(`>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U`, 4))
+		this.nFont("std", new ImageLoader(1, `121|4|>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U!0 `, this.gl))
 		this.font("std")
 
 		// Events
@@ -204,7 +204,6 @@ class Console {
 	}
 
 	// Controls
-
 	/**
 	 * Adds a new event for when a key os pressed.
 	 * @param {String} name Name for the event
@@ -540,14 +539,8 @@ class Console {
 				img.addEventListener('load', function() {
 					textureInfo.width = img.width
 					textureInfo.height = img.height
+					CTool.bindTexture(spr.parentCon.gl, textureInfo.texture, img)
 					textureInfo.complete = true
-					spr.parentCon.gl.bindTexture(spr.parentCon.gl.TEXTURE_2D, textureInfo.texture)
-
-					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_S, spr.parentCon.gl.REPEAT)
-					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_WRAP_T, spr.parentCon.gl.REPEAT)
-					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MIN_FILTER, spr.parentCon.gl.NEAREST)
-					spr.parentCon.gl.texParameteri(spr.parentCon.gl.TEXTURE_2D, spr.parentCon.gl.TEXTURE_MAG_FILTER, spr.parentCon.gl.NEAREST)
-					spr.parentCon.gl.texImage2D(spr.parentCon.gl.TEXTURE_2D, 0, spr.parentCon.gl.RGBA, spr.parentCon.gl.RGBA, spr.parentCon.gl.UNSIGNED_BYTE, img)
 					spr.imageLoaded()
 				})
 				setTimeout(() => { img.src = spr.srcStr }, _ImageLoadTimeoutCount += CON_IMAGE_LOAD_TIMEOUT)
@@ -628,9 +621,40 @@ class Console {
 	 * @param {*} y Y Position to draw at
 	 */
 	text(text, x, y) {
+		let _scale = 2
+		let _h = this.fonts[this.currentFont].textureInfo.height
+		x -= (_h + 1) * _scale
+		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&:"
+		text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
+		// console.log(text)
+		let _vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.fonts[this.currentFont].textureInfo.tex)
+		this.gl.uniform2fv(this.glParams.tSize, [
+			this.fonts[this.currentFont].textureInfo.width * _scale,
+			this.fonts[this.currentFont].textureInfo.height * _scale
+		])
+		this.gl.uniform4fv(this.glParams.colorParam, [
+			this.currentColor[0], this.currentColor[1],
+			this.currentColor[2], -this.currentColor[3]
+		])
+
+		for (let c = 0; c < text.length; c++) {
+			x += (_h + 1) * _scale
+			if (text[c] == -1) continue
+			this.gl.uniform2fv(this.glParams.tOffs, [-x + text[c] * _scale * _h, -y])
+			_vertexArr[0] = x
+			_vertexArr[1] = y
+			_vertexArr[2] = x + _h * _scale
+			_vertexArr[3] = y
+			_vertexArr[4] = x
+			_vertexArr[5] = y + _h * _scale
+			_vertexArr[6] = _vertexArr[2]
+			_vertexArr[7] = _vertexArr[5]
+			this.gl.bufferData(this.gl.ARRAY_BUFFER, _vertexArr, this.gl.STATIC_DRAW)
+			this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4)
+		}
+		
 		// let f = this.fonts[this.currentFont].canvas
-		// let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&"
-		// text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
 		// for (let c = 0; c < text.length; c++) {
 		// 	this.ctx.drawImage(f, text[c] * 4, 0, f.height, f.height, x + c * (f.height + 1), y, f.height, f.height)
 		// }
@@ -727,16 +751,18 @@ class Console {
 	}
 }
 
-// A type of source
-class CImage {
-	constructor(text, h) {
+// Loads an image from a specific source.
+class ImageLoader {
+	constructor(srcType, src, gl) {
 		this.isText = true
-		this.canvas = CTool.canvasFromString(text, h)
-		this.canvas.className += "noSmooth"
+		this.canvas = CTool.canvasFromString(src)
+		this.textureInfo = {width: this.canvas.width, height: this.canvas.height, tex: gl.createTexture()}
+		CTool.bindTexture(gl, this.textureInfo.tex, this.canvas)
 	}
 }
 
 // Draws a sprite or any type of image to the screen
+// Eventually Sprite should inherit from ImageLoader, as should TileMap.
 class Sprite {
 	constructor(src, x, y, width, height, scale, centered) {
 		if ((!width) && (!height)) CTool.warning("No width / height provided!")
@@ -913,7 +939,7 @@ class Sprite {
 				}
 			}
 		}
-		// Sprite
+		// Return if the image is not loaded
 		if (typeof this.src == 'string' || !this.parentCon.imageElements[this.src].complete) return
 
 		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.parentCon.imageElements[this.src].texture)
@@ -1248,12 +1274,7 @@ class TileMap {
 					Math.floor(i / this.wt) * this.tileSets[ti].th)
 			}
 		}
-		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.glTex.tex)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_S, this.parentCon.gl.CLAMP_TO_EDGE)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_WRAP_T, this.parentCon.gl.CLAMP_TO_EDGE)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MIN_FILTER, this.parentCon.gl.NEAREST)
-		this.parentCon.gl.texParameteri(this.parentCon.gl.TEXTURE_2D, this.parentCon.gl.TEXTURE_MAG_FILTER, this.parentCon.gl.NEAREST)
-		this.parentCon.gl.texImage2D(this.parentCon.gl.TEXTURE_2D, 0, this.parentCon.gl.RGBA, this.parentCon.gl.RGBA, this.parentCon.gl.UNSIGNED_BYTE, this.cnv)
+		CTool.bindTexture(this.parentCon.gl, this.glTex.tex, this.cnv)
 		this.nbToIdx = []
 		// this.map = []
 		this.loaded = true
@@ -1415,6 +1436,15 @@ class PhysicsActor extends Sprite {
 }
 
 class CTool {
+	static bindTexture(gl, glTex, tx) {
+		gl.bindTexture(gl.TEXTURE_2D, glTex)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tx)
+	}
+
 	static mod(n, m) {
 		return ((n % m) + m) % m
 	}
@@ -1554,18 +1584,25 @@ class CTool {
 	/**
 	 * Gets an editable canvas from a source string. 
 	 * @param {String} str Data string that contains the image data.
-	 * @param {number} h The height of the canvas, as it's not encoded in the string.
 	 * @returns {HTMLCanvasElement}
 	 */
-	 static canvasFromString(str, h) {
-		str = str.split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
+	static canvasFromString(str) {
+		str = str.split('|')
+		str[0] = parseInt(str[0], 16)
+		str[1] = parseInt(str[1], 16)
 		let canvas = document.createElement("canvas")
-		canvas.height = h
-		canvas.width = Math.ceil(str.length / h)
+		canvas.width = str[0]
+		canvas.height = str[1]
+		str = str[2].split('').map(e => CTool.bin(e.charCodeAt(0) - 32, 6)).join('').split('')
 		let ctx = canvas.getContext('2d')
 		let dat = ctx.getImageData(0, 0, canvas.width, canvas.height)
-		for (let i = 0; i < str.length; i++)
-			dat.data[(Math.floor(i / canvas.height) + (i % canvas.height) * canvas.width) * 4 + 3] = str[i] == "0" ? 0 : 255
+		for (let i = 0; i < str.length; i++) {
+			let _p = (Math.floor(i / canvas.height) + (i % canvas.height) * canvas.width) * 4
+			dat.data[_p] = 255
+			dat.data[_p + 1] = 255
+			dat.data[_p + 2] = 255
+			dat.data[_p + 3] = str[i] == "0" ? 0 : 255
+		}
 		ctx.putImageData(dat, 0, 0)
 		return canvas
 	}
@@ -1835,11 +1872,19 @@ class Device {
 		return [window.innerWidth, window.innerHeight]
 	}
 
-	/**
-	 * Calculates a good width and height based on the desired size
-	 * @param {Number} desiredSize
-	 */
-	static calculateSize(desiredSize) {
+	static getTime() {
+		return Date.now()
+	}
+}
 
+class Format {
+	static timeMMSSHH(ms) {
+		return this.padNum(Math.floor(ms / 60000), 2) + ":" + this.padNum(Math.floor((ms % 60000) / 1000), 2) + ":" + this.padNum(Math.floor((ms % 1000) / 10), 2)
+	}
+
+	static padNum(n, z) {
+		n += ''
+		while (n.length < z) n = '0' + n
+		return n
 	}
 }
