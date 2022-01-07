@@ -405,10 +405,17 @@ class Console {
 	doGraphics() {
 		// Move camera towards targeted object
 		if (this.camera.following) {
-			this.camera.pos.lerp(
-				Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.speed.x * this.camera.followFract[1].x + this.camera.following.w * this.camera.following.scale * 0.5)),
-				Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.speed.y * this.camera.followFract[1].y + this.camera.following.h * this.camera.following.scale * 0.5)),
-				this.camera.followFract[0])
+			if (this.camera.following instanceof PhysicsActor) {
+				this.camera.pos.lerp(
+					Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.speed.x * this.camera.followFract[1].x + this.camera.following.w * this.camera.following.scale * 0.5)),
+					Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.speed.y * this.camera.followFract[1].y + this.camera.following.h * this.camera.following.scale * 0.5)),
+					this.camera.followFract[0])
+			} else {
+				this.camera.pos.lerp(
+					Math.min(this.camera._constrains.x2, Math.max(this.camera._constrains.x, (this.camera.following.pos.x - this.width  / 2) + this.camera.following.w * this.camera.following.scale * 0.5)),
+					Math.min(this.camera._constrains.y2, Math.max(this.camera._constrains.y, (this.camera.following.pos.y - this.height / 2) + this.camera.following.h * this.camera.following.scale * 0.5)),
+					this.camera.followFract[0])
+			}
 		}
 
 		// Calculate frame rate
@@ -621,10 +628,11 @@ class Console {
 	 * @param {*} y Y Position to draw at
 	 */
 	text(text, x, y) {
-		let _scale = 2
+		let _scale = Device.touch() ? 1 : 2
 		let _h = this.fonts[this.currentFont].textureInfo.height
 		x -= (_h + 1) * _scale
-		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&:"
+		let ox = x + 0
+		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&:\n"
 		text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
 		// console.log(text)
 		let _vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
@@ -640,6 +648,11 @@ class Console {
 
 		for (let c = 0; c < text.length; c++) {
 			x += (_h + 1) * _scale
+			if (text[c] == 58) {
+				x = ox
+				y += (_h + 1) * _scale
+				continue
+			}
 			if (text[c] == -1) continue
 			this.gl.uniform2fv(this.glParams.tOffs, [-x + text[c] * _scale * _h, -y])
 			_vertexArr[0] = x
@@ -653,11 +666,6 @@ class Console {
 			this.gl.bufferData(this.gl.ARRAY_BUFFER, _vertexArr, this.gl.STATIC_DRAW)
 			this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4)
 		}
-		
-		// let f = this.fonts[this.currentFont].canvas
-		// for (let c = 0; c < text.length; c++) {
-		// 	this.ctx.drawImage(f, text[c] * 4, 0, f.height, f.height, x + c * (f.height + 1), y, f.height, f.height)
-		// }
 	}
 
 	/**
@@ -775,6 +783,7 @@ class Sprite {
 		this.c = centered
 		this._layer = 0
 		this.drawFn = null
+		this.hidden = false
 		this.animation = [0, 0, true] // frame, timer, paused
 		this.animationOffset = 0
 		this.animationStates = {} // start, end, timer, loop, pause frame
@@ -941,34 +950,35 @@ class Sprite {
 		}
 		// Return if the image is not loaded
 		if (typeof this.src == 'string' || !this.parentCon.imageElements[this.src].complete) return
+		if (!this.hidden) {
+			this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.parentCon.imageElements[this.src].texture)
 
-		this.parentCon.gl.bindTexture(this.parentCon.gl.TEXTURE_2D, this.parentCon.imageElements[this.src].texture)
+			this.parentCon.gl.uniform2fv(this.parentCon.glParams.tSize, [
+				this.parentCon.imageElements[this.src].width * (this.flipped ? -1 : 1) * this.scale,
+				this.parentCon.imageElements[this.src].height * this.scale
+			])
+			let _xOffs = Math.floor(this.pos.x - (this.c ? (this.w / 2) * this.scale : 0))
+			let _yOffs = Math.floor(this.pos.y - (this.c ? (this.h / 2) * this.scale : 0))
+			this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.scale, -_yOffs])
+			this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [
+				this.parentCon.currentColor[0],
+				this.parentCon.currentColor[1],
+				this.parentCon.currentColor[2],
+				-this.parentCon.currentColor[3]
+			])
+			this._vertexArr[0] = _xOffs
+			this._vertexArr[1] = _yOffs
+			this._vertexArr[2] = _xOffs + this.w * this.scale
+			this._vertexArr[3] = _yOffs
+			this._vertexArr[4] = _xOffs
+			this._vertexArr[5] = _yOffs + this.h * this.scale
+			this._vertexArr[6] = this._vertexArr[2]
+			this._vertexArr[7] = this._vertexArr[5]
 
-		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tSize, [
-			this.parentCon.imageElements[this.src].width * (this.flipped ? -1 : 1) * this.scale,
-			this.parentCon.imageElements[this.src].height * this.scale
-		])
-		let _xOffs = Math.floor(this.pos.x - (this.c ? this.w / 2 : 0))
-		let _yOffs = Math.floor(this.pos.y - (this.c ? this.h / 2 : 0))
-		this.parentCon.gl.uniform2fv(this.parentCon.glParams.tOffs, [-_xOffs + (this.flipped ? -1 : 1) * (this.animation[0] + (this.flipped ? 1 : 0) + this.animationOffset) * this.w * this.scale, -_yOffs])
-		this.parentCon.gl.uniform4fv(this.parentCon.glParams.colorParam, [
-			this.parentCon.currentColor[0],
-			this.parentCon.currentColor[1],
-			this.parentCon.currentColor[2],
-			-this.parentCon.currentColor[3]
-		])
-		this._vertexArr[0] = _xOffs
-		this._vertexArr[1] = _yOffs
-		this._vertexArr[2] = _xOffs + this.w * this.scale
-		this._vertexArr[3] = _yOffs
-		this._vertexArr[4] = _xOffs
-		this._vertexArr[5] = _yOffs + this.h * this.scale
-		this._vertexArr[6] = this._vertexArr[2]
-		this._vertexArr[7] = this._vertexArr[5]
-
-		this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
-		// Four is the number of vertices, which for images is always four.
-		this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
+			this.parentCon.gl.bufferData(this.parentCon.gl.ARRAY_BUFFER, this._vertexArr, this.parentCon.gl.STATIC_DRAW)
+			// Four is the number of vertices, which for images is always four.
+			this.parentCon.gl.drawArrays(this.parentCon.gl.TRIANGLE_STRIP, 0, 4)
+		}
 
 		// Hitbox
 		if (this.showHitbox) {
