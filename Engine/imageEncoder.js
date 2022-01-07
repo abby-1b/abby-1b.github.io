@@ -1,12 +1,13 @@
 
 // This works wonders on 1-bit images (like bitmap fonts), which apparently
-// PNG doesn't compress very well, so I'll hard-code the font into `lib.js` for now.
+// PNG doesn't compress very well, so I'll be using this to hard-code the font
+// into `lib.js` for now.
 
 const fs  = require('fs')
 try {
     var PNG = require('pngjs').PNG
 } catch (e) {
-    console.log("Please install pngjs using: npm install pngjs --save")
+    console.log("Please install pngjs: npm install pngjs --save")
 }
 
 fs.createReadStream(process.argv[process.argv.length - 1]).pipe(new PNG()).on('parsed', function() {
@@ -36,13 +37,15 @@ fs.createReadStream(process.argv[process.argv.length - 1]).pipe(new PNG()).on('p
     }
     bs = bs.match(/.{1,6}/g)
     while (bs[bs.length - 1].length < 6) bs[bs.length - 1] += "0"
-	console.log(bs)
+	// console.log(bs)
+	console.log("W/H:   ", this.width, this.height)
     bs = bs.map(e => String.fromCharCode(parseInt(e, 2) + 32)).join("")
-	let min = minifyOutput(bs)
-	if (min.length < bs.length)
-		bs = min
-	else
-		bs = "`" + bs + "`"
+	// let min = minifyOutput(bs)
+	// if (min.length < bs.length)
+	// 	bs = min
+	// else
+		// bs = "`" + bs + "`"
+	bs = `\`${this.width.toString(16)}|${this.height.toString(16)}|${bs}\``
 	// bs = minifyOutput(bs)
 	bs = bs.replace(/\\/g, "\\\\")
     console.log(bs.length, bs)
