@@ -155,7 +155,7 @@ class Console {
 
 		// Font
 		this.fonts = {"": "20px Arial"}
-		this.nFont("std", new ImageLoader(1, `121|4|>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U!0 `, this.gl))
+		this.nFont("std", new ImageLoader(1, `127|4|>J?[UFF9^9;[N?JH:9OR+Y^9*9[R6?$1_(_XAVF6^J1IM_JEV9N(^.$>PA[S'I]IPTBYG?^?C_"[W9W_XO_=N_^[F^SKU^K_#=")W _YG_ 1$09@#_!O]F9F%^B.<0$0!OF?8-V?P, ,  ,  G57("6U!0"220`, this.gl))
 		this.font("std")
 
 		// Events
@@ -632,7 +632,7 @@ class Console {
 		let _h = this.fonts[this.currentFont].textureInfo.height
 		x -= (_h + 1) * _scale
 		let ox = x + 0
-		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&:\n"
+		let charMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?[]_*|+-/\\.()@\"',<>&:%\n"
 		text = (text + '').toUpperCase().split('').map(e => charMap.indexOf(e))
 		// console.log(text)
 		let _vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
@@ -648,7 +648,7 @@ class Console {
 
 		for (let c = 0; c < text.length; c++) {
 			x += (_h + 1) * _scale
-			if (text[c] == 58) {
+			if (text[c] == charMap.length - 1) {
 				x = ox
 				y += (_h + 1) * _scale
 				continue
@@ -831,6 +831,7 @@ class Sprite {
 			this.parentCon.imageIndexes[src] = this.parentCon.imageElements.push(textureInfo) - 1
 			this.src = this.parentCon.imageElements.length - 1
 		}
+		this.srcStr = src
 	}
 
 	layer(l) {
@@ -843,7 +844,6 @@ class Sprite {
 		this.hb.stb = hb.top + hb.bottom
 	}
 
-	// ISSUE WITH MINIFY
 	getHb() {
 		if (this.flipped) {
 			return [
@@ -964,7 +964,7 @@ class Sprite {
 				this.parentCon.currentColor[0],
 				this.parentCon.currentColor[1],
 				this.parentCon.currentColor[2],
-				-this.parentCon.currentColor[3]
+				Math.min(-this.parentCon.currentColor[3], 0)
 			])
 			this._vertexArr[0] = _xOffs
 			this._vertexArr[1] = _yOffs
@@ -1347,6 +1347,7 @@ class PhysicsActor extends Sprite {
 		super(src, x, y, width, height, scale, centered)
 		this.type = "PhysicsActor"
 		this.hasPhysics = true
+		this.resolveCollision = true
 		this.speed = new Vec2(0, 0)
 		this.locked = false
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0}
@@ -1377,8 +1378,6 @@ class PhysicsActor extends Sprite {
 	}
 
 	physics(el) {
-		// this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x
-		// this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y
 		this.pos.x += (this.speed.x = (this.speed.x + this.parentCon.physics.gravity.x) * this.parentCon.physics.friction.x)
 		this.pos.y += (this.speed.y = (this.speed.y + this.parentCon.physics.gravity.y) * this.parentCon.physics.friction.y)
 		for (let t = 0; t < this.parentCon.objects.length; t++) {
@@ -1410,34 +1409,47 @@ class PhysicsActor extends Sprite {
 			let td = ((b1[1] + b1[3]) - b2[1])
 			let bd = ((b2[1] + b2[3]) - b1[1])
 			if (td < rd && td < ld && td < bd) {
-				this.pos.y -= td
-				if (this.bounce != 0) {
-					// This stops the thing from infinitely bouncing.
-					if (this.speed.y < 0.1 && this.speed.y != 0) {
-						this.pos.y += td / 2
-						this.speed.y = 0
+				if (this.resolveCollision) {
+					this.pos.y -= td
+					if (this.bounce != 0) {
+						// This stops the thing from infinitely bouncing.
+						if (this.speed.y < 0.1 && this.speed.y != 0) {
+							this.pos.y += td / 2
+							this.speed.y = 0
+						} else {
+							this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
+						}
 					} else {
-						this.speed.y = Math.min(-this.speed.y * this.bounce, 0)
+						this.speed.y = Math.min(this.speed.y, 0)
 					}
-				} else
-					this.speed.y = Math.min(this.speed.y, 0)
-				this.onGround = true
+					this.onGround = true
+				}
 				this.collidedWith(el, "top", cn)
+				el.collidedWith(this, "bottom", cn)
 			} else if (bd < rd && bd < ld) {
-				this.pos.y += bd
-				if (this.bounce != 0)
-					this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
-				else
-					this.speed.y = Math.max(this.speed.y, 0)
+				if (this.resolveCollision) {
+					this.pos.y += bd
+					if (this.bounce != 0)
+						this.speed.y = Math.max(-this.speed.y * this.bounce, 0)
+					else
+						this.speed.y = Math.max(this.speed.y, 0)
+				}
 				this.collidedWith(el, "bottom", cn)
+				el.collidedWith(this, "top", cn)
 			} else if (ld <= rd) {
-				this.pos.x += ld
-				this.speed.x = -this.speed.x * this.bounce
+				if (this.resolveCollision) {
+					this.pos.x += ld
+					this.speed.x = -this.speed.x * this.bounce
+				}
 				this.collidedWith(el, "left", cn)
+				el.collidedWith(this, "right", cn)
 			} else {
-				this.pos.x -= rd
-				this.speed.x = -this.speed.x * this.bounce
+				if (this.resolveCollision) {
+					this.pos.x -= rd
+					this.speed.x = -this.speed.x * this.bounce
+				}
 				this.collidedWith(el, "right", cn)
+				el.collidedWith(this, "left", cn)
 			}
 		} else {
 			el.collided = false
@@ -1803,6 +1815,58 @@ class Rect {
 	}
 }
 
+class SoundPlayer {
+	constructor(volume=1) {
+		this.volume = volume
+		this.loaded = []
+		this._prependedPath = ""
+	}
+
+	prependPath(path) {
+		this._prependedPath = path
+	}
+
+	preload(sound, prependedPath) {
+		if (prependedPath) this._prependedPath = prependedPath
+		if (typeof sound == "string") {
+			this._loadSound(sound)
+		} else {
+			sound.map(s => this._loadSound(s))
+		}
+	}
+
+	_loadSound(path) {
+		this.loaded[path] = new Audio(this._prependedPath + path)
+	}
+
+	play(path, volume=1, speed=1, loop=false) {
+		if (!(path in this.loaded)) {
+			CTool.error(`Sound \`${path}\` not preloaded.`)
+			return
+		}
+		let au = this.loaded[path]
+		if (loop) {
+			au.ontimeupdate = function(){
+				console.log(this.currentTime, this.duration)
+				if (this.currentTime > this.duration - 0.5) {
+					this.currentTime = 0
+					this.play()
+				}
+			}
+		} else if (!au.paused) {
+			au = new Audio(this._prependedPath + path)
+		}
+		au.volume = volume
+		au.playbackRate = speed
+		au.currentTime = 0
+		au.play()
+	}
+
+	pause(path) {
+		this.loaded[path].ontimeupdate = () => {}
+		this.loaded[path].pause()
+	}
+}
 
 class Controllers {
 	/**
