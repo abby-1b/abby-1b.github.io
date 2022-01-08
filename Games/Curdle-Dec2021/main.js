@@ -1,4 +1,14 @@
 
+const sound = new SoundPlayer()
+sound.preload([
+	"dash.mp3",
+	"switch.mp3",
+	"noSwitch.mp3",
+	"death.mp3",
+	"onHum.mp3",
+	"click.mp3"
+], "Sound/")
+
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
 document.body.style.background = '#000'
 
@@ -8,6 +18,7 @@ const LAMPPOST_CHARGE = 0.001
 const ON_CHARGE_MULTIPLIER = 1.5
 const HOVER_ENERGY_DRAIN = 0.01
 const INIT_ENERGY = 0.8
+const TOUCH_ENERGY_DRAIN = 0.002
 
 // Screen stuff
 let ts = Device.touch() ? 1 : 2
@@ -61,6 +72,15 @@ button.onClick(function(){
 	// })
 })
 
+// Instructions
+let insShow = 0
+let ins = con.nObj(new Sprite("Assets/insWasd.png", 0, con.height / 5, 33, 24, 1, true))
+ins.addAnimation("sw", {start: 0, end: 3, timer: 30, loop: true, pause: -1}, true)
+ins.layer(3e9)
+ins.drawFn = (function(){
+	con.color(255, insShow * 255)
+})
+
 // Spotlight
 let spotlight = con.nObj(new Sprite("Assets/playerSpotlight.png", 0, 0, 69 * 8, 26 * 8, 1, true))
 let spotlightAdd = 0
@@ -71,6 +91,7 @@ spotlight.drawFn = (function(){
 
 // Bulbs
 let bulbs = []
+let deadBulbs = []
 let addBulbs = []
 function newBulb() {
 	if (fadeMultiplier == -1) {
@@ -99,14 +120,33 @@ function newBulb() {
 function clearBulbs() {
 	while (bulbs.length > 1) con.rObj(bulbs.pop())
 }
-function deathAnim() {
-	let ds = con.nObj(new Sprite("Assets/offDeath.png", player.pos.x, player.pos.y, 46, 32))
-	ds.drawFn = (function(){
-		con.color(255)
+function deathAnim(b, hide) {
+	setTimeout(() => { sound.play("death.mp3", hide ? 1 : 0.5, hide ? 1 + Math.random() * 0.5 : 1) }, 120)
+	let ds = con.nObj(new Sprite("Assets/offDeath.png", b.pos.x, b.pos.y, 46, 32))
+	ds.fadeOut = 1
+	if (hide) ds.drawFn = b.drawFn
+	else ds.drawFn = (function(){
+		if ((this.fadeOut -= 0.002) < 0) {
+			con.rObj(this)
+			deadBulbs.splice(deadBulbs.indexOf(this))
+		}
+		let md = 1e4
+		for (let h = 0; h < hovers.length; h++) {
+			let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
+			if (dsq < md) md = dsq
+		}
+		md = Math.max(0, 50 - (md / 10)) * 3
+		if (player.isOn)
+			con.color(Math.max(300 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.5) + md, this.fadeOut * 255)
+		else
+			con.color(Math.max(255 - Math.sqrt(player.pos.distSquared(this.pos)) * 0.3) + md, this.fadeOut * 255)
 	})
-	ds.addAnimation("die", { start: 0, end: 5, timer: 9, loop: false, pause: -1}, true)
-	ds.flipped = player.flipped
-	return ds
+	ds.addAnimation("die", { start: 0, end: 5 + Math.round(Math.random()), timer: 9, loop: false, pause: -1}, true)
+	ds.flipped = b.flipped
+	if (!ds.flipped) ds.pos.x -= 25
+	if (hide) { b.hidden = true }
+	else { b.pos.x = con.camera.pos.x - 16 }
+	deadBulbs.push(ds)
 }
 
 // PLAYER
@@ -116,6 +156,10 @@ let player = bulbs[0]
 
 player.addAnimation("idle", { start: 0, end: 7, timer: 12, loop: true , pause: -1 }, true)
 player.addAnimation("socket", { start: 21, end: 26, timer: 3, loop: false, pause: -1 })
+player.onCollision((e) => {
+	if (levelInfo[level].dash > 1) deathAnim(e, false)
+	if (!player.isOn) player.energyLevel -= TOUCH_ENERGY_DRAIN
+})
 player.drawFn = (function(){
 	let md = 1e4
 	for (let h = 0; h < hovers.length; h++) {
@@ -134,6 +178,9 @@ player.drawFn = (function(){
 
 // Player custom properties
 player.isOn = false
+player.setSrc("Assets/insSpace.png")
+player.setSrc("Assets/insLamppost.png")
+player.setSrc("Assets/insSocket.png")
 player.setSrc("Assets/offDeath.png")
 player.setSrc("Assets/on.png")
 player.setSrc("Assets/off.png")
@@ -152,19 +199,24 @@ con.nEvent("switch", () => {
 		return
 	}
 	if (player.locked) return
-	if (levelInfo[level].dash) {
+	if (levelInfo[level].dash > 0) {
 		// Dashing mechanic
 		if (player.energyLevel > 0) {
+			sound.play("dash.mp3", 1)
 			player.speed = player.speed.normalized().multiplied2(3,1.8)
 			player.energyLevel -= DASH_ENERGY
 		}
 	} else {
 		// Switching mechanic
+		if (player.energyLevel > 0) sound.play("switch.mp3", 0.8, (player.isOn ? 0.85 : 1) + Math.random() * 0.3)
+		else sound.play("noSwitch.mp3", 1)
 		player.isOn = (!player.isOn) && player.energyLevel > 0
 		if (player.isOn) {
+			sound.play("onHum.mp3", 0.15, 1, true)
 			player.setSrc("Assets/on.png")
 			player.animationStates.run[2] = 2
 		} else {
+			sound.pause("onHum.mp3")
 			player.setSrc("Assets/off.png")
 			player.animationStates.run[2] = 6
 		}
@@ -182,7 +234,7 @@ socket.drawFn = (function(){
 	if (player.isOn) {
 		con.color(Math.max(100, 355 - Math.sqrt(player.pos.distSquared(this.pos))))
 	} else {
-		con.color(255, 10)
+		con.color(255, 100)
 	}
 })
 socket.layer(-1e2)
@@ -219,8 +271,8 @@ for (let l = 0; l < 5; l++) {
 	// Instantiate shine
 	lampposts.push(con.nObj(new Sprite("Assets/lamppostShine.png", 0, 0, 27, 59)))
 	lampposts[lampposts.length - 1].drawFn = (function(){
-		con.color(255, 100)
 		con.blend(1)
+		con.color(255, 200)
 	})
 }
 
@@ -268,6 +320,10 @@ function useSocket(s) {
 	if (!player.locked) {
 		timerText = Format.timeMMSSHH(Device.getTime() - timer)
 		if (!levelInfo[level].finalSocket) timerScores.push([timerText, Device.getTime() - timer])
+		timerText = Math.round(player.energyLevel * 100) + "% battery\n" + timerText
+		setTimeout(() => {
+			sound.play("click.mp3")
+		}, 250)
 		player.onAnimationDone(() => {
 			if (!levelInfo[level].finalSocket) {
 				fadeTo = -1
@@ -283,7 +339,25 @@ function useSocket(s) {
 	player.animate("socket")
 }
 
+con.preFrame(() => {
+	ins.pos.x = Math.floor(con.width / 2) + con.camera.pos.x
+})
+
 con.frame(() => {
+	// Show instructions
+	insShow = CTool.lerp(insShow, button.state * (Math.min(ins.pos.dist(player.pos.added2(8, 10)), 35) / 35), 0.05)
+	if (player.pos.x > 25 && ins.srcStr == "Assets/insWasd.png") {
+		ins.setSrc("Assets/insSpace.png")
+	} else if (con.camera.pos.x > 200 && ins.srcStr == "Assets/insSpace.png") {
+		ins.setSrc("Assets/insLamppost.png")
+		ins.animationStates.sw[2] *= 2
+		ins.animationStates.sw[1] = 2
+	} else if (con.camera.pos.x > 600 && ins.srcStr == "Assets/insLamppost.png") {
+		// ins.hidden = true
+		ins.setSrc("Assets/insSocket.png")
+		ins.animationStates.sw[1] = 1
+	}
+
 	// Set button position
 	button.pos.x = con.width / 2
 	button.pos.y = con.height / 2
@@ -333,6 +407,7 @@ con.frame(() => {
 			}
 		}
 		for (let h = 0; h < hovers.length; h++) hovers[h][1].layer(hovers[h][1].pos.y + 14)
+		for (let d = 0; d < deadBulbs.length; d++) deadBulbs[d].layer(deadBulbs[d].pos.y - 1)
 		for (let e = 0; e < bulbs.length; e++) {
 			bulbs[e].flipped = bulbs[e].speed.x > 0
 			bulbs[e].layer(bulbs[e].pos.y)
@@ -387,7 +462,7 @@ con.pFrame(() => {
 	// if (player.isOn && player.animationState != "socket" && !levelInfo[level].dash) player.energyLevel -= ON_ENERGY_DRAIN
 	if (player.energyLevel <= 0 && !levelInfo[level].finalSocket) {
 		player.energyLevel = 0
-		if (!levelInfo[level].dash) {
+		if (levelInfo[level].dash == 0) {
 			player.isOn = false
 			player.setSrc("Assets/off.png")
 			player.animationStates.run[2] = 6
@@ -420,7 +495,7 @@ con.pFrame(() => {
 			let d = Math.sqrt((bulbs[e].pos.x - bulbs[o].pos.x) ** 2 + ((bulbs[e].pos.y - bulbs[o].pos.y) * 1.5) ** 2)
 			if (d > 0) {
 				let a = Math.atan2(bulbs[e].pos.x - bulbs[o].pos.x, bulbs[e].pos.y - bulbs[o].pos.y)
-				if (d < 18 || (d < 64 && e > 0)) {
+				if (d < 13 || (d < 64 && e > 0)) {
 					bulbs[e].speed.x += Math.sin(a) / (d * 40)
 					bulbs[e].speed.y += Math.cos(a) / (d * 40)
 				}
@@ -457,9 +532,8 @@ con.pFrame(() => {
 				else if (sceneID == 2 && d < 120) scenePart += 3
 				break
 			case 1: // Die
-				player.hidden = true
 				spotlight.hidden = true
-				deathAnim()
+				deathAnim(player, true)
 				con.follow(socket, 0.004, new Vec2(0, 0))
 				scenePart++
 				setTimeout(() => {
@@ -487,7 +561,7 @@ con.pFrame(() => {
 				// Camera shake
 				con.camera.pos.x += (Math.random() - 0.5) * 0.5
 				con.camera.pos.y += (Math.random() - 0.5) * 0.5
-				spotlightAdd += 0.0002
+				spotlightAdd += 0.0003
 			case 5: // Wait for fadeout...
 				useSocket(socket)
 				player.energyLevel += 0.001
@@ -499,7 +573,7 @@ con.pFrame(() => {
 				scenePart++
 			case 8:
 				player.energyLevel += 0.001
-				spotlightAdd += 0.0005
+				spotlightAdd += 0.0008
 
 				// Camera shake
 				blackBarOffset = Math.floor((Math.random() - 0.5) * spotlightAdd * 9)
@@ -508,7 +582,6 @@ con.pFrame(() => {
 				if (spotlightAdd > 2) scenePart++
 				break
 		}
-		// if (sceneID > 0) spotlightAdd += 0.03 / d
 	} else {
 		if (button.state % 2 == 1 && !player.locked)
 			player.speed.addVec(new Vec2(
@@ -516,20 +589,24 @@ con.pFrame(() => {
 				+ (con.eventOngoing("down")  ? 0.01 : 0) - (con.eventOngoing("up")   ? 0.01 : 0),
 				(con.eventOngoing("down")  ? 1    : 0) - (con.eventOngoing("up")   ? 1    : 0) * 0.5
 			).normalized().divideRet(
-				player.isOn ? 50 : 110
+				player.isOn ? 50 : 180
 			))
 	}
 })
 
 // DEALING WITH LEVELS
 let totalEnergy = 0
-let level = -1//-1
+let level = -1 //-1
 let levelDone = false
 let levelInfo = [
-	{width: 1000, bulbs:  0, addBulbs: 15, bulbFollow: 0.0020, hoverSpace: 2.0, dash: false, finalSocket: false},
-	{width: 1200, bulbs: 15, addBulbs: 15, bulbFollow: 0.0025, hoverSpace: 1.8, dash: false, finalSocket: false},
-	{width: 1500, bulbs: 20, addBulbs: 20, bulbFollow: 0.0030, hoverSpace: 1.0, dash: true , finalSocket: false},
-	{width: 1800, bulbs: 25, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: true , finalSocket: false},
+	{width: 1000, bulbs:  0, addBulbs: 15, bulbFollow: 0.0020, hoverSpace: 2.0, dash: 0, finalSocket: false},
+	{width: 1200, bulbs: 15, addBulbs: 15, bulbFollow: 0.0025, hoverSpace: 1.8, dash: 0, finalSocket: false},
+
+	{width: 1500, bulbs: 20, addBulbs: 20, bulbFollow: 0.0030, hoverSpace: 1.0, dash: 1, finalSocket: false},
+	{width: 1800, bulbs: 25, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: 1, finalSocket: false},
+
+	{width: 1500, bulbs: 20, addBulbs: 20, bulbFollow: 0.0030, hoverSpace: 1.0, dash: 2, finalSocket: false},
+	{width: 1800, bulbs: 25, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: 2, finalSocket: false},
 
 	{width:  100, bulbs:  0, bulbFollow: 0.0000, hoverSpace:  -1, dash: false, finalSocket: true}
 ]
@@ -537,6 +614,7 @@ let levelInfo = [
 function loadLevel() {
 	if (level >= 0) {
 		timer = Device.getTime()
+		ins.hidden = true
 	}
 	levelDone = false
 	level++
@@ -557,13 +635,15 @@ function loadLevel() {
 	socket.pos.y = con.height / 2
 
 	player.animate("idle")
-	player.isOn = levelInfo[level].dash
+	player.isOn = levelInfo[level].dash > 0
 	if (player.isOn) player.setSrc("Assets/on.png")
 	else  player.setSrc("Assets/off.png")
 	player.energyLevel = INIT_ENERGY
 	player.locked = false
 	con.camera.constrains = new Rect(0, 0, levelInfo[level].width, 0)
 	con.camera.pos.x = 0
+
+	player.resolveCollision = (levelInfo[level].dash < 2)
 
 	clearBulbs()
 	for (let _ = 0; _ < levelInfo[level].bulbs; _++) newBulb()
