@@ -588,16 +588,16 @@ class Console {
 	}
 	
 	/**
-	 * 
-	 * @param {*} t 
+	 * Sets the blend mode for images, colors, and shapes.
+	 * @param {Number} t
 	 */
 	blend(t) {
 		this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA)
 		switch (t) {
-			case 0:
+			case 0: // Normal
 				this.gl.blendEquation(this.gl.FUNC_ADD)
 				break
-			case 1:
+			case 1: // Additive
 				this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE)
 				// this.gl.blendEquation(this.gl.ADD)
 				break
