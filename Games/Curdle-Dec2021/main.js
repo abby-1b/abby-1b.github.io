@@ -5,14 +5,12 @@ sound.preload([
 	"switch.mp3",
 	"noSwitch.mp3",
 	"death.mp3",
-	"onHum.mp3",
 	"click.mp3",
 	"hover.mp3",
-	"final.mp3"
+	"final.mp3",
+	"spark.mp3"
 ], "Sound/")
 
-// SOUND CONSTANTS
-const HUM_VOLUME = 0.15
 
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
 document.body.style.background = '#000'
@@ -46,6 +44,13 @@ let timer = -1
 let timerText = ""
 let timerScores = []
 
+// Title screen
+let title = con.nObj(new Sprite("Assets/TITLE.png", 0, 0, 68, 32, 1, true))
+title.drawFn = (function(){
+	con.color(255, button.opacity * 255)
+})
+title.layer(2e9)
+
 // Button
 let button = con.nObj(new Button("Assets/playButton.png", 0, 0, 16, 16, 1, true))
 button.addAnimation("off", {start: 0, end: 0, timer: 1, loop: false, pause: -1}, true)
@@ -54,7 +59,7 @@ button.opacity = 1
 button.state = 0
 button.layer(2e9)
 button.drawFn = (function() {
-	if (this.state % 2 == 1) this.opacity = Math.max(0, this.opacity - 0.1)
+	if (this.state % 2 == 1) this.opacity = Math.max(0, this.opacity - 0.04)
 	con.color(255, this.opacity * 255)
 })
 button.onClick(function(){
@@ -172,7 +177,6 @@ player.drawFn = (function(){
 		if (dsq < md) md = dsq
 	}
 	sound.loaded["hover.mp3"].volume = Math.max(0, ((1 - Math.min(Math.sqrt(md), 500) / 500) ** 2) * (1 - Math.abs(fadeMultiplier)))
-	sound.loaded["onHum.mp3"].volume = Math.max(0, player.energyLevel * HUM_VOLUME)
 	md = Math.max(0, 50 - (md / 10)) * 2 + spotlightAdd * 1600
 	if (player.isOn)
 		con.color(
@@ -220,11 +224,9 @@ con.nEvent("switch", () => {
 		else sound.play("noSwitch.mp3", 1)
 		player.isOn = (!player.isOn) && player.energyLevel > 0
 		if (player.isOn) {
-			sound.play("onHum.mp3", HUM_VOLUME, 1, true)
 			player.setSrc("Assets/on.png")
 			player.animationStates.run[2] = 2
 		} else {
-			sound.pause("onHum.mp3")
 			player.setSrc("Assets/off.png")
 			player.animationStates.run[2] = 6
 		}
@@ -274,7 +276,7 @@ for (let l = 0; l < 5; l++) {
 	})
 	// lampposts[lampposts.length - 1].showHitbox = true
 	lampposts[lampposts.length - 1].hbOffsets({top: 50, bottom: -4, left: -8, right: 3})
-	lampposts[lampposts.length - 1].pos = new Vec2(Math.random() * con.width, Math.random() * con.height)
+	lampposts[lampposts.length - 1].pos = new Vec2(con.width * (l / 5) * (Math.random() * 0.5 + 1), Math.random() * con.height)
 
 	// Instantiate shine
 	lampposts.push(con.nObj(new Sprite("Assets/lamppostShine.png", 0, 0, 27, 59)))
@@ -369,10 +371,14 @@ con.frame(() => {
 		ins.setSrc("Assets/insSocket.png")
 		ins.animationStates.sw[1] = 1
 	}
+	
+	// Set title position
+	title.pos.x = con.width / 2
+	title.pos.y = con.height / 3
 
 	// Set button position
 	button.pos.x = con.width / 2
-	button.pos.y = con.height / 2
+	button.pos.y = con.height - con.height / 3
 
 	// Move and scale player's spotlight
 	spotlight.pos = player.pos.added2(8, 31)
@@ -615,7 +621,7 @@ con.pFrame(() => {
 })
 
 // DEALING WITH LEVELS
-let totalEnergy = 3
+let totalEnergy = 0
 let level = -1 //-1
 let levelDone = false
 let levelInfo = [
@@ -646,7 +652,7 @@ function loadLevel() {
 	console.log("Loading level", level)
 
 	// Makes the level short for testing.
-	// levelInfo[level].width /= 100
+	levelInfo[level].width /= 100
 
 	player.pos.x = 0
 	player.pos.y = con.height / 2 - player.h / 2
@@ -683,7 +689,10 @@ function loadLevel() {
 let sceneID = -1
 let scenePart = 0
 function runFinal() {
-	sceneID = totalEnergy / 4 //(levelInfo.length - 1)
+	for (let b = 0; b < deadBulbs.length; b++) {
+		deadBulbs[b].fadeOut = 0
+	}
+	sceneID = totalEnergy / 6 //(levelInfo.length - 1)
 	player.energyLevel = sceneID
 	if (sceneID < 0.5) {
 		sceneID = 0
@@ -698,6 +707,7 @@ function runFinal() {
 }
 
 function doSparks() {
+	sound.play("spark.mp3", 0.2, 1 + Math.random() * 0.5)
 	button.hidden = true
 	let s = con.nObj(new Sprite("Assets/spark.png", socket.pos.x - 12 + Math.random() * 10, socket.pos.y - 4 + Math.random() * 8, 16, 16, 1, true))
 	s.addAnimation("sp", {start: 0, end: 7, timer: 1, loop: false, pause: -1}, true)
