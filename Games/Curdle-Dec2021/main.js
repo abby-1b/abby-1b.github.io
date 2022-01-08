@@ -65,7 +65,7 @@ button.onClick(function(){
 let spotlight = con.nObj(new Sprite("Assets/playerSpotlight.png", 0, 0, 69 * 8, 26 * 8, 1, true))
 let spotlightAdd = 0
 spotlight.drawFn = (function(){
-	con.color(255, player.energyLevel * (player.isOn ? 150 : 100))
+	con.color(255, player.energyLevel * (player.isOn ? 190 : 130))
 	con.blend(1)
 })
 
@@ -155,7 +155,7 @@ con.nEvent("switch", () => {
 	if (levelInfo[level].dash) {
 		// Dashing mechanic
 		if (player.energyLevel > 0) {
-			player.speed = player.speed.normalized().multiplied2(5,3)
+			player.speed = player.speed.normalized().multiplied2(3,1.8)
 			player.energyLevel -= DASH_ENERGY
 		}
 	} else {
@@ -226,7 +226,7 @@ for (let l = 0; l < 5; l++) {
 
 // Instantiate hovers
 let hovers = []
-for (let h = 0; h < 6; h++) {
+for (let h = 0; h < 8; h++) {
 	let nh = [
 		con.nObj(new Sprite("Assets/lamp.png", h * 74, 0, 74, 31)),
 		con.nObj(new Sprite("Assets/lampLight.png", h * 74, 0, 48, 58))
@@ -267,7 +267,7 @@ function keepOnScreen(el) {
 function useSocket(s) {
 	if (!player.locked) {
 		timerText = Format.timeMMSSHH(Device.getTime() - timer)
-		timerScores.push([timerText, Device.getTime() - timer])
+		if (!levelInfo[level].finalSocket) timerScores.push([timerText, Device.getTime() - timer])
 		player.onAnimationDone(() => {
 			if (!levelInfo[level].finalSocket) {
 				fadeTo = -1
@@ -308,7 +308,7 @@ con.frame(() => {
 	}
 
 	// Socket interaction
-	if ((!levelInfo[level].finalSocket) && player.isOn && player.pos.added2(player.w / 2, 32).distSquared(socket.pos) < 161) useSocket(socket)
+	if ((!levelInfo[level].finalSocket) && player.isOn && (player.pos.added2(player.w / 2, 32).distSquared(socket.pos) < 161 || player.locked)) useSocket(socket)
 
 	// Layering, animation (for bulbs), and keeping things on screen.
 	let ppy = player.finalPos().y + (Math.random() - 0.5) * 3
@@ -522,7 +522,7 @@ con.pFrame(() => {
 })
 
 // DEALING WITH LEVELS
-let totalEnergy = 4
+let totalEnergy = 0
 let level = -1//-1
 let levelDone = false
 let levelInfo = [
@@ -603,7 +603,7 @@ function finalFade() {
 		"You tried,\nyet you fit in",
 		"After all that, you\ndid great. Keep going,\nand dont fit in."
 	][sceneID] + "\n\n" + timerScores.map((e, i) => "LVL " + (i + 1) + " " + e[0]).join("\n") + "\nTotal " + Format.timeMMSSHH(timerScores.map(e => e[1]).reduce((a, b) => a + b))
-	fadeSpeed *= 0.25
+	fadeSpeed *= 0.5
 	fadeTo = (sceneID == 2 ? 1 : -1)
 }
 
