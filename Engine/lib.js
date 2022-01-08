@@ -171,36 +171,19 @@ class Console {
 			if (e.key.toLowerCase() in this.keys) delete this.keys[e.key.toLowerCase()]
 		})
 
+		// Checks if the user interacted with the page.
+		document.body.innerHTML = "<h1 id='startPrompt'>[Play]</h1>"
+		this.userInteracted = false
+		window.addEventListener('click', () => {
+			this.userInteracted = true
+		})
+
 		// Different functions.
 		this.initFn    = () => {}
 		this.preFrameFn = () => {}
 		this.frameFn    = () => {}
 		this.pFrameFn   = () => {}
 		this.frameCount = 0
-
-		// Finally, the canvas gets appended.
-		// Second step to make things not blurry on some devices.
-		this.usesSecondStepBlur = false
-		if (Device.outputIsBlurry()) {
-			this.usesSecondStepBlur = true
-			this.secondOutputCanvas = document.createElement("canvas")
-			
-			this.secondOutputCanvas.width = this.width
-			this.secondOutputCanvas.height = this.height
-
-			this.secondOutputCtx = this.secondOutputCanvas.getContext("2d")
-			this.secondOutputCanvas.style.width = "100vw"
-			this.secondOutputCanvas.style.height = "100vh"
-			document.body.appendChild(this.secondOutputCanvas)
-		} else {
-			this.el.style.width = "100vw"
-			this.el.style.height = "100vh"
-			// this.el.style.objectFit = "contain"
-			// this.el.style.position = "fixed"
-			// this.el.style.transform = "translate(-50%,-50%)"
-			// this.el.style.left = this.el.style.top = "50%"
-			document.body.appendChild(this.el)
-		}
 	}
 
 	// Controls
@@ -341,8 +324,6 @@ class Console {
 	}
 
 	_init() {
-		this.initFn()
-
 		let unloaded = 0
 		for (let i = 0; i < this.imageElements.length; i++) {
 			if (!this.imageElements[i].complete) unloaded++
@@ -350,12 +331,38 @@ class Console {
 
 		// ERR:
 		// console.log("Missing", unloaded, "images.")
-		if (unloaded > 0) {
+		if ((!this.userInteracted) || unloaded > 0) {
 			setTimeout(() => {
 				this._init.call(this)
 			}, 10)
 			return
 		}
+
+		// Finally, the canvas gets appended.
+		// Second step to make things not blurry on some devices.
+		this.usesSecondStepBlur = false
+		if (Device.outputIsBlurry()) {
+			this.usesSecondStepBlur = true
+			this.secondOutputCanvas = document.createElement("canvas")
+			
+			this.secondOutputCanvas.width = this.width
+			this.secondOutputCanvas.height = this.height
+
+			this.secondOutputCtx = this.secondOutputCanvas.getContext("2d")
+			this.secondOutputCanvas.style.width = "100vw"
+			this.secondOutputCanvas.style.height = "100vh"
+			document.body.appendChild(this.secondOutputCanvas)
+		} else {
+			this.el.style.width = "100vw"
+			this.el.style.height = "100vh"
+			// this.el.style.objectFit = "contain"
+			// this.el.style.position = "fixed"
+			// this.el.style.transform = "translate(-50%,-50%)"
+			// this.el.style.left = this.el.style.top = "50%"
+			document.body.appendChild(this.el)
+		}
+
+		this.initFn()
 
 		// Framerate calculation setup
 		this.lastTime = window.performance.now()
@@ -1847,7 +1854,6 @@ class SoundPlayer {
 		let au = this.loaded[path]
 		if (loop) {
 			au.ontimeupdate = function(){
-				console.log(this.currentTime, this.duration)
 				if (this.currentTime > this.duration - 0.5) {
 					this.currentTime = 0
 					this.play()

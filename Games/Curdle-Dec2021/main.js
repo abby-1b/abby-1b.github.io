@@ -6,8 +6,13 @@ sound.preload([
 	"noSwitch.mp3",
 	"death.mp3",
 	"onHum.mp3",
-	"click.mp3"
+	"click.mp3",
+	"hover.mp3",
+	"final.mp3"
 ], "Sound/")
+
+// SOUND CONSTANTS
+const HUM_VOLUME = 0.15
 
 const con = new Console(Device.touch() ? 300 : 200, [49, 25, 77])
 document.body.style.background = '#000'
@@ -161,11 +166,13 @@ player.onCollision((e) => {
 	if (!player.isOn) player.energyLevel -= TOUCH_ENERGY_DRAIN
 })
 player.drawFn = (function(){
-	let md = 1e4
+	let md = 2e5
 	for (let h = 0; h < hovers.length; h++) {
 		let dsq = this.pos.multiplied2(1, 2).distSquared(hovers[h][1].pos.multiplied2(1, 2).added(new Vec2(20, 48)))
 		if (dsq < md) md = dsq
 	}
+	sound.loaded["hover.mp3"].volume = Math.max(0, ((1 - Math.min(Math.sqrt(md), 500) / 500) ** 2) * (1 - Math.abs(fadeMultiplier)))
+	sound.loaded["onHum.mp3"].volume = Math.max(0, player.energyLevel * HUM_VOLUME)
 	md = Math.max(0, 50 - (md / 10)) * 2 + spotlightAdd * 1600
 	if (player.isOn)
 		con.color(
@@ -181,6 +188,7 @@ player.isOn = false
 player.setSrc("Assets/insSpace.png")
 player.setSrc("Assets/insLamppost.png")
 player.setSrc("Assets/insSocket.png")
+player.setSrc("Assets/spark.png")
 player.setSrc("Assets/offDeath.png")
 player.setSrc("Assets/on.png")
 player.setSrc("Assets/off.png")
@@ -212,7 +220,7 @@ con.nEvent("switch", () => {
 		else sound.play("noSwitch.mp3", 1)
 		player.isOn = (!player.isOn) && player.energyLevel > 0
 		if (player.isOn) {
-			sound.play("onHum.mp3", 0.15, 1, true)
+			sound.play("onHum.mp3", HUM_VOLUME, 1, true)
 			player.setSrc("Assets/on.png")
 			player.animationStates.run[2] = 2
 		} else {
@@ -302,6 +310,10 @@ con.init(() => {
 	con.physics.gravity = new Vec2(0, 0)
 	con.physics.friction = new Vec2(0.95, 0.95)
 	con.maxSortPerFrame = -1
+
+	// Start hover sound
+	sound.play("hover.mp3", 0, 1, true)
+	// console.log("Init-ing...")
 })
 
 function keepOnScreen(el) {
@@ -536,9 +548,14 @@ con.pFrame(() => {
 				deathAnim(player, true)
 				con.follow(socket, 0.004, new Vec2(0, 0))
 				scenePart++
+				if (sceneID == 1) {
+					setTimeout(() => { doSparks() }, 2000)
+					setTimeout(() => { doSparks() }, 2500)
+					setTimeout(() => { doSparks() }, 3000)
+				}
 				setTimeout(() => {
 					finalFade()
-				}, 3000)
+				}, 5000)
 				break
 			case 2: // Fade out
 				break
@@ -552,7 +569,10 @@ con.pFrame(() => {
 			case 4: // Socket
 				useSocket(socket)
 				if (player.locked) {
-					setTimeout(() => { scenePart++ }, 2000)
+					setTimeout(() => {
+						scenePart++
+						sound.play("final.mp3")
+					}, 2000)
 					setTimeout(() => { scenePart++ }, 5500)
 					scenePart++
 				}
@@ -595,7 +615,7 @@ con.pFrame(() => {
 })
 
 // DEALING WITH LEVELS
-let totalEnergy = 0
+let totalEnergy = 3
 let level = -1 //-1
 let levelDone = false
 let levelInfo = [
@@ -605,8 +625,8 @@ let levelInfo = [
 	{width: 1500, bulbs: 20, addBulbs: 20, bulbFollow: 0.0030, hoverSpace: 1.0, dash: 1, finalSocket: false},
 	{width: 1800, bulbs: 25, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: 1, finalSocket: false},
 
-	{width: 1500, bulbs: 20, addBulbs: 20, bulbFollow: 0.0030, hoverSpace: 1.0, dash: 2, finalSocket: false},
-	{width: 1800, bulbs: 25, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: 2, finalSocket: false},
+	{width: 1500, bulbs: 25, addBulbs: 30, bulbFollow: 0.0030, hoverSpace: 1.0, dash: 2, finalSocket: false},
+	{width: 1800, bulbs: 30, addBulbs: 30, bulbFollow: 0.0035, hoverSpace: 0.8, dash: 2, finalSocket: false},
 
 	{width:  100, bulbs:  0, bulbFollow: 0.0000, hoverSpace:  -1, dash: false, finalSocket: true}
 ]
@@ -677,7 +697,16 @@ function runFinal() {
 	blackBarSizeTo = 20
 }
 
+function doSparks() {
+	button.hidden = true
+	let s = con.nObj(new Sprite("Assets/spark.png", socket.pos.x - 12 + Math.random() * 10, socket.pos.y - 4 + Math.random() * 8, 16, 16, 1, true))
+	s.addAnimation("sp", {start: 0, end: 7, timer: 1, loop: false, pause: -1}, true)
+}
+
 function finalFade() {
+	if (timerScores.length == 0) {
+		timerScores.push(["xx:xx:xx", 0])
+	}
 	timerText = [
 		"You\nfit in",
 		"You tried,\nyet you fit in",

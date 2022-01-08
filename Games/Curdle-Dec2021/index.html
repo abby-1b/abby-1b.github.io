@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Fitting In</title>
-        <script src="../../Engine/lib.js" defer></script>
+        <script src="lib.js" defer></script>
         <script src="main.js" defer></script>
 		<style>
 			* {
@@ -29,6 +29,18 @@
 				-ms-interpolation-mode: nearest-neighbor;
 				font-smooth: never;
 				-webkit-font-smoothing: none;
+				position: fixed;
+			}
+
+			#startPrompt {
+				color: white;
+				text-align: center;
+				font-family: monospace;
+				position: fixed;
+				z-index: 0;
+				transform: translate(-50%, -50%);
+				top: 50%;
+				left: 50%;
 			}
 		</style>
     </head>
