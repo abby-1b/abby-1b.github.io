@@ -373,7 +373,7 @@ con.frame(() => {
 	con.blend(0)
 	con.color(fadeMultiplier < 0 ? 200 : 40, Math.abs(fadeMultiplier) * 255)
 	let st = timerText.split("\n")
-	let 
+	// let 
 	for (let l = 0; l < st.length; l++) {
 		con.text(st[l], con.width / 2 - st[l].length * (2.5 * ts), con.height / 2 + (ts * 5) * l - (2.5 * ts * st.length))
 	}
