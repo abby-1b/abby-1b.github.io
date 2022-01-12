@@ -62,6 +62,11 @@ class Console {
 
 		// Setup WebGL
 		this.gl = this.el.getContext("webgl2", {antialias: false, alpha: true})
+		if (!this.gl) {
+			document.write("WebGL2 doesn't work on this device."
+			+ (Device.touch() ? "\nIf you're on iPhone, go to:\nSettings > Safari > Advanced > Experimental Features > WebGL 2.0\nand turn it on." : ""))
+			return
+		}
 		this.material = CTool.buildShaderProgram(this.gl, `
 			attribute vec2 vPos;
 			uniform vec2 vOffs;
@@ -170,13 +175,14 @@ class Console {
 		window.addEventListener('keyup'  , e => {
 			if (e.key.toLowerCase() in this.keys) delete this.keys[e.key.toLowerCase()]
 		})
+		this._touchAreaOpacity = 0
 
 		// Checks if the user interacted with the page.
 		document.body.innerHTML = "<h1 id='startPrompt'>[Play]</h1>"
 		this.userInteracted = false
-		window.addEventListener('click', () => {
-			this.userInteracted = true
-		})
+		window.addEventListener('click', () => { this.userInteracted = true })
+		window.addEventListener('touchstart', () => { this.userInteracted = true })
+		window.addEventListener('keydown', () => { this.userInteracted = true })
 
 		// Different functions.
 		this.initFn    = () => {}
@@ -264,6 +270,7 @@ class Console {
 	 * @param {Array} events Array of events to run when the screen is touched
 	 */
 	touchArea(height, width, events) {
+		this._touchAreas = [height, width, events]
 		this.currentTouches = {}
 		var ths = this
 		window.addEventListener("touchstart", function(e) {
@@ -297,6 +304,19 @@ class Console {
 				delete ths.currentTouches[e.changedTouches[ct].identifier]
 			}
 		})
+	}
+
+	displayTouchArea() {
+		this._touchAreaOpacity = CTool.lerp(this._touchAreaOpacity, Object.keys(con.currentTouches).length == 0 ? 30 : 2, 0.08)
+		this.color(255, this._touchAreaOpacity)
+		this.rect(0, 0, this.width, this.height)
+		for (let h = 1 / this._touchAreas[0]; h < 1; h += 1 / this._touchAreas[0])
+			this.line(1, h * this.height, this.width - 2, h * this.height)
+		for (let v = 1 / this._touchAreas[1]; v < 1; v += 1 / this._touchAreas[1])
+			this.line(v * this.width, 1, v * this.width, this.height - 2)
+		for (let e = 0; e < this._touchAreas[2].length; e++) {
+			this.text(this._touchAreas[2][e], ((e % this._touchAreas[1]) / this._touchAreas[1]) * this.width + 2, Math.floor(e / this._touchAreas[1]) * (this.height / this._touchAreas[0]) + 2)
+		}
 	}
 
 	// Camera
@@ -466,6 +486,7 @@ class Console {
 		this.gl.uniform2fv(this.glParams.vOffs, this.glTranslation)
 		
 		this.frameFn() // Call user loop function
+		if (Device.touch()) this.displayTouchArea() // Shows the touch area
 		this.frameCount++ // Increment frame count
 
 		// Draw to second canvas if still blurry
@@ -1898,9 +1919,9 @@ class Controllers {
 				"down": ['s', 'S', "ArrowDown"],
 
 				"_touch": [3, 3, [
-					" ", "up", " ",
+					"left", "up", "right",
 					"left", "switch", "right",
-					" ", "down", " "
+					"left", "down", "right"
 				]]
 			}
 		}

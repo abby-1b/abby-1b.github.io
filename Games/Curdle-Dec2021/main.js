@@ -652,7 +652,7 @@ function loadLevel() {
 	console.log("Loading level", level)
 
 	// Makes the level short for testing.
-	levelInfo[level].width /= 100
+	// levelInfo[level].width /= 100
 
 	player.pos.x = 0
 	player.pos.y = con.height / 2 - player.h / 2
