@@ -803,6 +803,7 @@ class Sprite {
 		this.collisionEvents = []
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
 
+		this.collidedWith = () => {}
 		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
 	}
 
@@ -1223,6 +1224,7 @@ class TileMap {
 
 		this.hb = {top: 0, bottom: 0, left: 0, right: 0, slr: 0, stb: 0}
 
+		this.collidedWith = () => {}
 		this._vertexArr = new Float32Array([0,0, 0,0, 0,0, 0,0])
 	}
 
