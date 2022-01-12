@@ -1,3 +1,0 @@
-
- - Double jump
- - Nothing else for now
