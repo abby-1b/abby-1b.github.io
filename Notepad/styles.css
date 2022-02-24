@@ -33,6 +33,8 @@ body, html {
     opacity: 0.5;
     pointer-events: none;
     tab-size: 2;
+	background: none;
+	border: none;
 }
 
 #cv {
