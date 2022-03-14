@@ -4,7 +4,31 @@
 		"a": ["2", "3", " 4", "5"]
 	},
 	{
-		"q": "\"they're\" means...",
-		"a": ["they were", " they are", "their wire"]
+		"q": "\"They're\" means...",
+		"a": ["They were", " They are", "Their wire"]
+	},
+	{
+		"q": "Starts on the 14th",
+		"a": [" English week", "The pain", "The 14th of what?"]
+	},
+	{
+		"q": "The meaning of life",
+		"a": ["Happiness", " 42", "To not die"]
+	},
+	{
+		"q": "Why are you playing?",
+		"a": ["For honor", "idk", "Why not?", " I'm being forced to"]
+	},
+	{
+		"q": "5 - 3",
+		"a": ["potato", " 2", "???", "8"]
+	},
+	{
+		"q": "√16",
+		"a": [" 4", "2", "8", "256"]
+	},
+	{
+		"q": "5 + 4 * 2",
+		"a": [" 13", "12", "19", "18"]
 	}
 ]
