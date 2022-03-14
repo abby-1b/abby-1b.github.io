@@ -1,0 +1,10 @@
+[
+	{
+		"q": "2 + 2 =",
+		"a": ["2", "3", " 4", "5"]
+	},
+	{
+		"q": "\"they're\" means...",
+		"a": ["they were", " they are", "their wire"]
+	}
+]
