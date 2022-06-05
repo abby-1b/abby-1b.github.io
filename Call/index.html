@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Call</title>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<script src="script.js" defer></script>
+		<style>
+			body, html {
+				margin: 0;
+				padding: 0;
+				background: black;/*linear-gradient(-20deg, rgba(0,29,36,1) 0%, rgba(9,83,121,1) 24%, rgba(0,255,124,1) 100%)*/;
+			}
+			body {
+				opacity: 0;
+			}
+
+			img {
+				width: 100vw;
+				height: 100vh;
+			}
+
+			* {
+				overflow: hidden;
+			}
+			a {
+				color: white;
+				position: absolute;
+				font-size: 5em;
+				left: 50%;
+				top: 10%;
+				transform: translate(-50%,-50%);
+				font-family: sans-serif;
+				font-weight: 300;
+				width: 100vw;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<a>...</a>
+		<img src="Bg.png" onclick="play()">
+	</body>
+</html>
