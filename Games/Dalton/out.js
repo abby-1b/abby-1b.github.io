@@ -215,6 +215,21 @@ window.addEventListener("mousemove", (e) => {
 });
 window.addEventListener("mousedown", () => { Control.mouseDown = true; });
 window.addEventListener("mouseup", () => { Control.mouseDown = false; });
+
+window.addEventListener("touchmove", (e) => {
+	Control.mouseX = (e.changedTouches[0].clientX / window.innerWidth) * Surface.width;
+	Control.mouseY = (e.changedTouches[0].clientY / window.innerHeight) * Surface.height;
+})
+window.addEventListener("touchstart", (e) => {
+	Control.mouseX = (e.changedTouches[0].clientX / window.innerWidth) * Surface.width;
+	Control.mouseY = (e.changedTouches[0].clientY / window.innerHeight) * Surface.height;
+	Control.mouseDown = true;
+})
+window.addEventListener("touchend", (e) => {
+	Control.mouseX = (e.changedTouches[0].clientX / window.innerWidth) * Surface.width;
+	Control.mouseY = (e.changedTouches[0].clientY / window.innerHeight) * Surface.height;
+	Control.mouseDown = false;
+})
 //# sourceMappingURL=Control.js.map
 class Texture {
     el;
