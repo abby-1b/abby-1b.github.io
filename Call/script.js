@@ -8,7 +8,7 @@ function play() {
                 setTimeout(() =>
 		        audio.play()
 		        document.body.style.opacity = '1'
-                }, (5 + Math.random() * 10) * 1000
+                }, (5 + Math.random() * 10) * 1000)
 	} else {
                 playing = true
 		audio.pause()
