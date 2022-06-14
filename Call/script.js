@@ -1,13 +1,16 @@
 var playing = true
 let audio = new Audio("audio.mp3")
-let names = "Fabi,Platonic Soulmate,darling,worm girl :D,Mari,My Dear,sweetheart <3".split(",")
+let names = "Fabi,Platonic Soulmate,darling,Mari,My Dear,sweetheart <3".split(",")
 function play() {
 	playing = !playing
 	console.log(playing)
 	if (playing) {
-		audio.play()
-		document.body.style.opacity = '1'
+                setTimeout(() =>
+		        audio.play()
+		        document.body.style.opacity = '1'
+                }, (5 + Math.random() * 10) * 1000
 	} else {
+                playing = true
 		audio.pause()
 		audio.currentTime = 0
 		document.body.style.opacity = '0'
