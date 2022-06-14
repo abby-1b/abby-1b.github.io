@@ -5,7 +5,7 @@ function play() {
 	playing = !playing
 	console.log(playing)
 	if (playing) {
-                setTimeout(() =>
+                setTimeout(() => {
 		        audio.play()
 		        document.body.style.opacity = '1'
                 }, (5 + Math.random() * 10) * 1000)
