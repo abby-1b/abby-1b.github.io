@@ -1,6 +1,6 @@
 var playing = true
 let audio = new Audio("audio.mp3")
-let names = "Fabi,Platonic Soulmate,darling,Mari,My Dear,sweetheart <3".split(",")
+let names = "Fabi,Platonic Soulmate,darling,Mari,My Dear,sweetheart <3,my luv <3,darling <3".split(",")
 function play(kk) {
 	playing = !playing
 	console.log(playing)
