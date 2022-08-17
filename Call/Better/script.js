@@ -3,7 +3,7 @@ function out(...txt) {
 	document.getElementById("out").value += txt.join(" ") + "\n"
 }
 
-const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 const recognition = new SpeechRecognition()
 recognition.continuous = true
 recognition.interimResults = true
@@ -23,3 +23,13 @@ function start() {
 }
 
 window.addEventListener("load", () => { start() })
+
+// const r = new window.webkitSpeechRecognition()
+// r.onerror = e => {
+// 	console.log(`Speech recognition error detected: ${e.error}`)
+// 	console.log(`Additional information: ${e.message}`)
+// }
+// r.onresult = r => {
+// 	console.log("Result:", r)
+// }
+// r.start()
