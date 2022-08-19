@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"lib": ["DOM", "ESNext"],
+		"target": "ES6",
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": false,
+		"sourceMap": false
+	}
+}
