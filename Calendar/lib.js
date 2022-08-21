@@ -27,8 +27,10 @@ Branch.Grid = class Grid extends Branch {
         this._cellHeight = "1fr";
     }
     get cellWidth() { return this._cellWidth; }
+    ;
     set cellWidth(v) { this._cellWidth = v, this.reload(); }
     get cellHeight() { return this._cellHeight; }
+    ;
     set cellHeight(v) { this._cellHeight = v, this.reload(); }
     get rows() { return this._rows; }
     get cols() { return this._cols; }
