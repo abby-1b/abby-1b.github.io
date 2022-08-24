@@ -23,9 +23,18 @@ class Branch {
 		return this.element
 	}
 	has(...branches: Branch[]): this { this.children.push(...branches); branches.forEach(b => b.parent = this); return this }
+	clearChildren() {
+		this.children.forEach(c => c.parent = undefined)
+		this.children = []
+	}
+
+	center(position = "absolute") { this.css({textAlign: "center", position, transform: "translate(-50%,-50%)", top: "50%", left: "50%"}) }
+	centerHorizontal(position = "absolute") { this.css({textAlign: "center", position, transform: "translate(-50%,0)", left: "50%"}) }
+
+	onClick(fn: (e: PointerEvent) => void) { this.element.addEventListener("pointerdown", fn) }
 
 	css(styles: CSSStyle) { for (const k in styles) (this.element.style as unknown as {[key: string]: string})[k] = (styles as unknown as {[key: string]: string})[k] }
-	reload() {  } // TODO:
+	reload() { this.children.forEach(c => c.reload()) }
 
 	static Grid = class Grid extends Branch {
 		protected _rows = 0
@@ -43,10 +52,12 @@ class Branch {
 			super.makeElement()
 			this.css({display: "grid"})
 		}
-		addRow(num = 1) { this._rows += num, this.reload() }
-		addCol(num = 1) { this._cols += num, this.reload() }
+		setRows(num: number, reload = true) { this._rows = num, reload && this.reload() }
+		setCols(num: number, reload = true) { this._cols = num, reload && this.reload() }
+		addRows(num = 1) { this._rows += num, this.reload() }
+		addCols(num = 1) { this._cols += num, this.reload() }
 
-		reload() { this.css({gridTemplateRows: `repeat(${this._rows},${this._cellHeight})`, gridTemplateColumns: `repeat(${this._cols},${this._cellWidth})`}) }
+		reload() { this.css({gridTemplateRows: `repeat(${this._rows},${this._cellHeight})`, gridTemplateColumns: `repeat(${this._cols},${this._cellWidth})`}), super.reload() }
 	}
 }
 
