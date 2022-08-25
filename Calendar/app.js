@@ -1,55 +1,40 @@
-class Day extends Branch {
-    constructor() {
-        super("Day");
-        this.number = 0;
-        this.innerDay = new Day.DayContainer("InnerDay");
-        this.has(this.innerDay);
+function makeDay(date) {
+    const day = document.createElement("div");
+    day.className = "day";
+    if (date > 0) {
+        day.innerText = date + "";
     }
-    set(n) { this.number = n, this.reload(); }
-    render() { this.reload(); }
-    reload() {
-        this.innerDay.number = this.number;
-        super.reload();
-    }
+    return day;
 }
-Day.DayContainer = class DayContainer extends Branch {
-    constructor() {
-        super(...arguments);
-        this.number = 0;
+function makeWeek(startNum = 1, startPos = 0, endPos = 7) {
+    const week = document.createElement("div");
+    week.className = "week";
+    for (let i = 0; i < 7; i++)
+        week.appendChild(makeDay((i < startPos || i >= endPos) ? 0 : i + 1 + startNum - startPos));
+    return week;
+}
+function makeMonth(date = new Date()) {
+    const startWeekDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    const endDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    console.log(startWeekDay, endDay);
+    let weeks = 1;
+    const month = document.createElement("div");
+    month.className = "month";
+    month.appendChild(makeWeek(0, startWeekDay));
+    let on = 7 - startWeekDay;
+    for (let i = 1; on < endDay; i++) {
+        month.appendChild(makeWeek(on, 0, endDay - on));
+        on += 7;
+        weeks++;
     }
-    reload() {
-        this.centerHorizontal("relative");
-        this.element.innerText = this.number < 1 ? "_" : this.number + "";
-    }
+    month.style.gridTemplateRows = "repeat(" + weeks + ",1fr)";
+    return month;
+}
+const container = document.getElementById("container");
+container.appendChild(makeMonth(new Date(new Date().getFullYear())));
+window.onresize = () => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    Array.from(document.getElementById("days").children).forEach((c, i) => c.innerText = (window.innerWidth < 800 ? days[i][0] : days[i]));
+    console.log("Done!");
 };
-class Month extends Branch.Grid {
-    constructor() {
-        super("Month");
-        this._seeingDate = new Date();
-        this.setCols(7, false);
-        this.setRows(6, false);
-    }
-    set seeingDate(d) { this._seeingDate = d, this.reload(); }
-    get seeingDate() { return this._seeingDate; }
-    reload() {
-        this.clearChildren();
-        for (let i = 0; i < this.rows * this.cols; i++) {
-            const d = new Day();
-            d.onClick(function (e) { console.log("Clicked!", e); });
-            this.has(d);
-        }
-        const dateOffset = new Date(this._seeingDate.getFullYear(), this._seeingDate.getMonth(), 1).getDay();
-        const monthLength = new Date(this._seeingDate.getFullYear(), this._seeingDate.getMonth() + 1, 0).getDate();
-        console.log(dateOffset, monthLength);
-        for (let i = 0; i < this.rows * this.cols; i++) {
-            const d = (i - dateOffset + 1) > monthLength ? 0 : i - dateOffset + 1;
-            this.children[i].set(d);
-        }
-        super.reload();
-    }
-}
-const calendar = new Month();
-calendar.center();
-calendar.cellWidth = "min(14.2857vw, 100px)", calendar.cellHeight = "90px";
-body.has(calendar);
-body.start();
+window.onresize();

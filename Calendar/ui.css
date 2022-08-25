@@ -1,0 +1,25 @@
+.roundButton {
+	border-radius: 100%;
+}
+
+.discreteButton {
+	background-color: transparent;
+	border: none;
+	text-align: center;
+	vertical-align: middle;
+
+	box-shadow: 0 0 5px -3px #0004;
+	transition: transform .3s, box-shadow .2s;
+}
+.discreteButton:hover {
+	box-shadow: 0 0 6px 0px #0003;
+}
+
+@media (prefers-color-scheme: dark) {
+	.discreteButton {
+		box-shadow: 0 0 5px -3px #fff4;
+	}
+	.discreteButton:hover {
+		box-shadow: 0 0 6px 0px #fff3;
+	}
+}
