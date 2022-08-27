@@ -24,13 +24,26 @@
 	}
 }
 
-.leftArrow {
+.arrow {
 	box-sizing: border-box;
 	width: 20px;
 	height: 20px;
 	background-color: transparent;
-	transform: rotate(-45deg);
+}
 
+.leftArrow {
 	border-left: 5px solid red;
 	border-top: 5px solid red;
+	transform: translate(50%,-50%) rotate(-45deg);
+	position: relative;
+	left: 0px;
+	top: 50%;
+}
+
+.rightArrow {
+	border-right: 5px solid red;
+	border-bottom: 5px solid red;
+	transform: translate(-150%,-50%) rotate(-45deg);
+	position: relative;
+	left: 100%;
 }

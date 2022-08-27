@@ -1,3 +1,6 @@
+const taskBar = document.getElementById("taskBar");
+function openTaskBar() { taskBar.classList.add("open"); }
+function closeTaskBar() { taskBar.classList.remove("open"); }
 function makeDay(date) {
     const day = document.createElement("div");
     day.className = "day";
@@ -31,10 +34,11 @@ function makeMonth(date = new Date()) {
     return month;
 }
 const container = document.getElementById("container");
-container.appendChild(makeMonth(new Date(new Date().getFullYear())));
+const d = new Date();
+container.appendChild(makeMonth(d));
 window.onresize = () => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    Array.from(document.getElementById("days").children).forEach((c, i) => c.innerText = (window.innerWidth < 800 ? days[i][0] : days[i]));
+    Array.from(document.getElementById("days").children).forEach((c, i) => c.innerText = (window.innerWidth < 1000 ? days[i][0] : days[i]));
     console.log("Done!");
 };
 window.onresize();
