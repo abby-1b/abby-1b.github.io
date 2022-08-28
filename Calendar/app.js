@@ -1,4 +1,9 @@
 const taskBar = document.getElementById("taskBar");
+function toggleTaskBar() { if (taskBar.classList.contains("open")) {
+    closeTaskBar();
+}
+else
+    openTaskBar(); }
 function openTaskBar() { taskBar.classList.add("open"); }
 function closeTaskBar() { taskBar.classList.remove("open"); }
 function makeDay(date) {
@@ -42,3 +47,13 @@ window.onresize = () => {
     console.log("Done!");
 };
 window.onresize();
+const keyBinds = {
+    "t": () => { toggleTaskBar(); }
+};
+window.onkeydown = (e) => {
+    const k = e.key;
+    if (k in keyBinds)
+        keyBinds[k]();
+    else
+        console.log(`Pressed ${k}`);
+};

@@ -2,6 +2,7 @@
 // document.documentElement.style.setProperty("--dayGap", "10px")
 
 const taskBar = document.getElementById("taskBar")
+function toggleTaskBar() { if (taskBar.classList.contains("open")) { closeTaskBar() } else openTaskBar() }
 function openTaskBar() { taskBar.classList.add("open") }
 function closeTaskBar() { taskBar.classList.remove("open") }
 
@@ -55,11 +56,11 @@ window.onresize = () => {
 (window.onresize as any)()
 
 const keyBinds: {[key: string]: () => void} = {
-	"t": () => {
-		
-	}
+	"t": () => { toggleTaskBar() }
 }
 
-window.onkeydown = () => {
-	
+window.onkeydown = (e) => {
+	const k = e.key
+	if (k in keyBinds) keyBinds[k]()
+	else console.log(`Pressed ${k}`)
 }
