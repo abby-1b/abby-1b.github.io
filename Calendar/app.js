@@ -1,3 +1,5 @@
+const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const taskBar = document.getElementById("taskBar");
 function toggleTaskBar() { if (taskBar.classList.contains("open")) {
     closeTaskBar();
@@ -6,19 +8,22 @@ else
     openTaskBar(); }
 function openTaskBar() { taskBar.classList.add("open"); }
 function closeTaskBar() { taskBar.classList.remove("open"); }
-function makeDay(date) {
+function makeDay(date, month, year) {
     const day = document.createElement("div");
     day.className = "day";
-    if (date > 0) {
-        day.innerText = date + "";
-    }
+    if (date > 0)
+        day.innerText = `${date}`;
+    if (date == d.getDate())
+        day.classList.add("today");
+    getDateEvents(date, month, year)
+        .map(e => day.appendChild(e.makeElement()));
     return day;
 }
-function makeWeek(startNum = 1, startPos = 0, endPos = 7) {
+function makeWeek(startNum, startPos, endPos, month, year) {
     const week = document.createElement("div");
     week.className = "week";
     for (let i = 0; i < 7; i++)
-        week.appendChild(makeDay((i < startPos || i >= endPos) ? 0 : i + 1 + startNum - startPos));
+        week.appendChild(makeDay((i < startPos || i >= endPos) ? 0 : i + 1 + startNum - startPos, month, year));
     return week;
 }
 function makeMonth(date = new Date()) {
@@ -26,15 +31,14 @@ function makeMonth(date = new Date()) {
     const endDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
     console.log(startWeekDay, endDay);
     let weeks = 1;
+    const yearNum = date.getFullYear();
+    const monthNum = date.getMonth();
     const month = document.createElement("div");
     month.className = "month";
-    month.appendChild(makeWeek(0, startWeekDay));
+    month.appendChild(makeWeek(0, startWeekDay, 7, monthNum, yearNum));
     let on = 7 - startWeekDay;
-    for (let i = 1; on < endDay; i++) {
-        month.appendChild(makeWeek(on, 0, endDay - on));
-        on += 7;
-        weeks++;
-    }
+    for (let i = 1; on < endDay; i++)
+        month.appendChild(makeWeek(on, 0, endDay - on, monthNum, yearNum)), on += 7, weeks++;
     month.style.gridTemplateRows = "repeat(" + weeks + ",1fr)";
     return month;
 }
@@ -42,9 +46,8 @@ const container = document.getElementById("container");
 const d = new Date();
 container.appendChild(makeMonth(d));
 window.onresize = () => {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     Array.from(document.getElementById("days").children).forEach((c, i) => c.innerText = (window.innerWidth < 1000 ? days[i][0] : days[i]));
-    console.log("Done!");
+    document.documentElement.style.setProperty("--dayGap", (window.innerWidth <= 800) ? "5px" : "10px");
 };
 window.onresize();
 const keyBinds = {
