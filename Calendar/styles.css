@@ -86,18 +86,23 @@ html, body {
 	height: var(--inlineEventHeight);
 	background-color: red;
 
-	width: calc(100% + 3 * var(--dayGap) + 2px);
-	margin-left: calc(-1.5 * var(--dayGap) - 1px);
+	width: calc(100% + 3 * var(--dayGap) + 4px);
+	margin-left: calc(-1.5 * var(--dayGap) - 3px);
 }
 .inlineEvent.start {
 	border-radius: var(--inlineEventHeight) 0 0 var(--inlineEventHeight);
 
-	width: calc(100% + 1.5 * var(--dayGap) + 1px);
+	width: calc(100% + 1.5 * var(--dayGap) + 2px);
 	margin-left: 0;
 }
 .inlineEvent.end {
 	width: calc(100% + var(--dayGap));
 	border-radius: 0 var(--inlineEventHeight) var(--inlineEventHeight) 0;
+}
+.inlineEvent.start.end {
+	margin-left: 0;
+	border-radius: var(--inlineEventHeight);
+	width: calc(100% + 0.5 * var(--dayGap));
 }
 
 #taskBar {
