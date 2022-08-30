@@ -1,5 +1,3 @@
-const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const taskBar = document.getElementById("taskBar");
 function toggleTaskBar() { if (taskBar.classList.contains("open")) {
     closeTaskBar();
