@@ -6,8 +6,11 @@ class CalendarDate {
         this.month = month;
         this.year = year;
     }
-    toString() {
-        return `${months[this.month]} ${this.day}th, ${this.year}`;
+    toString(display = false) {
+        if (display)
+            return `${months[this.month]} ${this.day}th, ${this.year}`;
+        else
+            return `[${this.month},${this.day},${this.year - 2000}]`;
     }
 }
 class CalendarEvent {
@@ -25,6 +28,22 @@ class CalendarEvent {
         if (day < this.date.day || day > this.endDate.day)
             return false;
         return true;
+    }
+    dateStartEnd(day, month, year) {
+        return [
+            year == this.date.year
+                && month == this.date.month
+                && day == this.date.day,
+            year == this.endDate.year
+                && month == this.endDate.month
+                && day == this.endDate.day
+        ];
+    }
+    toString(display = false) {
+        if (display)
+            return `CalendarEvent "${this.name}" {}`;
+        else
+            return `["${this.name}",${this.date},${this.endDate == this.date ? 0 : this.endDate}]`;
     }
 }
 class DateEvent {
@@ -50,9 +69,8 @@ const events = [
 function getDateEvents(day, month, year) {
     const ret = [];
     for (let e = 0; e < events.length; e++) {
-        if (events[e].dateInRange(day, month, year)) {
-            ret.push(new DateEvent(events[e].name, true, true));
-        }
+        if (events[e].dateInRange(day, month, year))
+            ret.push(new DateEvent(events[e].name, ...events[e].dateStartEnd(day, month, year)));
     }
     return ret;
 }

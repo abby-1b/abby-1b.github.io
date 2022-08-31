@@ -14,8 +14,11 @@ class CalendarDate {
 		this.year = year
 	}
 
-	toString(): string {
-		return `${months[this.month]} ${this.day}th, ${this.year}`
+	toString(display=false): string {
+		if (display)
+			return `${months[this.month]} ${this.day}th, ${this.year}`
+		else
+			return `[${this.month},${this.day},${this.year - 2000}]`
 	}
 }
 
@@ -37,6 +40,26 @@ class CalendarEvent {
 		if (month < this.date.month || month > this.endDate.month) return false
 		if (day < this.date.day || day > this.endDate.day) return false
 		return true
+	}
+
+	dateStartEnd(day: number, month: number, year: number): [boolean, boolean] {
+		return [
+			year == this.date.year
+			&& month == this.date.month
+			&& day == this.date.day,
+			year == this.endDate.year
+			&& month == this.endDate.month
+			&& day == this.endDate.day
+		]
+	}
+
+	// Serialize / Deserialize
+	toString(display=false) {
+		if (display)
+			return `CalendarEvent "${this.name}" {}`
+		else
+			return `["${this.name}",${this.date},${
+				this.endDate == this.date ? 0 : this.endDate}]`
 	}
 }
 
@@ -72,9 +95,8 @@ const events: CalendarEvent[] = [
 function getDateEvents(day: number, month: number, year: number): DateEvent[] {
 	const ret: DateEvent[] = []
 	for (let e = 0; e < events.length; e++) {
-		if (events[e].dateInRange(day, month, year)) {
-			ret.push(new DateEvent(events[e].name, true, true))
-		}
+		if (events[e].dateInRange(day, month, year))
+			ret.push(new DateEvent(events[e].name, ...events[e].dateStartEnd(day, month, year)))
 	}
 	return ret
 }
