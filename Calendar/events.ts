@@ -56,7 +56,7 @@ class CalendarEvent {
 	// Serialize / Deserialize
 	toString(display=false) {
 		if (display)
-			return `CalendarEvent "${this.name}" {}`
+			return `CalendarEvent "${this.name}" {}` // ez
 		else
 			return `["${this.name}",${this.date},${
 				this.endDate == this.date ? 0 : this.endDate}]`
