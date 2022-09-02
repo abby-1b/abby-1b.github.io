@@ -89,7 +89,7 @@ class DateEvent {
 }
 
 const events: CalendarEvent[] = [
-	new CalendarEvent("Test!", new CalendarDate(17, 7, 2022), new CalendarDate(19, 7, 2022))
+	new CalendarEvent("Test!", new CalendarDate(17, 8, 2022), new CalendarDate(19, 8, 2022))
 ]
 
 function getDateEvents(day: number, month: number, year: number): DateEvent[] {
