@@ -31,7 +31,6 @@ class CalendarEvent {
 	constructor(name: string, date: CalendarDate, endDate?: CalendarDate) {
 		this.name = name
 		this.date = date
-		console.log(date.toString())
 		this.endDate = endDate ?? date
 	}
 

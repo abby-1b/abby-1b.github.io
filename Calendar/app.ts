@@ -26,7 +26,6 @@ function makeWeek(startNum: number, startPos: number, endPos: number, month: num
 function makeMonth(date: Date = new Date()) {
 	const startWeekDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
 	const endDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-	console.log(startWeekDay, endDay)
 	let weeks = 1
 
 	const yearNum = date.getFullYear()

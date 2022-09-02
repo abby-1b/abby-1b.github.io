@@ -17,7 +17,6 @@ class CalendarEvent {
     constructor(name, date, endDate) {
         this.name = name;
         this.date = date;
-        console.log(date.toString());
         this.endDate = endDate !== null && endDate !== void 0 ? endDate : date;
     }
     dateInRange(day, month, year) {
