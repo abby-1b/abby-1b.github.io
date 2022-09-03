@@ -65,7 +65,10 @@ window.onresize = () => {
 };
 window.onresize();
 const keyBinds = {
-    "t": () => { toggleTaskBar(); }
+    "t": () => { toggleTaskBar(); },
+    "e": () => { makeNewEvent(); },
+    "ArrowLeft": () => { currMonth--, updateMonth(); },
+    "ArrowRight": () => { currMonth++, updateMonth(); },
 };
 window.onkeydown = (e) => {
     const k = e.key;

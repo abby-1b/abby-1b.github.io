@@ -71,7 +71,10 @@ window.onresize = () => {
 (window.onresize as any)()
 
 const keyBinds: {[key: string]: () => void} = {
-	"t": () => { toggleTaskBar() }
+	"t": () => { toggleTaskBar() },
+	"e": () => { makeNewEvent() },
+	"ArrowLeft" : () => { currMonth--, updateMonth() },
+	"ArrowRight": () => { currMonth++, updateMonth() },
 }
 
 window.onkeydown = (e) => {

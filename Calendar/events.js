@@ -73,3 +73,5 @@ function getDateEvents(day, month, year) {
     }
     return ret;
 }
+function makeNewEvent() {
+}

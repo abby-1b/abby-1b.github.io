@@ -130,6 +130,8 @@ html, body {
 		height: 40vh;
 	}
 	#taskBar.open { width: 100%; }
+
+	#dateText { font-size: 1.8em; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -144,4 +146,31 @@ html, body {
 	top: calc(var(--dayGap) / 2);
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+#popup {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	opacity: 0;
+	z-index: 1;
+	transition: backdrop-filter .5s, background-color .5s;
+}
+#popup.visible {
+	opacity: 1;
+	background-color: #0006;
+	backdrop-filter: blur(3px);
+}
+
+#innerPopup {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 50vw;
+	height: 50vh;
+	background-color: white;
+	border-radius: 20px;
 }

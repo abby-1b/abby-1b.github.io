@@ -99,3 +99,7 @@ function getDateEvents(day: number, month: number, year: number): DateEvent[] {
 	}
 	return ret
 }
+
+function makeNewEvent() {
+	
+}

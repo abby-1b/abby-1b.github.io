@@ -1,5 +1,5 @@
-const specialChars = "@^_`{|}~;<=>*+#$%&[\\]:0123456789";
-const usedChars = " etoanih@srludymwgcfI,kbpvWTY.!SAH()MNBDC\"O?jL'G/-xEJPRFzKqUVQZX";
+const specialChars = "@^_`|~;<=>*+#$%&\\:0123456789/-!'";
+const usedChars = " etoanih@srludymwgcfI,kbpvWTY.SAH()MNBDC\"O?jLG[]{}xEJPRFzKqUVQZX";
 function compress(inp) {
     inp = inp.trim();
     let simple = "";
