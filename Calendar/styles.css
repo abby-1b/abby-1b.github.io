@@ -135,5 +135,13 @@ html, body {
 @media (prefers-color-scheme: dark) {
 	body { background-color: #111111; }
 	.day { color: white; }
+	#dateText { color: white; }
 	.day.today { background-color: #50a2; }
+}
+
+#dateText {
+	position: absolute;
+	top: calc(var(--dayGap) / 2);
+	left: 50%;
+	transform: translate(-50%, -50%);
 }

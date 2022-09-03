@@ -30,4 +30,3 @@ function decompress(inp: string) {
 const str = "Chemistry"
 const comp = compress(str)
 const decomp = decompress(comp)
-console.log(`${str.length} > ${comp.length}`)

@@ -35,4 +35,3 @@ function decompress(inp) {
 const str = "Chemistry";
 const comp = compress(str);
 const decomp = decompress(comp);
-console.log(`${str.length} > ${comp.length}`);
