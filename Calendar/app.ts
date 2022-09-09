@@ -1,10 +1,13 @@
 // Change day gap
 // document.documentElement.style.setProperty("--dayGap", "10px")
 
+// Taskbar things
 const taskBar = document.getElementById("taskBar")
 function toggleTaskBar() { if (taskBar.classList.contains("open")) { closeTaskBar() } else openTaskBar() }
 function openTaskBar() { taskBar.classList.add("open") }
 function closeTaskBar() { taskBar.classList.remove("open") }
+
+/// ELEMENT MAKING
 
 function makeDay(date: number, month: number, year: number) {
 	const day = document.createElement("div")
@@ -43,6 +46,7 @@ function makeMonth(month: number, year: number) {
 	return monthEl
 }
 
+// Make the elements here...
 const container = document.getElementById("container")
 const d = new Date()
 let currMonth = d.getMonth()
@@ -63,6 +67,7 @@ updateMonth()
 ;(document.getElementsByClassName("leftArrow" )[0] as HTMLDivElement).addEventListener("click", () => { currMonth--, updateMonth() })
 ;(document.getElementsByClassName("rightArrow")[0] as HTMLDivElement).addEventListener("click", () => { currMonth++, updateMonth() })
 
+// Window size
 window.onresize = () => {
 	Array.from(document.getElementById("days").children).forEach((c, i) => (c as HTMLHeadingElement).innerText = (window.innerWidth < 1000 ? days[i][0] : days[i]))
 
@@ -70,13 +75,13 @@ window.onresize = () => {
 }
 (window.onresize as any)()
 
+// Input
 const keyBinds: {[key: string]: () => void} = {
 	"t": () => { toggleTaskBar() },
 	"e": () => { makeNewEvent() },
 	"ArrowLeft" : () => { currMonth--, updateMonth() },
-	"ArrowRight": () => { currMonth++, updateMonth() },
+	"ArrowRight": () => { currMonth++, updateMonth() }
 }
-
 window.onkeydown = (e) => {
 	const k = e.key
 	if (k in keyBinds) keyBinds[k]()
