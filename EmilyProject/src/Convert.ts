@@ -13,12 +13,12 @@ fetch("shake.json").then(r => r.text()).then(t => {
 
 	// Phrases
 	;((f: string[], t: string[]) => {
-		for (let i = 0; i < f.length; i++) phraseMap[f[i]] = t[i]
+		for (let i = 0; i < f.length; i++) if (t[i] != "alas") phraseMap[f[i]] = t[i]
 	})(jsonData.phrases1.split("\n"), jsonData.phrases2.split("\n"))
 
 	// Words
 	;((f: string[], t: string[]) => {
-		for (let i = 0; i < f.length; i++) phraseMap[f[i]] = t[i]
+		for (let i = 0; i < f.length; i++) if (t[i] != "alas") phraseMap[f[i]] = t[i]
 	})(jsonData.words1.split("\n"), jsonData.words2.split("\n"))
 
 	// Intrawords
@@ -48,8 +48,8 @@ function convert(dat: string): string {
 	// Loop through phrase map
 	for (const k in phraseMap) {
 		if (k.length < 2) continue
-		let v = phraseMap[k]
 		dat = dat.replace(new RegExp("( |^|[^A-Za-z])(" + k + ")( |$|[^A-Za-z])", "gi"), (...e: string[]) => {
+			let v = phraseMap[k]
 			i++
 			const t = e[2].trim()
 			const c1 = t[0].toUpperCase() == t[0]
@@ -62,8 +62,8 @@ function convert(dat: string): string {
 
 	// Loop through regexes
 	for (const r in regs) {
-		let v = regs[r]
 		dat = dat.replace(new RegExp(r, "gi"), (...a: string[]) => {
+			const v: [string, number] = [regs[r][0], regs[r][1]]
 			const e = a.slice(1, -2)
 			i++
 			const t = e[v[1]].trim()
