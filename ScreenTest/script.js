@@ -16,7 +16,7 @@ divs[2].style.setProperty("--color", "0,255,0")
 el.classList.add("anim")
 
 el.onclick = async () => {
-	// document.body.requestFullscreen()
+	document.body.requestFullscreen()
 
 	el.style.width = "0"
 	el.style.height = "0"
