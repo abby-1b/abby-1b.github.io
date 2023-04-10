@@ -1,0 +1,120 @@
+
+/* BASE */
+:root {
+	--accent: hsl(222, 100%, 69%);
+}
+
+* {
+	user-select: none;
+	margin: 0;
+	padding: 0;
+	font-family: sans-serif;
+	box-sizing: border-box;
+	/* border: 1px solid red; */
+}
+html, body {
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+}
+
+/* CARD */
+.card {
+	margin: 10px;
+	padding: 5px;
+	border-radius: 8px;
+	box-shadow: 0px 1.5px 2.8px 0px #0005;
+	transition: all .2s;
+}
+
+.card:hover {
+	transform: translateY(-1px);
+	box-shadow: 0px 2.2px 3.5px 0px #0005;
+}
+
+.card:active {
+	transform: translateY(1px);
+	box-shadow: 0px 1px 2px 0px #0005;
+}
+
+/* CHECKBOX */
+.cb-container {
+	display: block;
+	position: relative;
+	padding-left: 30px;
+	/* margin-bottom: 12px; */
+	cursor: pointer;
+	font-size: 22px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.cb-container input {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+	height: 0;
+	width: 0;
+}
+
+.cb-checkmark {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 25px;
+	width: 25px;
+	background-color: #eee;
+	border-radius: 4px;
+}
+
+.cb-container:hover input ~ .cb-checkmark {
+	background-color: #ccc;
+}
+
+.cb-container input:checked ~ .cb-checkmark {
+	background-color: var(--accent);
+}
+
+.cb-checkmark:after {
+	content: "";
+	position: absolute;
+	display: none;
+}
+
+.cb-container input:checked ~ .cb-checkmark:after {
+	display: block;
+}
+
+.cb-container .cb-checkmark:after {
+	left: 9px;
+	top: 5px;
+	width: 5px;
+	height: 10px;
+	border: solid white;
+	border-width: 0 3px 3px 0;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+/* REQUIREMENT MESSAGES */
+red {
+	color: red;
+	display: none;
+}
+
+/* FINAL */
+#final {
+	display: grid;
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+select {
+	border-radius: 4px;
+	padding: 3px;
+	font-size: 20px;
+}
