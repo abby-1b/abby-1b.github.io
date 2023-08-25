@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Spells</title>
+		<meta property="og:title" content="Spells!">
+		<link rel="icon" type="image/png" href="https://github.com/abby-1b/Spells/raw/main/assets/favicon.ico"></link>
+		<meta property="og:description" content="A half-decent amalgamation of languages that's... pretty fast."
+			>
+		<meta property="og:type" content="website">
+		<meta property="og:image" content="/assets/icon.png">
+		<style>		:root {
+					--mainColor: #b097c2;
+					--contentWidth: 800px;
+					--sideSpace: calc(50vw - var(--contentWidth) / 2);
+					--sideSpaceMin: 5vw;
+					--vertSpace: 80px;
+				}
+				* {
+					font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+					margin-top: 0;
+					color: #fbf8ff;
+				}
+				html, body {
+					background-color: #1b222e;
+					margin: 0;
+					padding: 0;
+				}
+				
+				.text-center { text-align: center; }
+				
+				.hero {
+					object-fit: contain;
+					width: 100%;
+				}
+		
+				section:nth-child(2n + 0) { background-color: #0002; }
+				section:nth-child(2n + 1) { background-color: #ffffff03; }
+				section {
+					padding: var(--vertSpace);
+					padding-left: max(var(--sideSpaceMin), var(--sideSpace));
+					padding-right: max(var(--sideSpaceMin), var(--sideSpace));
+					overflow: hidden;
+				}
+				section.tall {
+					padding-top: 20vh;
+					padding-bottom: 20vh;
+				}
+		
+				.align-horizontal {
+					display: flex;
+					justify-content: center;
+				}
+		
+				code {
+					font-family: monospace;
+					border-radius: 2px;
+					padding: 2px;
+				}
+		</style>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0"></meta>
+		<style>	.button-big {
+				text-align: center;
+			}
+			.button-big > button {
+				padding: 10px 18px 10px 18px;
+				border-radius: 999px;
+				font-size: 1.2em;
+				border: none;
+				background-color: var(--mainColor);
+			}
+			.button-big:not(:first-child) {
+				margin-left: 8px;
+			}
+			.button-big.secondary > button {
+				background-color: transparent;
+				outline: 2px solid #bbb;
+				outline-offset: -2px;
+			}
+		</style>
+	</head>
+	<body>
+		<section id="title" class="tall">
+			<img src="https://github.com/abby-1b/Spells/raw/main/assets/banner.png" class="hero"></img>
+			<h1 class="text-center">		A blazingly fast amalgamation of languages
+				</h1>
+			<div class="align-horizontal">
+				<div @ text="Get Started" class="button-big">
+					<button onclick="window.location='../'"><b>Get Started</b></button>
+				</div>
+				<div @ text="Learn Spells" class="button-big secondary">
+					<button onclick="window.location='../'"><b>Learn Spells</b></button>
+				</div>
+			</div>
+		</section>
+		<section>
+			<p>
+						Have you ever wanted to use a combination of JavaScript, TypeScript,
+					MarkDown, and Pug/Jade to mash modules, components, hopes, and dreams
+					into something barely representative of the Web Developer you really
+					are, but in a fraction of the time it would take you to do the same
+					thing in a sane matter (you know, by <i>not</i> mixing languages together)? <br><br>		Well, now you can!
+			
+			</p>
+		</section>
+		<section style="--vertSpace:20px">
+			<p style="font-size:0.8em" class="no-margin text-center">
+						This site was made with the Spells compiler!<br>		GitHub: <a href="https://github.com/abby-1b/Spells"><code>https://github.com/abby-1b/Spells</code></a> <br>		Contact: <a href="mailto:abby.041b@gmail.com"><code>abby.041b@gmail.com</code></a>
+			</p>
+		</section>
+	</body>
+</html>
