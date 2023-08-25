@@ -1,0 +1,11 @@
+<script>
+	const mappings = {
+		"ciic_tutoring": "/site/tutoring"
+	}
+	
+	const to = window.location.search.slice(1)
+	if (to in mappings)
+		window.location.href = mappings[to]
+	else
+		window.location.href = "/"
+</script>
