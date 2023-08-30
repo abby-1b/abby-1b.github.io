@@ -7,7 +7,6 @@ head
 div.titleContainer
 	div.center
 		h1 Want some help?
-		div.padding
 		p I'm here to help.
 		div.padding
 		p.money.
