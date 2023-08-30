@@ -26,8 +26,9 @@ const els = ([...document.querySelectorAll("*")] as HTMLElement[])
 let elIdx = 0
 for (const el of els) {
 	(el as any).realInner = el.innerText
+	el.style.transition = ""
 	el.style.opacity = '0'
-	// el. // TODO: AAAAAA
+	el.style.transition = "opacity .5s"
 	setTimeout(() => {
 		el.style.opacity = '1'
 	}, (elIdx++) * 100)
@@ -39,7 +40,7 @@ setInterval(() => {
 		el.innerHTML = (el as unknown as { realInner: string })
 			.realInner.replace(/./g, e => {
 				const lc = e.toLowerCase()
-				if (!(lc in letterMapping) || Math.random() < 0.95) return e
+				if (!(lc in letterMapping) || Math.random() < 0.98) return e
 				return "<weird>" + letterMapping[lc][
 					Math.floor(letterMapping[lc].length * Math.random())
 				] + "</weird>"
