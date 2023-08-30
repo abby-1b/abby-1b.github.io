@@ -1,0 +1,36 @@
+
+head
+	style(src="styles.css")
+	meta(name="viewport" content="width=device-width, initial-scale=1")
+	script(src="letterEffect.ts" async defer)
+
+div.titleContainer
+	div.center
+		h1 Want some help?
+		div.padding
+		p I'm here to help.
+		div.padding
+		p.money.
+			For only [$8]() an hour!
+
+div.optionContainer
+	div.option
+		div.center
+			p Wanna do a quick call so we can setup a time/place?
+			div.padding
+			h3 [Call me!](tel:+17873073031)
+
+	div.option
+		div.center
+			p Just want to get the help and get this over with?
+			div.padding
+			h3 [Text me!](sms:+17873073031)
+
+	div.option
+		div.center
+			p Don't know how to approach someone to ask for help?
+			div.padding
+			h3 [Text me, but it's just](sms:+17873073031&body=Hi%2C%20I%20need%20help%20with%20CIIC!%20Please%20let%20me%20know%20when%20you're%20available%20%3A%29)
+			h3 [a pre-made message!](sms:+17873073031&body=Hi%2C%20I%20need%20help%20with%20CIIC!%20Please%20let%20me%20know%20when%20you're%20available%20%3A%29)
+
+div.overlay

@@ -1,0 +1,9 @@
+style.
+	project {
+		background-color: red;
+	}
+
+project(@)
+	h1 @{name}
+	p @{text}
+
