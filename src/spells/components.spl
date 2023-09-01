@@ -19,4 +19,4 @@ style.
 	}
 
 button-big(@)
-	button(onclick="window.location='../'") **@{text}**
+	button(onclick="window.location='@{link}'") **@{text}**

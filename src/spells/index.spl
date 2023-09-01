@@ -67,8 +67,8 @@ section.tall#title
 		A blazingly fast amalgamation of languages
 	
 	div.align-horizontal
-		button-big(@, text="Get Started")
-		button-big(@, text="Learn Spells").secondary
+		button-big(@, text="Get Started", link="https://github.com/abby-1b/Spells/blob/main/INSTALL.md")
+		button-big(@, text="Learn Spells", link="https://github.com/abby-1b/Spells/blob/main/docs/0_start_here.md").secondary
 
 section
 	p.
