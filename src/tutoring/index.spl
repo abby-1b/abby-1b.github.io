@@ -10,7 +10,7 @@ div.titleContainer
 		p I'm here to help.
 		div.padding
 		p.money.
-			For only [$8]() an hour!
+			For only [$10]() an hour!
 
 div.optionContainer
 	div.option
