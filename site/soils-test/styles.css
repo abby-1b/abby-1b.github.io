@@ -1,0 +1,270 @@
+
+:root {
+	--accent-color: #00923c;
+}
+
+* {
+	user-select: none;
+	transition: all .2s ease-in-out;
+}
+
+body, html {
+	overscroll-behavior: none;
+	overflow: visible;
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	color: #eeeeee;
+	font: 700 24.58px "Inter-Bold", sans-serif;
+}
+
+body {
+	background-image: url(./assets/soil-bg-final.png);
+	background-size: cover;
+	background-position: center;
+	box-sizing: border-box;
+	border: 20px solid transparent;
+}
+
+#title {
+	margin-top: 10px;
+	margin-bottom: 30px;
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+}
+
+#title > h1 {
+	color: #ffffff;
+	text-align: left;
+	font: 900 43.47px "Inter-Black", sans-serif;
+	margin: 0;
+}
+
+#title > img {
+	width: 100%;
+	filter: drop-shadow(0px 1.29px 2px rgba(0, 0, 0, 0.5));
+}
+
+.input {
+	width: 100%;
+	position: relative;
+	margin-bottom: 70px;
+}
+
+.input > h2 {
+	margin: 0;
+	padding: 0;
+}
+
+.input > input {
+	-webkit-appearance: none;
+	-webkit-transition: .2s;
+	width: 100%;
+	height: 40px;
+	border-radius: 50px;
+	background: #eeeeee;
+	margin: 5px 0 5px 0;
+	outline: none;
+	box-shadow: 0 0 0 5px #eeeeee;
+	position: absolute;
+}
+
+.slider > input::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 40px;
+	height: 40px;
+	background: var(--accent-color);
+	cursor: pointer;
+	border-radius: 50px;
+}
+
+.slider > input::-moz-range-thumb {
+	width: 40px;
+	height: 40px;
+	background: var(--accent-color);
+	cursor: pointer;
+	border-radius: 50px;
+}
+
+.slider > div {
+	pointer-events: none;
+	position: absolute;
+	z-index: 999;
+	width: 100%;
+	margin-top: 7px;
+	height: 40px;
+	text-align: center;
+	font-size: 2em;
+	font: 900 30px "Inter-Black", sans-serif;
+	color: white;
+	mix-blend-mode: difference;
+}
+
+.num-input > input {
+	outline: none;
+	border: none;
+	padding: 5px 12px 5px 12px;
+	box-sizing: border-box;
+	font-size: 2em;
+	font: 900 30px "Inter-Black", sans-serif;
+}
+
+.num-input > input::placeholder {
+	color: #0002;
+}
+
+#output > h2 {
+	padding-top: 20px;
+	width: 100%;
+	font: 900 4em "Inter-Black", sans-serif;
+	text-align: center;
+}
+
+/* OLD! vvv */
+
+.calculate-button {
+	position: absolute;
+	inset: 0;
+}
+
+.rectangle-2 {
+	background: #f9f9f9;
+	border-radius: 3px;
+	width: 269px;
+	height: 55px;
+	position: absolute;
+	left: calc(50% - 134.5px);
+	top: 594px;
+	box-shadow: 0px 0px 10.35px 0px rgba(255, 255, 255, 0.4);
+}
+
+.calculate {
+	color: #000000;
+	text-align: center;
+	font: 900 43.47px "Inter-Black", sans-serif;
+	position: absolute;
+	left: calc(50% - 131.85px);
+	top: 596px;
+	width: 263.71px;
+	height: 49px;
+}
+
+.field-al-content {
+	height: 85px;
+	position: absolute;
+	right: 22px;
+	left: 22px;
+	top: 227px;
+}
+
+.background2 {
+	background: #eeeeee;
+	border-radius: 3px;
+	position: absolute;
+	right: -8px;
+	left: -8px;
+	bottom: 0%;
+	top: 36.47%;
+	height: 63.53%;
+}
+
+.input-placeholder {
+	color: rgba(0, 0, 0, 0.3);
+	text-align: left;
+	font: 400 33.54px "Inter-Regular", sans-serif;
+	position: absolute;
+	left: 0px;
+	bottom: 7.06%;
+	top: 44.71%;
+	height: 48.24%;
+	width: 428px;
+}
+
+.field-cmol-content {
+	height: 85px;
+	position: absolute;
+	right: 22px;
+	left: 22px;
+	top: 338px;
+}
+
+.slider-factor {
+	height: 85px;
+	position: absolute;
+	right: 22px;
+	left: 22px;
+	top: 449px;
+}
+
+.range-text {
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.range-start {
+	color: #252525;
+	/* text-align: center; */
+	font: 600 24.58px "Inter-SemiBold", sans-serif;
+	position: absolute;
+	left: 27px;
+}
+
+.range-end {
+	color: #252525;
+	text-align: center;
+	font: 600 24.58px "Inter-SemiBold", sans-serif;
+	position: absolute;
+	right: 12px;
+	top: calc(50% - -0.5px);
+}
+
+.actual-value {
+	color: #252525;
+	text-align: center;
+	font: 900 24.58px "Inter-Black", sans-serif;
+	position: absolute;
+	transform: translate(-50%, -50%);
+	left: 50%;
+	top: calc(50% - -0.5px);
+}
+
+.slider-bit {
+	width: 54px;
+	height: 54px;
+	position: absolute;
+	left: 0px;
+}
+
+.slider-graphic {
+	position: absolute;
+    mix-blend-mode: difference;
+	background: #ff4ab5;
+	border-radius: 27px;
+	width: 38px;
+	height: 38px;
+	left: 8px;
+	top: 8px;
+}
+
+.insignia {
+	width: 121.57px;
+	height: 121.57px;
+	position: absolute;
+	right: 32.43px;
+	top: 44px;
+	filter: drop-shadow(0px 1.29px 2px rgba(0, 0, 0, 0.5));
+}
+
+.title {
+	color: #ffffff;
+	text-align: left;
+	font: 900 43.47px "Inter-Black", sans-serif;
+	position: relative;
+	left: 33px;
+	top: 26px;
+}

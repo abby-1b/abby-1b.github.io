@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="./calc.js" async defer></script>
+		<title>Soil calculator</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0">
+		<link rel="icon" type="image/x-icon" href="./assets/insignia-uprm.png"></link>
+		<link rel="stylesheet" href="styles.css"></link>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0"></meta>
+	</head>
+	<body>
+		<div id="title">
+			<h1>				UPRM<br>				Lime<wbr>stone<br>				Calcu<wbr>lator<br></h1>
+			<img src="./assets/insignia-uprm-hires.png"></img>
+		</div>
+		<div @ purpose="ppmAl" text="ppm (mg/kg) Al" class="num-input input">
+			<h2>ppm (mg/kg) Al</h2>
+			<input type="number" placeholder="123.45" min="0" oninput="inputChange(this)"></input>
+		</div>
+		<div @ purpose="cmolAlKg" text="cmol Al/kg of soil" class="num-input input">
+			<h2>cmol Al/kg of soil</h2>
+			<input type="number" placeholder="123.45" min="0" oninput="inputChange(this)"></input>
+		</div>
+		<div @ purpose="factor" text="Factor" class="slider input">
+			<h2>Factor</h2>
+			<input type="range" min="1" max="3" step="0.25" oninput="sliderChange(this)" class="inner-slider"></input>
+			<div class="slider-label">####</div>
+		</div>
+		<div id="output">
+			<h2>...</h2>
+		</div>
+	</body>
+</html>
