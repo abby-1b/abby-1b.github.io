@@ -2,6 +2,29 @@
 <html>
 	<head>
 		<script src="./calc.js" async defer></script>
+		<script>const translations = {
+		    "en": [
+		        "Soil Calculator",
+		        "Espa\xf1ol",
+		        "UPRM<br>Lime&shy;stone<br>Calcu&shy;lator",
+		        "ppm (mg/kg) Al",
+		        "cmol Al/kg of soil",
+		        "Factor",
+		        "t/ha",
+		        "lb/1000 ft"
+		    ],
+		    "es": [
+		        "Calculadora de Suelos",
+		        "English",
+		        "Calcu&shy;ladora<br>de piedra caliza<br>UPRM",
+		        "ppm (mg/kg) Al",
+		        "cmol Al/kg de tierra",
+		        "Factor",
+		        "t/ha",
+		        "lb/1000 pies"
+		    ]
+		};
+		</script>
 		<title>Soil calculator</title>
 		<meta name="viewport" content="width=device-width,initial-scale=1.0">
 		<link rel="icon" type="image/x-icon" href="./assets/insignia-uprm.png"></link>
@@ -11,19 +34,22 @@
 	<body>
 		<div id="content">
 			<div id="title">
-				<h1>					UPRM<br>					Lime<wbr>stone<br>					Calcu<wbr>lator<br></h1>
-				<img src="./assets/insignia-uprm-hires.png"></img>
+				<h1></h1>
+				<div>
+					<img src="./assets/insignia-uprm-hires.png"></img>
+					<input type="button" id="switch-button"></input>
+				</div>
 			</div>
-			<div @ purpose="ppmAl" text="ppm (mg/kg) Al" class="num-input input">
-				<h2>ppm (mg/kg) Al</h2>
+			<div @ purpose="ppmAl" class="num-input input">
+				<h2></h2>
 				<input type="number" placeholder="123.45" min="0" oninput="inputChange(this)"></input>
 			</div>
-			<div @ purpose="cmolAlKg" text="cmol Al/kg of soil" class="num-input input">
-				<h2>cmol Al/kg of soil</h2>
+			<div @ purpose="cmolAlKg" class="num-input input">
+				<h2></h2>
 				<input type="number" placeholder="123.45" min="0" oninput="inputChange(this)"></input>
 			</div>
-			<div @ purpose="factor" text="Factor" class="slider input">
-				<h2>Factor</h2>
+			<div @ purpose="factor" class="slider input">
+				<h2></h2>
 				<input type="range" min="1" max="3" step="0.25" oninput="sliderChange(this)" class="inner-slider"></input>
 				<div class="slider-label">####</div>
 			</div>

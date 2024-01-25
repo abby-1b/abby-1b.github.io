@@ -8,6 +8,12 @@
 	/* transition: all .2s ease-in-out; */
 }
 
+/* Make text have shadow */
+a, h1, h2 {
+	text-shadow: 0px 3px 8px #222f;
+}
+
+
 body, html {
 	overscroll-behavior: none;
 	overflow: visible;
@@ -54,22 +60,49 @@ body {
 	grid-template-columns: 1fr 122px;
 }
 
+@media screen and (max-width: 600px) {
+	#title {
+		font-size: 0.8em;
+		margin-bottom: 20px;
+		grid-template-columns: 1fr 100px;
+	}
+}
+
 #title > h1 {
 	color: #ffffff;
 	text-align: left;
-	font: 900 43.47px "Inter-Black", sans-serif;
+	font: 900 2.8em "Inter-Black", sans-serif;
 	margin: 0;
 }
 
-#title > img {
+#title img {
 	width: 100%;
 	filter: drop-shadow(0px 1.29px 2px rgba(0, 0, 0, 0.5));
+}
+
+#title input {
+	border: none;
+	outline: none;
+	border-radius: 100px;
+	width: 100%;
+	padding: 5px;
+	background-color: #ddd;
+	color: #222;
+	font-weight: 900;
+	font-family: "Inter-Black", sans-serif;
+	font-size: 1.2em;
 }
 
 .input {
 	width: 100%;
 	position: relative;
 	margin-bottom: 70px;
+}
+
+@media screen and (max-width: 600px) {
+	.input {
+		margin-bottom: 60px;
+	}
 }
 
 .input > h2 {
@@ -146,6 +179,15 @@ body {
 	padding-top: 20px;
 	text-align: center;
 	height: 65px;
+}
+
+@media screen and (max-width: 600px) {
+	#output {
+		padding-top: 20px;
+	}
+	#output > div {
+		padding-top: 0px;
+	}
 }
 
 #output > div > a:first-child {
