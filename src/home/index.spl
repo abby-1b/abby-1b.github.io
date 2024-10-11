@@ -1,38 +1,38 @@
 @import components.spl
 
 head
-  meta(property="og:title", content="Abby Gotay Almonte")
-  meta(
+	meta(property="og:title", content="Abby Gotay Almonte")
+	meta(
 		property="og:description",
 		content="Full-stack developer!"
 	)
-  meta(property="og:type", content="website")
-  meta(charset="UTF-8")
-  style(src="./styles.css")
-  script(src="script.ts" async defer)
+	meta(property="og:type", content="website")
+	meta(charset="UTF-8")
+	style(src="./styles.css")
+	script(src="script.ts" async defer)
 
 body
-  section#hero
-    h1.wiggle Hey! I'm Abby!
-    p I'm a full-stack developer with too much free time
+	section#hero
+		h1.wiggle Hey! I'm Abby!
+		p I'm a full-stack developer with too much free time
 
-  section
-    h1 Projects
-    p Here are some of my projects, in no particular order
-    project(@ name="Spells" description="A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time." link="https://abby-1b.github.io/site/spells/")
-    project(@ name="RSTSC: Rust TypeScript Compiler" description="A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools." link="https://github.com/abby-1b/rstsc")
-    project(@ name="FewerKeys" description="An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people." link="https://fewerkeys.com/")
-    project(@ name="Peek Game Engine" description="A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development." link="https://github.com/abby-1b/peek-game-engine")
-    project(@ name="Bulbs (Game)" description="A game about fitting in. Made in one week!" link="https://abby1b.itch.io/bulbs")
-    project(@ name="Super Alien Shoter (Game)" description="A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!" link="https://abby1b.itch.io/super-alien-shooter")
-    project(@ name="Python Tester" description="A test generator that compares baseline code to a given Python script without sending the baseline code directly." link="https://github.com/abby-1b/PythonTester")
-    project(@ name="Python Bytecode" description="A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code." link="https://github.com/abby-1b/PythonBytecode")
-  
-  section
-    p Oh, and here's where to contact me!
-    p
-      b
-        a(href="https://x.com/abby041b") 𝕏 @abby041b
-    p
-      b
-        a(href="mailto:abby.041b@gmail.com") ✉ abby.041b@gmail.com
+	section
+		h1 Projects
+		p Here are some of my projects, in no particular order
+		project(@ name="Spells" description="A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time." link="https://abby-1b.github.io/site/spells/")
+		project(@ name="RSTSC: Rust TypeScript Compiler" description="A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools." link="https://github.com/abby-1b/rstsc")
+		project(@ name="FewerKeys" description="An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people." link="https://fewerkeys.com/")
+		project(@ name="Peek Game Engine" description="A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development." link="https://github.com/abby-1b/peek-game-engine")
+		project(@ name="Bulbs (Game)" description="A game about fitting in. Made in one week!" link="https://abby1b.itch.io/bulbs")
+		project(@ name="Super Alien Shoter (Game)" description="A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!" link="https://abby1b.itch.io/super-alien-shooter")
+		project(@ name="Python Tester" description="A test generator that compares baseline code to a given Python script without sending the baseline code directly." link="https://github.com/abby-1b/PythonTester")
+		project(@ name="Python Bytecode" description="A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code." link="https://github.com/abby-1b/PythonBytecode")
+	
+	section
+		p Oh, and here's where to contact me!
+		p
+			b
+				a(href="https://x.com/abby041b") 𝕏 @abby041b
+		p
+			b
+				a(href="mailto:abby.041b@gmail.com") ✉ abby.041b@gmail.com

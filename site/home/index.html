@@ -1,60 +1,68 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta name="viewport" content="width=device-width,initial-scale=1.0"></meta>
+		<script src="script.js" async defer></script>
 		<meta property="og:title" content="Abby Gotay Almonte">
 		<meta property="og:description" content="Full-stack developer!"
 			>
 		<meta property="og:type" content="website">
 		<meta charset="UTF-8">
 		<link rel="stylesheet" href="./styles.css"></link>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0"></meta>
 	</head>
-	<script src="script.js" async defer></script>
-	<body></body>
-	<section id="hero"></section>
-	<h1 class="wiggle">Hey! I'm Abby!</h1>
-	<p>I'm a full-stack developer with too much free time</p>
-	<section></section>
-	<h1>Projects</h1>
-	<p>Here are some of my projects, in no particular order</p>
-	<div onclick="clickedProject(this)" @ name="Spells" description="A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time." link="https://abby-1b.github.io/site/spells/" class="project">
-		<h2>Spells</h2>
-		<p>A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time.</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="RSTSC: Rust TypeScript Compiler" description="A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools." link="https://github.com/abby-1b/rstsc" class="project">
-		<h2>RSTSC: Rust TypeScript Compiler</h2>
-		<p>A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools.</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="FewerKeys" description="An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people." link="https://fewerkeys.com/" class="project">
-		<h2>FewerKeys</h2>
-		<p>An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people.</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="Peek Game Engine" description="A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development." link="https://github.com/abby-1b/peek-game-engine" class="project">
-		<h2>Peek Game Engine</h2>
-		<p>A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development.</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="Bulbs (Game)" description="A game about fitting in. Made in one week!" link="https://abby1b.itch.io/bulbs" class="project">
-		<h2>Bulbs (Game)</h2>
-		<p>A game about fitting in. Made in one week!</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="Super Alien Shoter (Game)" description="A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!" link="https://abby1b.itch.io/super-alien-shooter" class="project">
-		<h2>Super Alien Shoter (Game)</h2>
-		<p>A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="Python Tester" description="A test generator that compares baseline code to a given Python script without sending the baseline code directly." link="https://github.com/abby-1b/PythonTester" class="project">
-		<h2>Python Tester</h2>
-		<p>A test generator that compares baseline code to a given Python script without sending the baseline code directly.</p>
-	</div>
-	<div onclick="clickedProject(this)" @ name="Python Bytecode" description="A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code." link="https://github.com/abby-1b/PythonBytecode" class="project">
-		<h2>Python Bytecode</h2>
-		<p>A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code.</p>
-	</div>
-	<section></section>
-	<p>Oh, and here's where to contact me!</p>
-	<p></p>
-	<b></b>
-	<a href="https://x.com/abby041b">𝕏 @abby041b</a>
-	<p></p>
-	<b></b>
-	<a href="mailto:abby.041b@gmail.com">✉ abby.041b@gmail.com</a>
+	<body>
+		<section id="hero">
+			<h1 class="wiggle">Hey! I'm Abby!</h1>
+			<p>I'm a full-stack developer with too much free time</p>
+		</section>
+		<section>
+			<h1>Projects</h1>
+			<p>Here are some of my projects, in no particular order</p>
+			<div onclick="clickedProject(this)" @ name="Spells" description="A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time." link="https://abby-1b.github.io/site/spells/" class="project">
+				<h2>Spells</h2>
+				<p>A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time.</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="RSTSC: Rust TypeScript Compiler" description="A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools." link="https://github.com/abby-1b/rstsc" class="project">
+				<h2>RSTSC: Rust TypeScript Compiler</h2>
+				<p>A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools.</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="FewerKeys" description="An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people." link="https://fewerkeys.com/" class="project">
+				<h2>FewerKeys</h2>
+				<p>An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people.</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="Peek Game Engine" description="A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development." link="https://github.com/abby-1b/peek-game-engine" class="project">
+				<h2>Peek Game Engine</h2>
+				<p>A lightweight, customizable game engine focused on simplicity and ease of debugging. Used a node-based system inspired by Godot, with a strong emphasis on code-driven development.</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="Bulbs (Game)" description="A game about fitting in. Made in one week!" link="https://abby1b.itch.io/bulbs" class="project">
+				<h2>Bulbs (Game)</h2>
+				<p>A game about fitting in. Made in one week!</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="Super Alien Shoter (Game)" description="A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!" link="https://abby1b.itch.io/super-alien-shooter" class="project">
+				<h2>Super Alien Shoter (Game)</h2>
+				<p>A game similar to space invaders, but with a lot more modern-day polish. Made in two days with Godot!</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="Python Tester" description="A test generator that compares baseline code to a given Python script without sending the baseline code directly." link="https://github.com/abby-1b/PythonTester" class="project">
+				<h2>Python Tester</h2>
+				<p>A test generator that compares baseline code to a given Python script without sending the baseline code directly.</p>
+			</div>
+			<div onclick="clickedProject(this)" @ name="Python Bytecode" description="A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code." link="https://github.com/abby-1b/PythonBytecode" class="project">
+				<h2>Python Bytecode</h2>
+				<p>A tool that compiles Python code to a representation similar to bytecode, solving some version issues and obscuring the code.</p>
+			</div>
+		</section>
+		<section>
+			<p>Oh, and here's where to contact me!</p>
+			<p>
+				<b>
+					<a href="https://x.com/abby041b">𝕏 @abby041b</a>
+				</b>
+			</p>
+			<p>
+				<b>
+					<a href="mailto:abby.041b@gmail.com">✉ abby.041b@gmail.com</a>
+				</b>
+			</p>
+		</section>
+	</body>
 </html>
