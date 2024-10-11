@@ -2,32 +2,9 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width,initial-scale=1.0"></meta>
-		<style>	project {
-				background-color: red;
-			}
-		</style>
-		<style>	.cool-letters {
-				font-family: monospace;
-				
-			}
-			.cool-letter {
-				display: inline-block;
-				transform-origin: 0 0;
-				transform: scale(1, 1);
-			}
-			.cool-letter:hover {
-				transform-origin: 0 0;
-				transform: scale(3, 1);
-				color: red;
-			}
-		</style>
 	</head>
 	<body>
-		<script src="./main/letters.js" async defer></script>
-		<h1 class="cool-letters">Hello, World!</h1>
-		<div @ name="Spells" img-src="https://github.com/abby-1b/Spells/raw/main/assets/banner.png" text="Spells: A blazingly fast amalgamation of languages" class="project">
-			<h1>Spells</h1>
-			<p>Spells: A blazingly fast amalgamation of languages</p>
-		</div>
+		<script>window.location.href += (window.location.href.slice(-1) == '/' ? '' : '/') + 'home';
+		</script>
 	</body>
 </html>

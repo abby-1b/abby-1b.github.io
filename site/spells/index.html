@@ -93,14 +93,33 @@
 			</div>
 		</section>
 		<section>
-			<p>
-						Have you ever wanted to use a combination of JavaScript, TypeScript,
-					MarkDown, and Pug/Jade to mash modules, components, hopes, and dreams
-					into something barely representative of the Web Developer you really
-					are, but in a fraction of the time it would take you to do the same
-					thing in a sane matter (you know, by <i>not</i> mixing languages together)? <br><br>		Well, now you can!
-			
-			</p>
+				Spells is a tool that allows for quick iteration and development of web
+			applications. It allows you to write a combination of JavaScript, TypeScript,
+			HTML, Markdown, and Pug/Jade to develop websites much faster.
+		
+		</section>
+		<section>
+			<h1>Install</h1><br>	To install Spells, follow the instructions <a href="./INSTALL.md">here</a>. Windows is
+			currently unsupported, but support is planned.
+		
+		</section>
+		<section>
+			<h2>Markup language</h2><br>	Spells (the tool) comes with its own own language: Spells (the markup language).<br>	It's a subset of Pug/Jade, a language similar to VSCode's Emmet abbreviations.
+			This greatly reduces the amount of code typed and overall looks less cluttered
+			than pure HTML:<br>	<br><code>	head<br>	title My Website!<br>	script(src="someScript.js")<br>	body<br>	h1 This content is in one line...<br>	h2.<br>		This content can span<br>		multiple lines!<br>	</code>
+		</section>
+		<section>
+			<h2>TypeScript</h2><br>	The main design goal of this tool is to allow mixing different languages within
+			the same project. You can, for example, put TypeScript inside your HTML script
+			tags, which compiles down to its JavaScript equivalent:<br>	<br><code>	script.<br>	// No need for a type="TypeScript" specifier!<br>	class SomeClass {<br>		public foo: number;<br>		private bar: string;<br>	}<br>	const a: Array<SomeClass> = [];<br>	a.push(new SomeClass());<br>	</code><br>	Alternatively, you can import TypeScript files directly:<br>	<br><code>	script(src="someFile.ts")<br>	</code><br>	<br><code>	const a: number = 123;<br>	</code><br>	This currently uses <a href="https://swc.rs/">Speedy Web Compiler</a>, a fast TypeScript
+			compiler written in Rust. Optionally, there's support for my own compiler,
+			<a href="https://github.com/abby-1b/rstsc">RSTSC</a>.
+		
+		</section>
+		<section>
+			<h2>Markdown</h2><br>	Markdown provides a simple way of styling text. When writing text in Spells, you
+			can include markdown at any point, and it will be converted to its equivalent
+			HTML when it's compiled:<br>	<br><code>	h1.<br>	You can <i>italicize</i> words, make them <b>bold</b>, or <i><b>both</b></i>.<br>	</code><br>	Which looks like the following:<br>	You can <i>italicize</i> words, make them <b>bold</b>, or <i><b>both</b></i>.<br>	Do keep in mind that this is a subset of the <a href="https://spec-md.com/">Markdown spec</a>.<br>
 		</section>
 		<section style="--vertSpace:20px">
 			<p style="font-size:0.8em" class="no-margin text-center">

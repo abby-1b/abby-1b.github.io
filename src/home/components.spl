@@ -1,0 +1,4 @@
+
+project(@, onclick="clickedProject(this)")
+	h2 @{name}
+	p @{description}

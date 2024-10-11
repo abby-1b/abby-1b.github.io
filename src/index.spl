@@ -1,1 +1,2 @@
-@import main/index.spl
+script.
+	window.location.href += (window.location.href.slice(-1) == '/' ? '' : '/') + 'home';
