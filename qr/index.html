@@ -1,13 +1,13 @@
 <script>
 	const mappings = {
-		"ciic_tutoring": "/site/tutoring",
-		"warmer_shower": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-		"abby_portfolio": "/site/home",
+		'ciic_tutoring': '/site/tutoring',
+		'warmer_shower': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		'park_away': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		'abby_portfolio': '/site/home',
 	}
 	
 	const to = window.location.search.slice(1)
-	if (to in mappings)
-		window.location.href = mappings[to]
-	else
-		window.location.href = "/"
+	window.location.href = to in mappings
+		? mappings[to]
+		: '/'
 </script>
