@@ -29,6 +29,11 @@ section#hero {
 	padding-top: 35vh;
 	padding-bottom: 35vh;
 }
+section.inverted {
+	background-color: var(--main-color);
+	filter: invert(1);
+}
+
 section > p {
 	text-align: center;
 }
@@ -46,8 +51,28 @@ section#hero > h1 {
 	border-radius: 16px;
 	padding: 16px;
 	background-color: var(--main-color);
-	box-shadow: 0px 2px 4px 0px var(--secondary-color);
+	box-shadow:
+		inset  2px -2px 4px 0px #ffffff70,
+		inset -2px  2px 4px 0px #00000020,
+		1px 1px 4px 0px #ffffff20
+		;
+	transform: scale(1.00);
+	filter: contrast(1.0);
 	margin-bottom: 16px;
+	transition:
+		.2s box-shadow ease-in-out,
+		.3s transform ease-in-out,
+		.4s filter ease-in-out
+		;
+}
+.project:hover {
+	box-shadow:
+		inset  3px -3px 4px 0px #ffffff60,
+		inset -3px  3px 4px 0px #00000018,
+		-6px 6px 16px 0px #ffffff20
+		;
+	transform: scale(1.005);
+	filter: contrast(0.98);
 }
 .project > h2 {
 	margin-top: 0;

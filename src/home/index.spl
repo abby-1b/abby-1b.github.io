@@ -16,9 +16,9 @@ body
 		h1.wiggle Hey! I'm Abby!
 		p I'm a full-stack developer with too much free time
 
-	section
+	section.inverted
 		h1 Projects
-		p Here are some of my projects, in no particular order
+		p Here are some of my projects in no particular order
 		project(@ name="Spells" description="A web-server that allows quick web prototyping using TypeScript, Markdown, and Pug/Jade, reducing iteration time by compiling resources at request time." link="https://abby-1b.github.io/site/spells/")
 		project(@ name="RSTSC: Rust TypeScript Compiler" description="A TypeScript compiler written in Rust, with a focus on speed, memory efficiency, and exposing its Abstract Syntax Tree (AST) for integration with external tools." link="https://github.com/abby-1b/rstsc")
 		project(@ name="FewerKeys" description="An app that helps people with mobility issues with typing. Includes various keyboards that can fit the needs of different people." link="https://fewerkeys.com/")
