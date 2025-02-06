@@ -1,122 +1,223 @@
-
-@keyframes centerBob {
-	  0% { transform: translate(-50%, -50%) rotate( 1deg); }
-	 50% { transform: translate(-50%, -50%) rotate(-1deg); }
-	100% { transform: translate(-50%, -50%) rotate( 1deg); }
+:root {
+  --primary: #2563eb;
+  --primary-light: #60a5fa;
+  --secondary: #ec4899;
+  --background: #f8fafc;
+  --text: #1e293b;
+  --card-bg: #ffffff;
 }
 
-@keyframes glitchy {
-	 0% { text-shadow: #f886  2px -1px, #88f6 -2px  1px; }
-	33% { text-shadow: #f886 -2px  0px, #88f6  2px -0px; }
-	66% { text-shadow: #f886  0px -1px, #88f6 -1px  1px; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-weird {
-	animation: glitchy 750ms cubic-bezier(0,.96,.8,0.75) infinite;
-	font-size: 0.85em;
-	font-weight: bolder;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-body, html {
-	width: 100vw;
-	height: 100vh;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	font-family: Arial, Helvetica, sans-serif;
+.background-shapes {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: -1;
 }
 
-/* I spent so long working around this. I hate CSS. */
-h1, h3, p {
-	margin: 0;
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
 }
 
-.padding {
-	content: " ";
-	width: 1px;
-	height: 15px;
+.shape-1 {
+  background: var(--primary-light);
+  width: 500px;
+  height: 500px;
+  top: -250px;
+  left: -100px;
+  opacity: 0.3;
+  animation: float 20s ease-in-out infinite;
 }
 
-.titleContainer {
-	width: 100%;
-	height: 18vh;
-	margin: 0;
-	padding: 0;
+.shape-2 {
+  background: var(--secondary);
+  width: 400px;
+  height: 400px;
+  top: 50%;
+  right: -200px;
+  opacity: 0.2;
+  animation: float 15s ease-in-out infinite reverse;
 }
 
-@keyframes priceGradient {
-	  0% { background-position: 0% 91% }
-	 50% { background-position: 100% 10% }
-	100% { background-position: 0% 91% }
+.shape-3 {
+  background: var(--primary);
+  width: 300px;
+  height: 300px;
+  bottom: -150px;
+  left: 30%;
+  opacity: 0.2;
+  animation: float 18s ease-in-out infinite;
+  animation-delay: -10s;
 }
 
-.money > a {
-	font-size: 1em;
-	text-decoration: none;
-
-	background: linear-gradient(10deg, #b88a00, #0057ba);
-	background-size: 400% 400%;
-	animation: priceGradient 8s ease infinite;
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(60px, 40px); }
 }
 
-.titleContainer > .center {
-	padding-top: 8vh;
-	padding-bottom: 3vh;
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-.optionContainer {
-	width: 100%;
-	height: 75vh;
-	border: 20px solid transparent;
-	border-top-width: 6vh;
-	border-bottom-width: 8vh;
-	box-sizing: border-box;
+.hero {
+  text-align: center;
+  padding: 4rem 1rem;
 }
 
-.option {
-	width: 100%;
-	height: 33.3%;
+.title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--text);
 }
 
-.option:nth-child(1) .center { animation: centerBob 4.0s ease-in-out infinite; animation-delay: -1.0s; }
-.option:nth-child(2) .center { animation: centerBob 3.8s ease-in-out infinite; animation-delay: -2.2s; }
-.option:nth-child(3) .center { animation: centerBob 4.2s ease-in-out infinite; animation-delay: -3s; }
-
-h1, h3, p {
-	width: 100%;
-	text-align: center;
+.highlight {
+  background: linear-gradient(120deg, var(--primary-light) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.center {
-	position: relative;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+.subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
 }
 
-h1 { font-size: 2.6em; }
-p { font-size: 1.35em; }
-
-a {
-	background-color: #000;
-	color: white;
-	font-size: 1.45em;
-	margin-top: 5px;
-	padding: 8px;
-	border-radius: 8px;
+.hero ul {
+  position: relative;
+  width: fit-content;
+  left: 50%;
+  transform: translate(-50%, 0);
 }
 
-h3 {
-	padding-bottom: 1vh;
+.price-tag {
+  display: inline-flex;
+  align-items: baseline;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-	pointer-events: none;
-	background: linear-gradient(45deg, rgba(255,230,142,1) 0%, rgba(177,213,255,1) 100%);
-	mix-blend-mode: multiply;
+.currency {
+  font-size: 1.5rem;
+}
+
+.amount {
+  font-size: 2.5rem;
+  margin: 0 0.25rem;
+}
+
+.period {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 2rem 0;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+@media (min-width: 768px) {
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.card-content {
+  padding: 2rem;
+  text-align: center;
+}
+
+.icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.5rem;
+  background: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+.icon object {
+  width: 70%;
+  height: 70%;
+  filter: brightness(0);
+  position: relative;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+.card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.card p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.button {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1.2em;
+  font-weight: bolder;
+  transition: transform 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .button:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 2rem 1rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }

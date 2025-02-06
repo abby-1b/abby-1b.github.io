@@ -1,35 +1,63 @@
+html
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title CIIC Tutoring
+    style(src="styles.css")
 
-head
-	style(src="styles.css")
-	meta(name="viewport" content="width=device-width, initial-scale=1")
-	script(src="letterEffect.ts" async defer)
+  body
+    div.background-shapes
+      div.shape.shape-1
+      div.shape.shape-2
+      div.shape.shape-3
 
-div.titleContainer
-	div.center
-		h1 Want some help?
-		p I'm here to help.
-		div.padding
-		p.money.
-			For only [$10]() an hour!
+    main.container
+      section.hero
+        div.content
+          h1.title 
+            span.highlight Need Help Studying for CIIC?
+          p.subtitle I'm here to help you learn!
+          br
+          ul
+            li.subtitle Intro to Programming
+            li.subtitle Advanced Programming
+            li.subtitle Data Structures
+            li.subtitle Code, in General!
+          br
+          div.price-tag
+            span.currency $
+            span.amount 15
+            span.period /hour
 
-div.optionContainer
-	div.option
-		div.center
-			p Wanna do a quick call so we can setup a time/place?
-			div.padding
-			h3 [Call me!](tel:+17873073031)
+      section.cards-container
+        div.card
+          div.card-content
+            div.icon
+              object(data="assets/message.svg" width="64" height="64")
+            h2 Ready to Start?
+            p Skip straight to scheduling your first tutoring session
+            a.button(href="sms:+17873073031") Text Me
 
-	div.option
-		div.center
-			p Just want to get the help and get this over with?
-			div.padding
-			h3 [Text me!](sms:+17873073031)
+        div.card
+          div.card-content
+            div.icon
+              object(data="assets/phone.svg" width="64" height="64")
+            h2 Quick Chat First?
+            p Let's have a brief call to discuss your needs and set up a time
+            a.button(href="tel:+17873073031") Call Me
 
-	div.option
-		div.center
-			p Don't know how to approach someone to ask for help?
-			div.padding
-			h3 [Text me, but it's just](sms:+17873073031&body=Hi%2C%20I%20need%20help%20with%20CIIC!%20Please%20let%20me%20know%20when%20you're%20available%20%3A%29)
-			h3 [a pre-made message!](sms:+17873073031&body=Hi%2C%20I%20need%20help%20with%20CIIC!%20Please%20let%20me%20know%20when%20you're%20available%20%3A%29)
+        div.card
+          div.card-content
+            div.icon
+              object(data="assets/premade.svg" width="64" height="64")
+            h2 Feeling Shy?
+            p Use this pre-written message to break the ice
+            a.button(href="sms:+17873073031&body=Hi%2C%20I%20need%20help%20with%20CIIC!%20Please%20let%20me%20know%20when%20you're%20available") Send Message
 
-div.overlay
+        div.card
+          div.card-content
+            div.icon
+              object(data="assets/mail.svg" width="64" height="64")
+            h2 Email?
+            p Let me know what you need, and I'll mail you back as soon as possible
+            a.button(href="mailto:abby.041b@gmail.com") Email Me
