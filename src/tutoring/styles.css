@@ -207,6 +207,11 @@ body {
   }
 }
 
+.footer p {
+  font-size: 0.8em;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .hero {
     padding: 2rem 1rem;

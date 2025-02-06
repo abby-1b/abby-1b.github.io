@@ -61,3 +61,5 @@ html
             h2 Email?
             p Let me know what you need, and I'll mail you back as soon as possible
             a.button(href="mailto:abby.041b@gmail.com") Email Me
+      section.footer
+        p.subtitle abby1b 2025 (yes, I made this site myself)
