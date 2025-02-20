@@ -1,11 +1,7 @@
 # abby-1b.github.io
 
-This is my site!
+This used to be my site & portfolio, but that's been moved.
 
-Go [here](https://abby-1b.github.io/site) to access the actual site.
+The new website is available at (abby1b.com)[abby1b.com]!
 
-# Why does the site redirect to `/site`?
-
-This website uses the Spells compiler, which isn't directly compatible with HTML
-and must therefore be compiled. The source is in `/src`, which gets compiled
-into the `/site` directory.
+This is kept here to prevent old links from breaking.
